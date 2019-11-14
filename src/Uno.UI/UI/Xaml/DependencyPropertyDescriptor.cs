@@ -28,12 +28,12 @@ namespace Windows.UI.Xaml
 			{
 				// (Uno.UI.Tests.BinderTests:Attachable.MyValue)
 
-				var bindingParts = propertyPath.Trim(new[] { '(', ')' }).Split(':');
+				var bindingParts = propertyPath.Trim(new[] { '(', ')' }).Split(new[] { ':' });
 
 				if (bindingParts.Length == 2)
 				{
 					var ns = bindingParts[0];
-					var propertyParts = bindingParts[1].Split('.');
+					var propertyParts = bindingParts[1].Split(new[] { '.' });
 
 					if (propertyParts.Length == 2)
 					{
@@ -75,7 +75,7 @@ namespace Windows.UI.Xaml
 					{
 						if (typeof(DependencyPropertyDescriptor).Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
 						{
-							typeof(DependencyPropertyDescriptor).Log().DebugFormat("The property path [{0}] is not formatted properly (must only access one property)");
+							typeof(DependencyPropertyDescriptor).Log().DebugFormat($"The property path [{propertyPath}] is not formatted properly (must only access one property)");
 						}
 					}
 				}
@@ -83,7 +83,7 @@ namespace Windows.UI.Xaml
 				{
 					if (typeof(DependencyPropertyDescriptor).Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
 					{
-						typeof(DependencyPropertyDescriptor).Log().DebugFormat("The property path [{0}] is not formatted properly (must have exactly one ':')");
+						typeof(DependencyPropertyDescriptor).Log().DebugFormat($"The property path [{propertyPath}] is not formatted properly (must have exactly one ':')");
 					}
 				}
 			}

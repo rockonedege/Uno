@@ -107,7 +107,7 @@ namespace CustomHost
 
             if(!Path.IsPathRooted(requestFileName))
             {
-                requestFileName = Path.Combine(Path.GetDirectoryName(TemplateFile), requestFileName);
+                requestFileName = Path.Combine(Path.GetDirectoryName(TemplateFile), requestFileName.Replace('\\', Path.DirectorySeparatorChar));
             }
 
             //If the argument is the fully qualified path of an existing file,  
@@ -137,8 +137,8 @@ namespace CustomHost
         {
             object returnObject;
             switch (optionName)
-            {
-                case "CacheAssemblies":
+			{
+				case "CacheAssemblies":
                     returnObject = true;
                     break;
                 default:
@@ -206,7 +206,7 @@ namespace CustomHost
         //---------------------------------------------------------------------  
         public string ResolvePath(string fileName)
         {
-            if (fileName == null)
+			if (fileName == null)
             {
                 throw new ArgumentNullException("the file name cannot be null");
             }
@@ -220,7 +220,7 @@ namespace CustomHost
             //Maybe the file is in the same folder as the text template that   
             //called the directive.  
             //----------------------------------------------------------------  
-            string candidate = Path.Combine(Path.GetDirectoryName(this.TemplateFile), fileName);
+            string candidate = Path.Combine(Path.GetDirectoryName(this.TemplateFile), fileName.Replace('\\', Path.DirectorySeparatorChar));
             if (File.Exists(candidate))
             {
                 return candidate;
@@ -292,7 +292,7 @@ namespace CustomHost
             return AppDomain.CreateDomain("Generation App Domain");
             //This could be changed to return the current appdomain, but new   
             //assemblies are loaded into this AppDomain on a regular basis.  
-            //If the AppDomain lasts too long, it will grow indefintely,   
+            //If the AppDomain lasts too long, it will grow indefinitely,   
             //which might be regarded as a leak.  
             //This could be customized to cache the application domain for   
             //a certain number of text template generations (for example, 10).  
@@ -343,7 +343,7 @@ namespace CustomHost
 
             CustomCmdLineHost host = new CustomCmdLineHost();
             Engine engine = new Engine();
-            host.TemplateFileValue = templateFileName;
+			host.TemplateFileValue = templateFileName;
             //Read the text template.  
             string input = File.ReadAllText(templateFileName);
             //Transform the text template.  

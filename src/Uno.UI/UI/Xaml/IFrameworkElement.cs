@@ -3,6 +3,7 @@ using System.Linq;
 using Uno.Extensions;
 using Windows.UI.Xaml;
 using Uno.UI.DataBinding;
+using Windows.UI.Xaml.Automation.Peers;
 using Windows.UI.Xaml.Data;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,6 +11,7 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Controls;
 using Uno.UI;
+using Windows.Foundation;
 
 #if XAMARIN_ANDROID
 using View = Android.Views.View;
@@ -28,6 +30,22 @@ using Font = UIKit.UIFont;
 using CoreGraphics;
 using _Size = Windows.Foundation.Size;
 using Point = Windows.Foundation.Point;
+#elif __MACOS__
+using AppKit;
+using View = AppKit.NSView;
+using Color = AppKit.NSColor;
+using Font = AppKit.NSFont;
+using CoreGraphics;
+using _Size = Windows.Foundation.Size;
+using Point = Windows.Foundation.Point;
+#elif __WASM__
+using nint = System.Int32;
+using nfloat = System.Double;
+using Point = Windows.Foundation.Point;
+using CGSize = Windows.Foundation.Size;
+using _Size = Windows.Foundation.Size;
+using NMath = System.Math;
+using View = Windows.UI.Xaml.UIElement;
 #else
 using nint = System.Int32;
 using nfloat = System.Double;
@@ -82,7 +100,7 @@ namespace Windows.UI.Xaml
 
 		Transform RenderTransform { get; set; }
 
-#if XAMARIN
+#if XAMARIN || __WASM__
 		Point RenderTransformOrigin { get; set; }
 #endif
 		TransitionCollection Transitions { get; set; }
@@ -108,7 +126,7 @@ namespace Windows.UI.Xaml
 		// void SetNeedsLayout ();
 		// void SetSuperviewNeedsLayout ();
 
-#if XAMARIN_IOS
+#if XAMARIN_IOS || __MACOS__
 
 		/// <summary>
 		/// The frame applied to this child when last arranged by its parent. This may differ from the current UIView.Frame if a RenderTransform is set.
@@ -117,6 +135,10 @@ namespace Windows.UI.Xaml
 
 		void SetSubviewsNeedLayout();
 #endif
+
+		AutomationPeer GetAutomationPeer();
+
+		string GetAccessibilityInnerText();
 	}
 
 	public static class IFrameworkElementHelper
@@ -126,7 +148,7 @@ namespace Windows.UI.Xaml
 		/// </summary>
 		public static void Initialize(IFrameworkElement e)
 		{
-#if NET46
+#if NET461
 			// These properties have moved to dependency properties
 			// on Uno.UI, tests still depend on it.
 			e.HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -140,10 +162,7 @@ namespace Windows.UI.Xaml
 				e.Style = Xaml.Style.DefaultStyleForType(e.GetType());
 			}
 
-			if (
-				!FeatureConfiguration.UIElement.UseLegacyClipping 
-				&& e is UIElement uiElement
-			)
+			if (e is UIElement uiElement)
 			{
 #if __IOS__
 				uiElement.ClipsToBounds = false;
@@ -152,10 +171,15 @@ namespace Windows.UI.Xaml
 #endif
 			}
 
-#if XAMARIN_ANDROID
-			if (Debugger.IsAttached)
+#if __ANDROID__
+			if (e is View view)
 			{
-				(e as View).ContentDescription = e.GetType().ToString();
+				// TODO:
+				// This causes Android to cycle through every visible IFrameworkElement every time the accessibility focus is changed
+				// and calls the overridden InitializeAccessibilityNodeInfo method.
+				// This could become a performance problem (due to interop) in complex UIs (only if TalkBack is enabled).
+				// A possible optimization could be to set it to ImportantForAccessibility.No if FrameworkElement.CreateAutomationPeer returns null.
+				view.ImportantForAccessibility = Android.Views.ImportantForAccessibility.Yes;
 			}
 #endif
 		}
@@ -186,6 +210,8 @@ namespace Windows.UI.Xaml
 			}
 #elif XAMARIN_IOS
 			(e as View).SetNeedsLayout();
+#elif __MACOS__
+			(e as View).NeedsLayout = true;
 #elif __WASM__
 			Window.InvalidateMeasure();
 #endif
@@ -214,7 +240,7 @@ namespace Windows.UI.Xaml
 
 				if (content != null)
 				{
-					frameworkElements = new[] { content };
+					frameworkElements = new IFrameworkElement[] { content };
 				}
 			}
 
@@ -242,13 +268,29 @@ namespace Windows.UI.Xaml
 		{
 #if XAMARIN_IOS
 			return ((View)element).SizeThatFits(new CoreGraphics.CGSize(availableSize.Width, availableSize.Height));
+#elif __MACOS__
+			if(element is NSControl nsControl)
+			{
+				return nsControl.SizeThatFits(new CoreGraphics.CGSize(availableSize.Width, availableSize.Height));
+			}
+			else if (element is FrameworkElement fe)
+			{
+				fe.Measure(new Size(availableSize.Width, availableSize.Height));
+				var desiredSize = fe.DesiredSize;
+				return new CGSize(desiredSize.Width, desiredSize.Height);
+			}
+			else
+			{
+				throw new NotSupportedException($"Unsupported measure for {element}");
+			}
+
 #elif XAMARIN_ANDROID
 			var widthSpec = ViewHelper.SpecFromLogicalSize(availableSize.Width);
 			var heightSpec = ViewHelper.SpecFromLogicalSize(availableSize.Height);
 
 			var view = ((View)element);
 			view.Measure(widthSpec, heightSpec);
-			
+
 			return Uno.UI.Controls.BindableView.GetNativeMeasuredDimensionsFast(view)
 				.PhysicalToLogicalPixels();
 #else
@@ -256,10 +298,31 @@ namespace Windows.UI.Xaml
 #endif
 		}
 
+#if __MACOS__
+		public static CGSize Measure(this View element, _Size availableSize)
+		{
+			if (element is NSControl nsControl)
+			{
+				return nsControl.SizeThatFits(new CoreGraphics.CGSize(availableSize.Width, availableSize.Height));
+			}
+			else if (element is FrameworkElement fe)
+			{
+				fe.Measure(new Size(availableSize.Width, availableSize.Height));
+				var desiredSize = fe.DesiredSize;
+				return new CGSize(desiredSize.Width, desiredSize.Height);
+			}
+			else
+			{
+				throw new NotSupportedException($"Unsupported measure for {element}");
+			}
+		}
+
+#endif
+
 		public static CGSize SizeThatFits(IFrameworkElement e, CGSize size)
 		{
 			// Note that on iOS, the computation is intentionally kept as nfloat
-			// to handle discrepencies with the nfloat.NaN and double.NaN.
+			// to handle discrepancies with the nfloat.NaN and double.NaN.
 
 			if (e.Visibility == Visibility.Collapsed)
 			{
@@ -285,10 +348,10 @@ namespace Windows.UI.Xaml
 		/// Gets the min value being left or right.
 		/// </summary>
 		/// <remarks>
-		/// This method kept here for readbility 
+		/// This method kept here for readbility
 		/// of <see cref="SizeThatFits(IFrameworkElement, CGSize)"/> the keep its
 		/// fluent aspect.
-		/// It also does not use the generic extension that may create an very 
+		/// It also does not use the generic extension that may create an very
 		/// short lived <see cref="IConvertible"/> instance.
 		/// </remarks>
 		private static nfloat LocalMin(this nfloat left, nfloat right)
@@ -300,10 +363,10 @@ namespace Windows.UI.Xaml
 		/// Gets the max value being left or right.
 		/// </summary>
 		/// <remarks>
-		/// This method kept here for readbility 
+		/// This method kept here for readbility
 		/// of <see cref="SizeThatFits(IFrameworkElement, CGSize)"/> the keep its
 		/// fluent aspect.
-		/// It also does not use the generic extension that may create an very 
+		/// It also does not use the generic extension that may create an very
 		/// short lived <see cref="IConvertible"/> instance.
 		/// </remarks>
 		private static nfloat LocalMax(this nfloat left, nfloat right)
@@ -322,7 +385,7 @@ namespace Windows.UI.Xaml
 			return element;
 		}
 
-#if XAMARIN_IOS
+#if XAMARIN_IOS || __MACOS__
 		private static nfloat NumberOrDefault(this double number, nfloat defaultValue)
 		{
 			return NumberOrDefault((nfloat)number, defaultValue);

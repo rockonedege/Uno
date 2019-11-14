@@ -4,18 +4,48 @@ using System.Collections.Generic;
 using System.Text;
 using Android.App;
 using Java.Interop;
+using Uno.UI.Services;
 using Windows.ApplicationModel.Activation;
+using Windows.UI.StartScreen;
+using Android.Content;
+using Uno.Extensions;
+using Microsoft.Extensions.Logging;
+using System.ComponentModel;
 
 namespace Windows.UI.Xaml
 {
-    public class NativeApplication : Android.App.Application
+	public class NativeApplication : Android.App.Application
 	{
 		private readonly Application _app;
+		private Intent _lastHandledIntent;
 
+		public delegate Windows.UI.Xaml.Application AppBuilder();
+
+		[EditorBrowsable(EditorBrowsableState.Never)]
 		public NativeApplication(Windows.UI.Xaml.Application app, IntPtr javaReference, Android.Runtime.JniHandleOwnership transfer)
+			: this(() => app, javaReference, transfer)
+		{
+			if (this.Log().IsEnabled(LogLevel.Warning))
+			{
+				this.Log().LogWarning(
+					"The constructor on Windows.UI.Xaml.NativeApplication uses an explicitly created Windows.UI.Xaml.Application instance. " +
+					"Instead, use the constructor that requires a Windows.UI.Xaml.NativeApplication.AppBuilder delegate.");
+			}
+		}
+
+		/// <summary>
+		/// Creates an android Application instance
+		/// </summary>
+		/// <param name="appBuilder">A <see cref="AppBuilder"/> delegate that provides an <see cref="Application"/> instance.</param>
+		public NativeApplication(AppBuilder appBuilder, IntPtr javaReference, Android.Runtime.JniHandleOwnership transfer)
 			: base(javaReference, transfer)
 		{
-			_app = app;
+			// Delay create the Windows.UI.Xaml.Application in order to get the
+			// Android.App.Application.Context to be populated properly. This enables
+			// APIs such as Windows.Storage.ApplicationData.Current.LocalSettings to function properly.
+			_app = appBuilder();
+
+			ResourceHelper.ResourcesService = new ResourcesService(this);
 		}
 
 		public override void OnCreate()
@@ -25,7 +55,17 @@ namespace Windows.UI.Xaml
 
 		private void OnActivityStarted(Activity activity)
 		{
-			_app.OnLaunched(new LaunchActivatedEventArgs());
+			_app.InitializationCompleted();
+			if (_lastHandledIntent != activity.Intent &&
+			    activity.Intent?.Extras?.ContainsKey(JumpListItem.ArgumentsExtraKey) == true)
+			{
+				_lastHandledIntent = activity.Intent;
+				_app.OnLaunched(new LaunchActivatedEventArgs(ActivationKind.Launch, activity.Intent.GetStringExtra(JumpListItem.ArgumentsExtraKey)));
+			}
+			else
+			{
+				_app.OnLaunched(new LaunchActivatedEventArgs());
+			}
 		}
 
 		/// <summary>
@@ -65,7 +105,6 @@ namespace Windows.UI.Xaml
 
 			public void OnActivityResumed(Android.App.Activity activity)
 			{
-
 			}
 
 			public void OnActivitySaveInstanceState(Android.App.Activity activity, Android.OS.Bundle outState)

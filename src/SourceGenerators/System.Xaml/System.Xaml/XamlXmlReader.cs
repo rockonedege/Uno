@@ -540,7 +540,7 @@ namespace Uno.Xaml
 				string aname = nsidx > 0 ? p.Key.Substring (nsidx + 1) : p.Key;
 				int propidx = aname.IndexOf ('.');
 				if (propidx > 0) {
-					string apns = prefix.Length > 0 ? r.LookupNamespace (prefix) : r.NamespaceURI;
+					string apns = r.LookupNamespace(prefix);
 					var apname = aname.Substring (0, propidx);
 					var axtn = new XamlTypeName (apns, apname, null);
 
@@ -634,12 +634,12 @@ namespace Uno.Xaml
 
 				if(isFirstElementString)
 				{
-					value = value.TrimStart();
+					value = value.TrimStart(new char[0]);
 				}
 
 				if(r.NodeType == XmlNodeType.EndElement)
 				{
-					value = value.TrimEnd();
+					value = value.TrimEnd(new char[0]);
 				}
 			}
 
@@ -742,8 +742,21 @@ namespace Uno.Xaml
 			}
 			else
 			{
-				foreach (var ni in ReadCollectionItems(xt, xm))
-					yield return ni;
+
+				if (r.Name.Contains(".") && r.IsEmptyElement && !r.HasAttributes)
+				{
+					// This case is present to handle self closing attached property nodes.
+
+					yield return Node(XamlNodeType.StartMember, xm);
+					yield return Node(XamlNodeType.EndMember, xm);
+					r.Read();
+					yield break;
+				}
+				else
+				{ 
+					foreach (var ni in ReadCollectionItems(xt, xm))
+						yield return ni;
+				}
 			}
 		}
 

@@ -64,17 +64,14 @@ namespace Windows.UI.Xaml.Media
 		{
 			Uri uri;
 
+			if (url.StartsWith("/"))
+			{
+				url = MsAppXScheme + "://" + url;
+			}
+
 			if (url.HasValueTrimmed() && Uri.TryCreate(url.Trim(), UriKind.RelativeOrAbsolute, out uri))
 			{
-				if (url.StartsWith("/", StringComparison.OrdinalIgnoreCase))
-				{
-					InitFromResource(uri);
-					return;
-				}
-				else
-				{
-					InitFromUri(uri);
-				}
+				InitFromUri(uri);
 			}
 			else
 			{
@@ -97,10 +94,14 @@ namespace Windows.UI.Xaml.Media
 
 		internal void InitFromUri(Uri uri)
 		{
+			if (!uri.IsAbsoluteUri || uri.Scheme == "")
+			{
+				uri = new Uri(MsAppXScheme + ":///" + uri.OriginalString.TrimStart("/"));
+			}
 
 			var isResource = uri.Scheme.Equals(MsAppXScheme, StringComparison.OrdinalIgnoreCase)
-							|| uri.Scheme.Equals(MsAppDataScheme, StringComparison.OrdinalIgnoreCase)
-							;
+							|| uri.Scheme.Equals(MsAppDataScheme, StringComparison.OrdinalIgnoreCase);
+
 			if (isResource)
 			{
 				InitFromResource(uri);
@@ -114,10 +115,12 @@ namespace Windows.UI.Xaml.Media
 
 			WebUri = uri;
 		}
+
 		private void InitFromFile(Uri uri)
 		{
 			FilePath = uri.PathAndQuery;
 		}
+
 		partial void InitFromResource(Uri uri);
 
 		static public implicit operator ImageSource(string url)

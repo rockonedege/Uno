@@ -5,6 +5,7 @@ using Android.Support.V7.Widget;
 using Android.Views;
 using Uno.Extensions;
 using Uno.UI;
+using Windows.UI.Xaml.Controls.Primitives;
 
 namespace Windows.UI.Xaml.Controls
 {
@@ -15,7 +16,38 @@ namespace Windows.UI.Xaml.Controls
 		/// </summary>
 		private bool _isInAnimatedScroll;
 
-		internal ScrollingViewCache ViewCache { get; }
+		bool _shouldRecalibrateFlingVelocity;
+		float? _previousX, _previousY;
+		float? _deltaX, _deltaY;
+
+		internal BufferViewCache ViewCache { get; }
+
+		internal IEnumerable<SelectorItem> CachedItemViews => ViewCache.CachedItemViews;
+
+		public override OverScrollMode OverScrollMode
+		{
+			get
+			{
+				// This duplicates the logic in Android.Views.View.overScrollBy(), which for some reason RecyclerView doesn't use, but
+				// only checks getOverScrollMode(). This ensures edge effects aren't shown if content is too small to scroll.
+				if (NativeLayout == null)
+				{
+					return base.OverScrollMode;
+				}
+				else if (NativeLayout.ScrollOrientation == Orientation.Vertical)
+				{
+					return ComputeVerticalScrollRange() > ComputeVerticalScrollExtent() ?
+						base.OverScrollMode :
+						OverScrollMode.Never;
+				}
+				else
+				{
+					return ComputeHorizontalScrollRange() > ComputeHorizontalScrollExtent() ?
+						base.OverScrollMode :
+						OverScrollMode.Never;
+				}
+			}
+		}
 
 		public NativeListViewBase() : base(ContextHelper.Current)
 		{
@@ -23,12 +55,22 @@ namespace Windows.UI.Xaml.Controls
 			VerticalScrollBarEnabled = true;
 			HorizontalScrollBarEnabled = true;
 
-			ViewCache = new ScrollingViewCache(this);
+			if (FeatureConfiguration.NativeListViewBase.RemoveItemAnimator)
+			{
+				SetItemAnimator(null);
+			}
+
+			ViewCache = new BufferViewCache(this);
 			SetViewCacheExtension(ViewCache);
 
 			InitializeSnapHelper();
 
 			MotionEventSplittingEnabled = false;
+
+			_shouldRecalibrateFlingVelocity = (int)Android.OS.Build.VERSION.SdkInt >= 28; // Android.OS.BuildVersionCodes.P
+
+			// // This is required for animations not to be cut off by transformed ancestor views. (#1333)
+			SetClipChildren(false);
 		}
 
 		partial void InitializeSnapHelper();
@@ -194,9 +236,55 @@ namespace Windows.UI.Xaml.Controls
 			return NativeLayout.CanCurrentlyScrollVertically(direction);
 		}
 
+		protected override void AttachViewToParent(View child, int index, ViewGroup.LayoutParams layoutParams)
+		{
+			var vh = GetChildViewHolder(child);
+			if (vh != null)
+			{
+				vh.IsDetached = false;
+			}
+			base.AttachViewToParent(child, index, layoutParams);
+		}
+
+		protected override void DetachViewFromParent(int index)
+		{
+			var view = GetChildAt(index);
+			if (view != null)
+			{
+				var vh = GetChildViewHolder(view);
+				if (vh != null)
+				{
+					vh.IsDetached = true;
+				}
+			}
+			base.DetachViewFromParent(index);
+		}
+
+		protected override void RemoveDetachedView(View child, bool animate)
+		{
+			var vh = GetChildViewHolder(child);
+			if (vh != null)
+			{
+				vh.IsDetached = false;
+			}
+#if DEBUG
+			if (!vh.IsDetachedPrivate)
+			{
+				// Preempt the unmanaged exception 'Java.Lang.IllegalArgumentException: Called removeDetachedView with a view which is not flagged as tmp detached.' for easier debugging.
+				throw new InvalidOperationException($"View {child} is not flagged tmp detached.");
+			}
+#endif
+			base.RemoveDetachedView(child, animate);
+		}
+
+		partial void OnUnloadedPartial()
+		{
+			ViewCache?.OnUnloaded();
+		}
+
 		public void Refresh()
 		{
-			CurrentAdapter?.NotifyDataSetChanged();
+			CurrentAdapter?.Refresh();
 
 			var isScrollResetting = NativeLayout != null && NativeLayout.ContentOffset != 0;
 			NativeLayout?.Refresh();
@@ -216,6 +304,8 @@ namespace Windows.UI.Xaml.Controls
 				asVirtualizingPanelLayout.Padding = this.Padding;
 			}
 		}
+
+		internal new UnoViewHolder GetChildViewHolder(View view) => base.GetChildViewHolder(view) as UnoViewHolder;
 
 		bool ILayoutConstraints.IsWidthConstrained(View requester)
 		{
@@ -238,6 +328,69 @@ namespace Windows.UI.Xaml.Controls
 			}
 
 			return this.IsHeightConstrainedSimple() ?? (base.Parent as ILayoutConstraints)?.IsHeightConstrained(this) ?? false;
+		}
+
+		public override bool Fling(int velocityX, int velocityY)
+		{
+			if (_shouldRecalibrateFlingVelocity)
+			{
+				// Workaround for inverted ListView receiving fling velocity in the opposite direction
+				// See: https://issuetracker.google.com/u/1/issues/112385925
+				velocityX = Recalibrate(velocityX, _deltaX);
+				velocityY = Recalibrate(velocityY, _deltaY);
+			}
+
+			return base.Fling(velocityX, velocityY);
+
+			int Recalibrate(int value, float? hint)
+			{
+				// note: the opposite sign should be used to recalibrate the velocity
+				return hint.HasValue && hint != 0
+					? Math.Abs(value) * -Math.Sign(hint.Value)
+					: value;
+			}
+		}
+
+		internal void TrackMotionDirections(MotionEvent e)
+		{
+			if (!_shouldRecalibrateFlingVelocity)
+			{
+				return;
+			}
+
+			switch (e.Action)
+			{
+				case MotionEventActions.Down:
+					_deltaX = _deltaY = null;
+					SaveCurrentCoordinates();
+					break;
+
+				case MotionEventActions.Move:
+					ComputeMotionDirections();
+					SaveCurrentCoordinates();
+					break;
+
+				case MotionEventActions.Up:
+					// Note that ACTION_UP and ACTION_POINTER_UP always report the last known position
+					// of the pointers that went up. -- VelocityTracker.cpp
+					// Ignoring this one, since trying to compute directions here will always return 0s.
+					break;
+
+				case MotionEventActions.Cancel:
+					_deltaX = _deltaY = null;
+					break;
+			}
+
+			void SaveCurrentCoordinates()
+			{
+				_previousX = e.GetX();
+				_previousY = e.GetY();
+			}
+			void ComputeMotionDirections()
+			{
+				_deltaX = e.GetX() - (e.HistorySize > 0 ? e.GetHistoricalX(e.HistorySize - 1) : _previousX);
+				_deltaY = e.GetY() - (e.HistorySize > 0 ? e.GetHistoricalY(e.HistorySize - 1) : _previousY);
+			}
 		}
 	}
 }

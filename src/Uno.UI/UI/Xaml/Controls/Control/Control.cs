@@ -11,7 +11,8 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Text;
 using Windows.UI.Xaml.Markup;
 using System.ComponentModel;
-
+using System.Reflection;
+using Uno.UI.Xaml;
 #if XAMARIN_ANDROID
 using View = Android.Views.View;
 using ViewGroup = Android.Views.ViewGroup;
@@ -23,7 +24,13 @@ using ViewGroup = UIKit.UIView;
 using Color = UIKit.UIColor;
 using Font = UIKit.UIFont;
 using UIKit;
-#elif __WASM__ || NET46
+#elif __MACOS__
+using View = AppKit.NSView;
+using ViewGroup = AppKit.NSView;
+using Color = AppKit.NSColor;
+using Font = AppKit.NSFont;
+using AppKit;
+#elif __WASM__ || NET461
 using View = Windows.UI.Xaml.UIElement;
 #endif
 
@@ -36,6 +43,8 @@ namespace Windows.UI.Xaml.Controls
 
 		private void InitializeControl()
 		{
+			SetDefaultForeground();
+			SubscribeToOverridenRoutedEvents();
 			OnIsFocusableChanged();
 		}
 
@@ -45,6 +54,17 @@ namespace Windows.UI.Xaml.Controls
 		protected object DefaultStyleKey { get; set; }
 
 		protected override bool IsSimpleLayout => true;
+
+
+		private void SetDefaultForeground()
+		{
+			//override the default value from dependency property based on application theme
+			//in the future, this will need to respond to the inherited RequestedTheme and its changes
+			this.SetValue(ForegroundProperty,
+				Application.Current == null || Application.Current.RequestedTheme == ApplicationTheme.Light
+					? SolidColorBrushHelper.Black
+					: SolidColorBrushHelper.White, DependencyPropertyValuePrecedences.DefaultValue);
+		}
 
 		protected override void OnBackgroundChanged(DependencyPropertyChangedEventArgs e)
 		{
@@ -90,7 +110,12 @@ namespace Windows.UI.Xaml.Controls
 		/// <param name="forceUpdate">If true, forces an update even if the control has no parent.</param>
 		internal void SetUpdateControlTemplate(bool forceUpdate = false)
 		{
-			if (forceUpdate || this.HasParent() || CanCreateTemplateWithoutParent)
+			if (
+				!FeatureConfiguration.Control.UseLegacyLazyApplyTemplate
+				|| forceUpdate
+				|| this.HasParent()
+				|| CanCreateTemplateWithoutParent
+			)
 			{
 				UpdateTemplate();
 				this.InvalidateMeasure();
@@ -130,11 +155,111 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
+		private void SubscribeToOverridenRoutedEvents()
+		{
+			// Overridden Events are registered from constructor to ensure they are
+			// registered first in event handlers.
+			// https://docs.microsoft.com/en-us/uwp/api/windows.ui.xaml.controls.control.onpointerpressed#remarks
+
+			var implementedEvents = GetImplementedRoutedEvents(GetType());
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.PointerPressed))
+			{
+				PointerPressed += OnPointerPressedHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.PointerReleased))
+			{
+				PointerReleased += OnPointerReleasedHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.PointerMoved))
+			{
+				PointerMoved += OnPointerMovedHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.PointerEntered))
+			{
+				PointerEntered += OnPointerEnteredHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.PointerExited))
+			{
+				PointerExited += OnPointerExitedHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.PointerCanceled))
+			{
+				PointerCanceled += OnPointerCanceledHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.PointerCaptureLost))
+			{
+				PointerCaptureLost += OnPointerCaptureLostHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.ManipulationStarting))
+			{
+				ManipulationStarting += OnManipulationStartingHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.ManipulationStarted))
+			{
+				ManipulationStarted += OnManipulationStartedHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.ManipulationDelta))
+			{
+				ManipulationDelta += OnManipulationDeltaHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.ManipulationInertiaStarting))
+			{
+				ManipulationInertiaStarting += OnManipulationInertiaStartingHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.ManipulationCompleted))
+			{
+				ManipulationCompleted += OnManipulationCompletedHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.Tapped))
+			{
+				Tapped += OnTappedHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.DoubleTapped))
+			{
+				DoubleTapped += OnDoubleTappedHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.KeyDown))
+			{
+				KeyDown += OnKeyDownHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.KeyUp))
+			{
+				KeyUp += OnKeyUpHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.GotFocus))
+			{
+				GotFocus += OnGotFocusHandler;
+			}
+
+			if (implementedEvents.HasFlag(RoutedEventFlag.LostFocus))
+			{
+				LostFocus += OnLostFocusHandler;
+			}
+		}
+
 		protected override void OnLoaded()
 		{
 			SetUpdateControlTemplate();
 
 			base.OnLoaded();
+
 		}
 
 		/// <summary>
@@ -150,7 +275,7 @@ namespace Windows.UI.Xaml.Controls
 		}
 
 		/// <summary>
-		/// Finds a realised element in the control template
+		/// Finds a realized element in the control template
 		/// </summary>
 		/// <param name="e">The framework element instance</param>
 		/// <param name="name">The name of the template part</param>
@@ -595,44 +720,239 @@ namespace Windows.UI.Xaml.Controls
 
 		protected virtual void OnFocusStateChanged(FocusState oldValue, FocusState newValue)
 		{
+			if (newValue == FocusState.Unfocused && oldValue == newValue)
+			{
+				return;
+			}
+
 			OnFocusStateChangedPartial(oldValue, newValue);
 #if XAMARIN || __WASM__
 			FocusManager.OnFocusChanged(this, newValue);
 #endif
 
-			var eventArgs = new RoutedEventArgs
-			{
-				OriginalSource = this,
-			};
-
 			if (newValue == FocusState.Unfocused)
 			{
-				OnLostFocus(eventArgs);
-				RaiseLostFocus(eventArgs);
+				RaiseEvent(LostFocusEvent, new RoutedEventArgs(this));
 			}
 			else
 			{
-				OnGotFocus(eventArgs);
-				RaiseGotFocus(eventArgs);
+				RaiseEvent(GotFocusEvent, new RoutedEventArgs(this));
 			}
 		}
 
 		partial void OnFocusStateChangedPartial(FocusState oldValue, FocusState newValue);
 
+		protected virtual void OnPointerPressed(PointerRoutedEventArgs args) { }
+		protected virtual void OnPointerReleased(PointerRoutedEventArgs args) { }
+		protected virtual void OnPointerEntered(PointerRoutedEventArgs args) { }
+		protected virtual void OnPointerExited(PointerRoutedEventArgs args) { }
+		protected virtual void OnPointerMoved(PointerRoutedEventArgs args) { }
+		protected virtual void OnPointerCanceled(PointerRoutedEventArgs args) { }
+		protected virtual void OnPointerCaptureLost(PointerRoutedEventArgs args) { }
+		protected virtual void OnManipulationStarting(ManipulationStartingRoutedEventArgs e) { }
+		protected virtual void OnManipulationStarted(ManipulationStartedRoutedEventArgs e) { }
+		protected virtual void OnManipulationDelta(ManipulationDeltaRoutedEventArgs e) { }
+		protected virtual void OnManipulationInertiaStarting(ManipulationInertiaStartingRoutedEventArgs e) { }
+		protected virtual void OnManipulationCompleted(ManipulationCompletedRoutedEventArgs e) { }
+		protected virtual void OnTapped(TappedRoutedEventArgs e) { }
+		protected virtual void OnDoubleTapped(DoubleTappedRoutedEventArgs e) { }
+		protected virtual void OnKeyDown(KeyRoutedEventArgs args) { }
+		protected virtual void OnKeyUp(KeyRoutedEventArgs args) { }
+		protected virtual void OnGotFocus(RoutedEventArgs e) { }
 		protected virtual void OnLostFocus(RoutedEventArgs e) { }
 
-		protected virtual void OnGotFocus(RoutedEventArgs e) { }
+		private static readonly PointerEventHandler OnPointerPressedHandler =
+			(object sender, PointerRoutedEventArgs args) => ((Control)sender).OnPointerPressed(args);
 
-		protected virtual void OnPointerPressed(PointerRoutedEventArgs args) { }
+		private static readonly PointerEventHandler OnPointerReleasedHandler =
+			(object sender, PointerRoutedEventArgs args) => ((Control)sender).OnPointerReleased(args);
 
-		protected virtual void OnPointerReleased(PointerRoutedEventArgs args) { }
+		private static readonly PointerEventHandler OnPointerEnteredHandler =
+			(object sender, PointerRoutedEventArgs args) => ((Control)sender).OnPointerEntered(args);
 
-		protected virtual void OnPointerEntered(PointerRoutedEventArgs args) { }
+		private static readonly PointerEventHandler OnPointerExitedHandler =
+			(object sender, PointerRoutedEventArgs args) => ((Control)sender).OnPointerExited(args);
 
-		protected virtual void OnPointerExited(PointerRoutedEventArgs args) { }
+		private static readonly PointerEventHandler OnPointerMovedHandler =
+			(object sender, PointerRoutedEventArgs args) => ((Control)sender).OnPointerMoved(args);
 
-		protected virtual void OnPointerMoved(PointerRoutedEventArgs args) { }
+		private static readonly PointerEventHandler OnPointerCanceledHandler =
+			(object sender, PointerRoutedEventArgs args) => ((Control)sender).OnPointerCanceled(args);
 
-		protected virtual void OnPointerCanceled(PointerRoutedEventArgs args) { }
+		private static readonly PointerEventHandler OnPointerCaptureLostHandler =
+			(object sender, PointerRoutedEventArgs args) => ((Control)sender).OnPointerCaptureLost(args);
+
+		private static readonly ManipulationStartingEventHandler OnManipulationStartingHandler =
+			(object sender, ManipulationStartingRoutedEventArgs args) => ((Control)sender).OnManipulationStarting(args);
+
+		private static readonly ManipulationStartedEventHandler OnManipulationStartedHandler =
+			(object sender, ManipulationStartedRoutedEventArgs args) => ((Control)sender).OnManipulationStarted(args);
+
+		private static readonly ManipulationDeltaEventHandler OnManipulationDeltaHandler =
+			(object sender, ManipulationDeltaRoutedEventArgs args) => ((Control)sender).OnManipulationDelta(args);
+
+		private static readonly ManipulationInertiaStartingEventHandler OnManipulationInertiaStartingHandler =
+			(object sender, ManipulationInertiaStartingRoutedEventArgs args) => ((Control)sender).OnManipulationInertiaStarting(args);
+
+		private static readonly ManipulationCompletedEventHandler OnManipulationCompletedHandler =
+			(object sender, ManipulationCompletedRoutedEventArgs args) => ((Control)sender).OnManipulationCompleted(args);
+
+		private static readonly TappedEventHandler OnTappedHandler =
+			(object sender, TappedRoutedEventArgs args) => ((Control)sender).OnTapped(args);
+
+		private static readonly DoubleTappedEventHandler OnDoubleTappedHandler =
+			(object sender, DoubleTappedRoutedEventArgs args) => ((Control)sender).OnDoubleTapped(args);
+
+		private static readonly KeyEventHandler OnKeyDownHandler =
+			(object sender, KeyRoutedEventArgs args) => ((Control)sender).OnKeyDown(args);
+
+		private static readonly KeyEventHandler OnKeyUpHandler =
+			(object sender, KeyRoutedEventArgs args) => ((Control)sender).OnKeyUp(args);
+
+		private static readonly RoutedEventHandler OnGotFocusHandler =
+			(object sender, RoutedEventArgs args) => ((Control)sender).OnGotFocus(args);
+
+		private static readonly RoutedEventHandler OnLostFocusHandler =
+			(object sender, RoutedEventArgs args) => ((Control)sender).OnLostFocus(args);
+
+		private static readonly Dictionary<Type, RoutedEventFlag> ImplementedRoutedEvents
+			= new Dictionary<Type, RoutedEventFlag>();
+
+		private static readonly Type[] _pointerArgsType = new[] { typeof(PointerRoutedEventArgs) };
+		private static readonly Type[] _tappedArgsType = new[] { typeof(TappedRoutedEventArgs) };
+		private static readonly Type[] _doubleTappedArgsType = new[] { typeof(DoubleTappedRoutedEventArgs) };
+		private static readonly Type[] _keyArgsType = new[] { typeof(KeyRoutedEventArgs) };
+		private static readonly Type[] _routedArgsType = new[] { typeof(RoutedEventArgs) };
+		private static readonly Type[] _manipStartingArgsType = new[] { typeof(ManipulationStartingRoutedEventArgs) };
+		private static readonly Type[] _manipStartedArgsType = new[] { typeof(ManipulationStartedRoutedEventArgs) };
+		private static readonly Type[] _manipDeltaArgsType = new[] { typeof(ManipulationDeltaRoutedEventArgs) };
+		private static readonly Type[] _manipInertiaArgsType = new[] { typeof(ManipulationInertiaStartingRoutedEventArgs) };
+		private static readonly Type[] _manipCompletedArgsType = new[] { typeof(ManipulationCompletedRoutedEventArgs) };
+
+		protected static RoutedEventFlag GetImplementedRoutedEvents(Type type)
+		{
+			// TODO: GetImplementedRoutedEvents() should be evaluated at compile-time
+			// and the result placed in a partial file.
+
+			if (ImplementedRoutedEvents.TryGetValue(type, out var result))
+			{
+				return result;
+			}
+
+			result = RoutedEventFlag.None;
+
+			var baseClass = type.BaseType;
+			if (baseClass == null || type == typeof(Control) || type == typeof(UIElement))
+			{
+				return result;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnPointerPressed), _pointerArgsType))
+			{
+				result |= RoutedEventFlag.PointerPressed;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnPointerReleased), _pointerArgsType))
+			{
+				result |= RoutedEventFlag.PointerReleased;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnPointerEntered), _pointerArgsType))
+			{
+				result |= RoutedEventFlag.PointerEntered;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnPointerExited), _pointerArgsType))
+			{
+				result |= RoutedEventFlag.PointerExited;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnPointerMoved), _pointerArgsType))
+			{
+				result |= RoutedEventFlag.PointerMoved;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnPointerCanceled), _pointerArgsType))
+			{
+				result |= RoutedEventFlag.PointerCanceled;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnPointerCaptureLost), _pointerArgsType))
+			{
+				result |= RoutedEventFlag.PointerCaptureLost;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnManipulationStarting), _manipStartingArgsType))
+			{
+				result |= RoutedEventFlag.ManipulationStarting;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnManipulationStarted), _manipStartedArgsType))
+			{
+				result |= RoutedEventFlag.ManipulationStarted;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnManipulationDelta), _manipDeltaArgsType))
+			{
+				result |= RoutedEventFlag.ManipulationDelta;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnManipulationInertiaStarting), _manipInertiaArgsType))
+			{
+				result |= RoutedEventFlag.ManipulationInertiaStarting;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnManipulationCompleted), _manipCompletedArgsType))
+			{
+				result |= RoutedEventFlag.ManipulationCompleted;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnTapped), _tappedArgsType))
+			{
+				result |= RoutedEventFlag.Tapped;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnDoubleTapped), _doubleTappedArgsType))
+			{
+				result |= RoutedEventFlag.DoubleTapped;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnKeyDown), _keyArgsType))
+			{
+				result |= RoutedEventFlag.KeyDown;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnKeyUp), _keyArgsType))
+			{
+				result |= RoutedEventFlag.KeyUp;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnLostFocus), _routedArgsType))
+			{
+				result |= RoutedEventFlag.LostFocus;
+			}
+
+			if (GetIsEventOverrideImplemented(type, nameof(OnGotFocus), _routedArgsType))
+			{
+				result |= RoutedEventFlag.GotFocus;
+			}
+
+			return ImplementedRoutedEvents[type] = result;
+		}
+
+		private static bool GetIsEventOverrideImplemented(Type type, string name, Type[] args)
+		{
+			var method = type
+				.GetMethod(
+					name,
+					BindingFlags.NonPublic | BindingFlags.Instance,
+					null,
+					args,
+					null);
+
+			return method != null
+				&& method.IsVirtual
+				&& method.DeclaringType != typeof(Control);
+		}
 	}
 }

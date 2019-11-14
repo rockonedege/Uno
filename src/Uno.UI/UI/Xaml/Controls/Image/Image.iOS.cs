@@ -15,15 +15,36 @@ using System.Threading.Tasks;
 using System.Threading;
 using Windows.Foundation;
 using Uno.Logging;
+using Windows.UI.Xaml.Media.Imaging;
+using Windows.Storage.Streams;
+using Uno.UI.Extensions;
 
 namespace Windows.UI.Xaml.Controls
 {
 	public partial class Image : UIImageView, IImage
 	{
-		/// <summary>
-		/// The size of the native image data
-		/// </summary>
-		private Size SourceImageSize { get; set; }
+        private Size _sourceImageSize;
+
+        /// <summary>
+        /// The size of the native image data
+        /// </summary>
+        private Size SourceImageSize
+        {
+            get
+            {
+                return _sourceImageSize;
+            }
+            set
+            {
+                _sourceImageSize = value;
+
+                if (Source is BitmapSource bitmapSource)
+                {
+                    bitmapSource.PixelWidth = (int)_sourceImageSize.Width;
+                    bitmapSource.PixelHeight = (int)_sourceImageSize.Height;
+                }
+            }
+        }
 
 		public Image()
 		{
@@ -80,7 +101,12 @@ namespace Windows.UI.Xaml.Controls
 			)
 			{
 				_openedImage = Source;
-				if (_openedImage == null || !_openedImage.HasSource())
+
+				if (_openedImage is WriteableBitmap writeableBitmap)
+				{
+					SetImageFromWriteableBitmap(writeableBitmap);
+				}
+				else if (_openedImage == null || !_openedImage.HasSource())
 				{
 					Image = null;
 					SetNeedsLayoutOrDisplay();
@@ -113,8 +139,8 @@ namespace Windows.UI.Xaml.Controls
 
 							//if both image and _openedImage are null this is ok just return;
 							//otherwise call SetImage with null which will raise the OnImageFailed event
-							if (ct.IsCancellationRequested || 
-								(image == null && _openedImage == null)) 
+							if (ct.IsCancellationRequested ||
+								(image == null && _openedImage == null))
 							{
 								return;
 							}
@@ -123,7 +149,51 @@ namespace Windows.UI.Xaml.Controls
 						}
 					};
 
-					Dispatch(scheduledFetch);
+					Execute(scheduledFetch);
+				}
+			}
+		}
+
+		private void SetImageFromWriteableBitmap(WriteableBitmap writeableBitmap)
+		{
+			if(writeableBitmap.PixelBuffer is InMemoryBuffer memoryBuffer)
+			{
+				// Convert RGB colorspace.
+				var bgraBuffer = memoryBuffer.Data;
+				var rgbaBuffer = new byte[memoryBuffer.Data.Length];
+
+				for (int i = 0; i < memoryBuffer.Data.Length; i += 4)
+				{
+					rgbaBuffer[i + 3] = bgraBuffer[i + 3]; // a
+					rgbaBuffer[i + 0] = bgraBuffer[i + 2]; // r
+					rgbaBuffer[i + 1] = bgraBuffer[i + 1]; // g
+					rgbaBuffer[i + 2] = bgraBuffer[i + 0]; // b
+				}
+
+				using (var dataProvider = new CGDataProvider(rgbaBuffer, 0, rgbaBuffer.Length))
+				{
+					using (var colorSpace = CGColorSpace.CreateDeviceRGB())
+					{
+						var bitsPerComponent = 8;
+						var bytesPerPixel = 4;
+
+						using (var cgImage = new CGImage(
+							writeableBitmap.PixelWidth,
+							writeableBitmap.PixelHeight,
+							bitsPerComponent,
+							bitsPerComponent * bytesPerPixel,
+							bytesPerPixel * writeableBitmap.PixelWidth,
+							colorSpace,
+							CGImageAlphaInfo.Last,
+							dataProvider,
+							null,
+							false,
+							CGColorRenderingIntent.Default
+						))
+						{
+							SetImage(UIImage.FromImage(cgImage));
+						}
+					}
 				}
 			}
 		}
@@ -138,6 +208,11 @@ namespace Windows.UI.Xaml.Controls
 				)
 			)
 			{
+				if (MonochromeColor != null)
+				{
+					image = image.AsMonochrome(MonochromeColor.Value);
+				}
+
 				Image = image;
 
 				SourceImageSize = image?.Size.ToFoundationSize() ?? default(Size);
@@ -187,7 +262,7 @@ namespace Windows.UI.Xaml.Controls
 					break;
 
 				default:
-					throw new NotSupportedException("Strech mode {0} is not supported".InvariantCultureFormat(stretch));
+					throw new NotSupportedException("Stretch mode {0} is not supported".InvariantCultureFormat(stretch));
 			}
 		}
 

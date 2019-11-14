@@ -130,7 +130,7 @@ namespace Windows.UI.Xaml
 										BorderBrush = SolidColorBrushHelper.Blue,
 										BorderThickness = new Thickness(2),
 									}
-									.Binding("Visibility", new TemplateBinding("IsSelected", converter: new FromNullableBoolToVisibilityConverter())),
+									.Binding("Visibility", new TemplateBinding("IsSelected", converter: new UnoNativeDefaultProgressBarReverseBoolConverter())),
 								}
 							}
 						)
@@ -159,7 +159,7 @@ namespace Windows.UI.Xaml
 										BorderBrush = SolidColorBrushHelper.Blue,
 										BorderThickness = new Thickness(2),
 									}
-									.Binding("Visibility", new TemplateBinding("IsSelected", converter: new FromNullableBoolToVisibilityConverter())),
+									.Binding("Visibility", new TemplateBinding("IsSelected", converter: new UnoNativeDefaultProgressBarReverseBoolConverter())),
 								}
 							}
 						)
@@ -199,11 +199,8 @@ namespace Windows.UI.Xaml
 			var style = new Style(typeof(Windows.UI.Xaml.Controls.WebView))
 			{
 				Setters =  {
-					//WKWebView should be used where available (8.0+) to avoid memory leaks, UIWebView is used on older versions
 					new Setter<WebView>("Template", t =>
-						t.Template = Funcs.Create<UIView>(() => WebView.MustUseWebKitWebView() ?
-							(UIView)new UnoWKWebView() :
-							(UIView)new UnoUIWebView()
+						t.Template = Funcs.Create<UIView>(() => (UIView)new UnoWKWebView() 
 						)
 					)
 				}
@@ -234,14 +231,17 @@ namespace Windows.UI.Xaml
 			var style = new Style(typeof(Windows.UI.Xaml.Controls.FlipView))
 			{
 				Setters =  {
+
+					// The order is important for this template, see FlipView.UpdateItems for the
+					// PagedCollectionView type dependency.
+					new Setter<FlipView>("ItemsPanel", t =>
+						t.ItemsPanel = new ItemsPanelTemplate(() =>
+							new PagedCollectionView() {ShowsHorizontalScrollIndicator=false })
+					),
 					new Setter<FlipView>("Template", t =>
 						t.Template = new ControlTemplate(() =>
 							new ItemsPresenter()
 						)
-					),
-					new Setter<FlipView>("ItemsPanel", t =>
-						t.ItemsPanel = new ItemsPanelTemplate(() =>
-							new PagedCollectionView() {ShowsHorizontalScrollIndicator=false })
 					)
 				}
 			};

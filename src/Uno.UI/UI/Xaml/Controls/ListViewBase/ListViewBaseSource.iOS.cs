@@ -74,6 +74,10 @@ namespace Windows.UI.Xaml.Controls
 		private DataTemplateSelector _currentSelector;
 		private Dictionary<DataTemplate, CGSize> _templateCache = new Dictionary<DataTemplate, CGSize>(DataTemplate.FrameworkTemplateEqualityComparer.Default);
 		private Dictionary<DataTemplate, NSString> _templateCells = new Dictionary<DataTemplate, NSString>(DataTemplate.FrameworkTemplateEqualityComparer.Default);
+		/// <summary>
+		/// The furthest item in the source which has already been materialized. Items up to this point can safely be retrieved.
+		/// </summary>
+		private NSIndexPath _lastMaterializedItem = NSIndexPath.FromRowSection(0, 0);
 
 		/// <summary>
 		/// Is the UICollectionView currently undergoing animated scrolling, either user-initiated or programmatic.
@@ -125,7 +129,7 @@ namespace Windows.UI.Xaml.Controls
 
 			if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
 			{
-				this.Log().Debug($"Count requested, returning {count}");
+				this.Log().Debug($"Count requested for section {section}, returning {count}");
 			}
 			return count;
 		}
@@ -165,6 +169,11 @@ namespace Windows.UI.Xaml.Controls
 				foreach (var a in actions) { a(); }
 				_onRecycled.Remove(key);
 			}
+
+			if (this.Log().IsEnabled(LogLevel.Debug))
+			{
+				this.Log().LogDebug($"CellDisplayingEnded for cell at {indexPath}");
+			}
 		}
 
 		/// <summary>
@@ -193,10 +202,7 @@ namespace Windows.UI.Xaml.Controls
 				// is used during the calculation of the layout.
 				// This is required for paged lists, so that the layout calculation
 				// does not eagerly get all the items of the ItemsSource.
-				if (!_materializedItems.Contains(indexPath))
-				{
-					_materializedItems.Add(indexPath);
-				}
+				UpdateLastMaterializedItem(indexPath);
 
 				var index = Owner?.XamlParent?.GetIndexFromIndexPath(IndexPath.FromNSIndexPath(indexPath)) ?? -1;
 
@@ -209,7 +215,10 @@ namespace Windows.UI.Xaml.Controls
 				{
 					var selectorItem = cell.Content as SelectorItem;
 
-					if (selectorItem == null)
+					if (selectorItem == null ||
+						// If it's not a generated container then it must be an item that returned true for IsItemItsOwnContainerOverride (eg an
+						// explicitly-defined ListViewItem), and shouldn't be recycled for a different item.
+						!selectorItem.IsGeneratedContainer)
 					{
 						cell.Owner = Owner;
 						selectorItem = Owner?.XamlParent?.GetContainerForIndex(index) as SelectorItem;
@@ -220,13 +229,21 @@ namespace Windows.UI.Xaml.Controls
 						}
 
 						FrameworkElement.InitializePhaseBinding(selectorItem);
-					}
+                        
+                        // Ensure the item has a parent, since it's added to the native collection view
+                        // which does not automatically sets the parent DependencyObject.
+                        selectorItem.SetParent(Owner?.XamlParent);
+                    }
 					else if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
 					{
 						this.Log().Debug($"Reusing view at indexPath={indexPath}, previously bound to {selectorItem.DataContext}.");
 					}
 
 					Owner?.XamlParent?.PrepareContainerForIndex(selectorItem, index);
+
+					// Normally this happens when the SelectorItem.Content is set, but there's an edge case where after a refresh, a
+					// container can be dequeued which happens to have had exactly the same DataContext as the new item.
+					cell.ClearMeasuredSize();
 				}
 
 				Owner?.XamlParent?.TryLoadMoreItems(index);
@@ -235,18 +252,50 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
+		/// <summary>
+		/// Update record of the furthest item materialized.
+		/// </summary>
+		/// <param name="newItem">Item currently being materialized.</param>
+		/// <returns>True if the value has changed and the layout would change.</returns>
+		internal bool UpdateLastMaterializedItem(NSIndexPath newItem)
+		{
+			if (newItem.Compare(_lastMaterializedItem) > 0)
+			{
+				_lastMaterializedItem = newItem;
+				return Owner.ItemTemplateSelector != null; ;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Is item in the range of already-materialized items?
+		/// </summary>
+		private bool IsMaterialized(NSIndexPath itemPath) => itemPath.Compare(_lastMaterializedItem) <= 0;
+
+		// Consider group header to be materialized if first item in group is materialized
+		private bool IsMaterialized(int section) => section <= _lastMaterializedItem.Section;
+
 		public override void WillDisplayCell(UICollectionView collectionView, UICollectionViewCell cell, NSIndexPath indexPath)
 		{
 			var index = Owner?.XamlParent?.GetIndexFromIndexPath(IndexPath.FromNSIndexPath(indexPath)) ?? -1;
 			var container = cell as ListViewBaseInternalContainer;
 			var selectorItem = container?.Content as SelectorItem;
-			//Update IsSelected immediately before display, in case it was modified after cell was prefetched but before it became visible
+			//Update IsSelected and multi-select state immediately before display, in case either was modified after cell was prefetched but before it became visible
 			if (selectorItem != null)
 			{
 				selectorItem.IsSelected = Owner?.XamlParent?.IsSelected(index) ?? false;
+				Owner?.XamlParent?.ApplyMultiSelectState(selectorItem);
 			}
 
 			FrameworkElement.RegisterPhaseBinding(container.Content, a => RegisterForRecycled(container, a));
+
+			if (this.Log().IsEnabled(LogLevel.Debug))
+			{
+				this.Log().LogDebug($"WillDisplayCell for cell at {indexPath}");
+			}
 		}
 
 		public override UICollectionReusableView GetViewForSupplementaryElement(
@@ -284,6 +333,9 @@ namespace Windows.UI.Xaml.Controls
 
 			else if (elementKind == NativeListViewBase.ListViewSectionHeaderElementKind)
 			{
+				// Ensure correct template can be retrieved
+				UpdateLastMaterializedItem(indexPath);
+
 				return GetBindableSupplementaryView(
 					collectionView: collectionView,
 					elementKind: NativeListViewBase.ListViewSectionHeaderElementKindNS,
@@ -291,7 +343,7 @@ namespace Windows.UI.Xaml.Controls
 					reuseIdentifier: NativeListViewBase.ListViewSectionHeaderReuseIdentifierNS,
 					//ICollectionViewGroup.Group is used as context for sectionHeader
 					context: listView.XamlParent.GetGroupAtDisplaySection(indexPath.Section).Group,
-					template: listView.GroupStyle?.HeaderTemplate,
+					template: GetTemplateForGroupHeader(indexPath.Section),
 					style: listView.GroupStyle?.HeaderContainerStyle
 				);
 			}
@@ -408,6 +460,11 @@ namespace Windows.UI.Xaml.Controls
 
 		#endregion
 
+		internal void ReloadData()
+		{
+			_lastMaterializedItem = NSIndexPath.FromRowSection(0, 0);
+		}
+
 		/// <summary>
 		/// Get item container corresponding to an element kind (header, footer, list item, etc)
 		/// </summary>
@@ -438,12 +495,12 @@ namespace Windows.UI.Xaml.Controls
 			return Owner.FooterTemplate != null ? GetTemplateSize(Owner.FooterTemplate, NativeListViewBase.ListViewFooterElementKindNS) : CGSize.Empty;
 		}
 
-		internal CGSize GetSectionHeaderSize()
+		internal CGSize GetSectionHeaderSize(int section)
 		{
-			return (Owner.GroupStyle?.HeaderTemplate).SelectOrDefault(ht => GetTemplateSize(ht, NativeListViewBase.ListViewSectionHeaderElementKindNS), CGSize.Empty);
+			var template = GetTemplateForGroupHeader(section);
+			return template.SelectOrDefault(ht => GetTemplateSize(ht, NativeListViewBase.ListViewSectionHeaderElementKindNS), CGSize.Empty);
 		}
 
-		HashSet<NSIndexPath> _materializedItems = new HashSet<NSIndexPath>();
 
 		public virtual CGSize GetItemSize(UICollectionView collectionView, NSIndexPath indexPath)
 		{
@@ -473,14 +530,31 @@ namespace Windows.UI.Xaml.Controls
 
 		private DataTemplate GetTemplateForItem(NSIndexPath indexPath)
 		{
-			if (_materializedItems.Contains(indexPath))
+			if (IsMaterialized(indexPath))
 			{
-				return Owner?.ResolveItemTemplate(Owner.XamlParent.GetDisplayItemFromIndexPath(indexPath.ToIndexPath()));
+				return Owner?.XamlParent?.ResolveItemTemplate(Owner.XamlParent.GetDisplayItemFromIndexPath(indexPath.ToIndexPath()));
 			}
 			else
 			{
 				// Ignore ItemTemplateSelector since we do not know what the item is
-				return Owner?.ItemTemplate;
+				return Owner?.XamlParent?.ItemTemplate;
+			}
+		}
+
+		private DataTemplate GetTemplateForGroupHeader(int section)
+		{
+			var groupStyle = Owner.GroupStyle;
+			if (IsMaterialized(section))
+			{
+				return DataTemplateHelper.ResolveTemplate(
+					groupStyle?.HeaderTemplate,
+					groupStyle?.HeaderTemplateSelector,
+					Owner.XamlParent.GetGroupAtDisplaySection(section).Group,
+					Owner);
+			}
+			else
+			{
+				return groupStyle?.HeaderTemplate;
 			}
 		}
 
@@ -495,10 +569,14 @@ namespace Windows.UI.Xaml.Controls
 			//TODO: this should take an available breadth
 			CGSize size;
 
-			// Cache the sizes to avoid creating new templates everytime.
+			// Cache the sizes to avoid creating new templates every time.
 			if (!_templateCache.TryGetValue(dataTemplate ?? _nullDataTemplateKey, out size))
 			{
 				var container = CreateContainerForElementKind(elementKind);
+
+				// Force a null DataContext so the parent's value does not flow
+				// through when temporarily adding the container to Owner.XamlParent
+				container.SetValue(FrameworkElement.DataContextProperty, null);
 
 				Style style = null;
 				if (elementKind == NativeListViewBase.ListViewItemElementKind)
@@ -521,12 +599,23 @@ namespace Windows.UI.Xaml.Controls
 					// applied until view is loaded.
 					Owner.XamlParent.AddSubview(BlockLayout);
 					BlockLayout.AddSubview(container);
-					size = Owner.NativeLayout.Layouter.MeasureChild(container, new Size(double.MaxValue, double.MaxValue));
+					// Measure with PositiveInfinity rather than MaxValue, since some views handle this better.
+					size = Owner.NativeLayout.Layouter.MeasureChild(container, new Size(double.PositiveInfinity, double.PositiveInfinity));
+
+					if ((size.Height > nfloat.MaxValue / 2 || size.Width > nfloat.MaxValue / 2) &&
+						this.Log().IsEnabled(LogLevel.Warning)
+					)
+					{
+						this.Log().LogWarning($"Infinite item size reported, this can crash {nameof(UICollectionView)}.");
+					}
 				}
 				finally
 				{
 					Owner.XamlParent.RemoveChild(BlockLayout);
 					BlockLayout.RemoveChild(container);
+
+					// Reset the DataContext for reuse.
+					container.ClearValue(FrameworkElement.DataContextProperty);
 				}
 
 				_templateCache[dataTemplate ?? _nullDataTemplateKey] = size;
@@ -561,7 +650,6 @@ namespace Windows.UI.Xaml.Controls
 	/// <summary>
 	/// A hidden root item that allows the reuse of ContentControl features.
 	/// </summary>
-	[global::Foundation.Register]
 	internal class ListViewBaseInternalContainer : UICollectionViewCell
 	{
 		/// <summary>
@@ -572,6 +660,11 @@ namespace Windows.UI.Xaml.Controls
 		/// objects that may have been collected in the managed world.
 		/// </remarks>
 		public ListViewBaseInternalContainer(IntPtr handle) : base(handle) { }
+
+		public ListViewBaseInternalContainer()
+		{
+
+		}
 
 		private CGSize _lastUsedSize;
 		private CGSize? _measuredContentSize;
@@ -606,7 +699,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 			else
 			{
-				// We need to excplicitly remove the content before being disposed
+				// We need to explicitly remove the content before being disposed
 				// otherwise, the children will try to reference ContentView which 
 				// will have been disposed.
 
@@ -623,7 +716,7 @@ namespace Windows.UI.Xaml.Controls
 		{
 			get
 			{
-				return ContentView.Subviews.FirstOrDefault() as ContentControl;
+				return /* Cache the content ?*/ContentView.Subviews.FirstOrDefault() as ContentControl;
 			}
 			set
 			{
@@ -639,7 +732,7 @@ namespace Windows.UI.Xaml.Controls
 
 					ContentView.AddSubview(value);
 
-					_measuredContentSize = null;
+					ClearMeasuredSize();
 					_contentChangedDisposable.Disposable = value?.RegisterDisposablePropertyChangedCallback(ContentControl.ContentProperty, (_, __) => _measuredContentSize = null);
 				}
 			}
@@ -683,6 +776,11 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
+		/// <summary>
+		/// Clear the cell's measured size, this allows the static template size to be updated with the correct databound size.
+		/// </summary>
+		internal void ClearMeasuredSize() => _measuredContentSize = null;
+
 		public override UICollectionViewLayoutAttributes PreferredLayoutAttributesFittingAttributes(UICollectionViewLayoutAttributes layoutAttributes)
 		{
 			if (!(((object)layoutAttributes) is UICollectionViewLayoutAttributes))
@@ -694,6 +792,12 @@ namespace Windows.UI.Xaml.Controls
 				return null;
 			}
 
+			if(Content == null)
+			{
+				this.Log().Error("Empty ListViewBaseInternalContainer content.");
+				return null;
+			}
+
 			try
 			{
 				var size = layoutAttributes.Frame.Size;
@@ -701,7 +805,7 @@ namespace Windows.UI.Xaml.Controls
 				{
 					_lastUsedSize = size;
 					var availableSize = AdjustAvailableSize(layoutAttributes.Frame.Size.ToFoundationSize());
-					if (Window != null)
+					if (Window != null || Owner.XamlParent.Window == null)
 					{
 						using (InterceptSetNeedsLayout())
 						{
@@ -796,7 +900,7 @@ namespace Windows.UI.Xaml.Controls
 			{
 				_needsLayout = true;
 				Owner?.NativeLayout?.RefreshLayout();
-				_measuredContentSize = null;
+				ClearMeasuredSize();
 				SetNeedsLayout();
 			}
 		}
@@ -834,11 +938,11 @@ namespace Windows.UI.Xaml.Controls
 		{
 			if (ScrollOrientation == Orientation.Vertical)
 			{
-				availableSize.Height = float.MaxValue;
+				availableSize.Height = double.PositiveInfinity;
 			}
 			else
 			{
-				availableSize.Width = float.MaxValue;
+				availableSize.Width = double.PositiveInfinity;
 			}
 			return availableSize;
 		}

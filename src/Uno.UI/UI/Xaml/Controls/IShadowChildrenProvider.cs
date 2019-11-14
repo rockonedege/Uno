@@ -7,6 +7,8 @@ using System.Text;
 using View = UIKit.UIView;
 #elif XAMARIN_ANDROID
 using View = Android.Views.View;
+#elif __MACOS__
+using View = AppKit.NSView;
 #endif
 
 namespace Uno.UI.Controls
@@ -20,7 +22,11 @@ namespace Uno.UI.Controls
         /// <summary>
         /// An enumerable of children views.
         /// </summary>
-        IReadOnlyList<View> ChildrenShadow { get; }
+		/// <remarks>
+		/// This property is exposed as a concrete <see cref="List{T}"/> to benefit from
+		/// allocation-less enumeration of the shadow children.
+		/// </remarks>
+        List<View> ChildrenShadow { get; }
 	}
 }
 #endif

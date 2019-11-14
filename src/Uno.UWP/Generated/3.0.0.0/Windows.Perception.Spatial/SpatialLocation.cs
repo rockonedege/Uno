@@ -2,12 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Perception.Spatial
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class SpatialLocation 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Numerics.Quaternion AbsoluteAngularAcceleration
 		{
@@ -17,7 +17,7 @@ namespace Windows.Perception.Spatial
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Numerics.Quaternion AbsoluteAngularVelocity
 		{
@@ -27,7 +27,7 @@ namespace Windows.Perception.Spatial
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Numerics.Vector3 AbsoluteLinearAcceleration
 		{
@@ -37,7 +37,7 @@ namespace Windows.Perception.Spatial
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Numerics.Vector3 AbsoluteLinearVelocity
 		{
@@ -47,7 +47,7 @@ namespace Windows.Perception.Spatial
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Numerics.Quaternion Orientation
 		{
@@ -57,7 +57,7 @@ namespace Windows.Perception.Spatial
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Numerics.Vector3 Position
 		{
@@ -67,11 +67,33 @@ namespace Windows.Perception.Spatial
 			}
 		}
 		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::System.Numerics.Vector3 AbsoluteAngularAccelerationAxisAngle
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member Vector3 SpatialLocation.AbsoluteAngularAccelerationAxisAngle is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::System.Numerics.Vector3 AbsoluteAngularVelocityAxisAngle
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member Vector3 SpatialLocation.AbsoluteAngularVelocityAxisAngle is not implemented in Uno.");
+			}
+		}
+		#endif
 		// Forced skipping of method Windows.Perception.Spatial.SpatialLocation.Position.get
 		// Forced skipping of method Windows.Perception.Spatial.SpatialLocation.Orientation.get
 		// Forced skipping of method Windows.Perception.Spatial.SpatialLocation.AbsoluteLinearVelocity.get
 		// Forced skipping of method Windows.Perception.Spatial.SpatialLocation.AbsoluteLinearAcceleration.get
 		// Forced skipping of method Windows.Perception.Spatial.SpatialLocation.AbsoluteAngularVelocity.get
 		// Forced skipping of method Windows.Perception.Spatial.SpatialLocation.AbsoluteAngularAcceleration.get
+		// Forced skipping of method Windows.Perception.Spatial.SpatialLocation.AbsoluteAngularVelocityAxisAngle.get
+		// Forced skipping of method Windows.Perception.Spatial.SpatialLocation.AbsoluteAngularAccelerationAxisAngle.get
 	}
 }

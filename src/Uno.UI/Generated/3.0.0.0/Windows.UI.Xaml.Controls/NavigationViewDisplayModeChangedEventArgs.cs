@@ -2,21 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Xaml.Controls
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class NavigationViewDisplayModeChangedEventArgs 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.Controls.NavigationViewDisplayMode DisplayMode
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member NavigationViewDisplayMode NavigationViewDisplayModeChangedEventArgs.DisplayMode is not implemented in Uno.");
-			}
-		}
-		#endif
+		// Skipping already declared property DisplayMode
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationViewDisplayModeChangedEventArgs.DisplayMode.get
 	}
 }

@@ -1,10 +1,10 @@
 ﻿using Uno.UI;
 using Uno.UI.Controls;
+using Uno.UI.Xaml.Input;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using Windows.Foundation;
-using Windows.UI.Xaml.Input;
 using Android.Support.V4.View;
 using Windows.UI.Xaml.Media;
 using Android.Views;
@@ -13,21 +13,13 @@ namespace Windows.UI.Xaml
 {
 	public partial class UIElement : BindableView
 	{
-		private readonly Lazy<GestureHandler> _gestures;
-
 		public UIElement()
-		: base(ContextHelper.Current)
+			: base(ContextHelper.Current)
 		{
-			_gestures = new Lazy<GestureHandler>(() => GestureHandler.Create(this));
-
-			InitializeCapture();
-
-			MotionEventSplittingEnabled = false;
+			InitializePointers();
 		}
 
-		partial void InitializeCapture();
-
-		partial void EnsureClip(Rect rect)
+		partial void ApplyNativeClip(Rect rect)
 		{
 			if (rect.IsEmpty)
 			{
@@ -36,6 +28,20 @@ namespace Windows.UI.Xaml
 			}
 
 			ViewCompat.SetClipBounds(this, rect.LogicalToPhysicalPixels());
+			SetClipChildren(NeedsClipToSlot);
+		}
+
+		private bool _renderTransformRegisteredParentChanged;
+		private static void RenderTransformOnParentChanged(object dependencyObject, object _, DependencyObjectParentChangedEventArgs args)
+			=> ((UIElement)dependencyObject)._renderTransform?.UpdateParent(args.PreviousParent, args.NewParent);
+		partial void OnRenderTransformSet()
+		{
+			// On first Transform set, we register to the parent changed, so we can enable or disable the static transformations on it
+			if (!_renderTransformRegisteredParentChanged)
+			{
+				((IDependencyObjectStoreProvider)this).Store.RegisterSelfParentChangedCallback(RenderTransformOnParentChanged);
+				_renderTransformRegisteredParentChanged = true;
+			}
 		}
 
 		public GeneralTransform TransformToVisual(UIElement visual)
@@ -62,107 +68,18 @@ namespace Windows.UI.Xaml
 			var x = thisRect[0] - otherRect[0];
 			var y = thisRect[1] - otherRect[1];
 
-			// TODO: UWP returns a MatrixTransform here. For now TransformToVisual doesn't support rotations, scalings, etc.
-			return new TranslateTransform { X = ViewHelper.PhysicalToLogicalPixels(x), Y = ViewHelper.PhysicalToLogicalPixels(y) };
+			return new MatrixTransform
+			{
+				Matrix = new Matrix(
+					m11: 1,
+					m12: 0,
+					m21: 0,
+					m22: 1,
+					offsetX: ViewHelper.PhysicalToLogicalPixels(x),
+					offsetY: ViewHelper.PhysicalToLogicalPixels(y)
+				)
+			};
 		}
-
-		#region DoubleTapped event
-		private void RegisterDoubleTapped(DoubleTappedEventHandler handler)
-		{
-			_gestures.Value.RegisterDoubleTapped(handler);
-		}
-
-		private void UnregisterDoubleTapped(DoubleTappedEventHandler handler)
-		{
-			_gestures.Value.UnregisterDoubleTapped(handler);
-		}
-		#endregion
-
-		#region PointerCanceled event
-		private void RegisterPointerCanceled(PointerEventHandler handler)
-		{
-			_gestures.Value.RegisterPointerCanceled(handler);
-		}
-
-		private void UnregisterPointerCanceled(PointerEventHandler handler)
-		{
-			_gestures.Value.UnregisterPointerCanceled(handler);
-		}
-		#endregion
-
-		#region PointerExited event
-		private void RegisterPointerExited(PointerEventHandler handler)
-		{
-			_gestures.Value.RegisterPointerExited(handler);
-		}
-
-		private void UnregisterPointerExited(PointerEventHandler handler)
-		{
-			_gestures.Value.UnregisterPointerExited(handler);
-		}
-		#endregion
-
-		#region PointerEntered event
-		private void RegisterPointerEntered(PointerEventHandler handler)
-		{
-			_gestures.Value.RegisterPointerEntered(handler);
-		}
-
-		private void UnregisterPointerEntered(PointerEventHandler handler)
-		{
-			_gestures.Value.UnregisterPointerEntered(handler);
-		}
-		#endregion
-
-		#region PointerPressed event
-		private void RegisterPointerPressed(PointerEventHandler handler)
-		{
-			_gestures.Value.RegisterPointerPressed(handler);
-		}
-
-		private void UnregisterPointerPressed(PointerEventHandler handler)
-		{
-			_gestures.Value.UnregisterPointerPressed(handler);
-		}
-		#endregion
-
-		#region PointerReleased event
-		private void RegisterPointerReleased(PointerEventHandler handler)
-		{
-			_gestures.Value.RegisterPointerReleased(handler);
-		}
-
-		private void UnregisterPointerReleased(PointerEventHandler handler)
-		{
-			_gestures.Value.UnregisterPointerReleased(handler);
-		}
-		#endregion
-
-		#region PointerMoved event
-		private void RegisterPointerMoved(PointerEventHandler handler)
-		{
-			_gestures.Value.RegisterPointerMoved(handler);
-		}
-
-		private void UnregisterPointerMoved(PointerEventHandler handler)
-		{
-			_gestures.Value.UnregisterPointerMoved(handler);
-		}
-		#endregion
-
-		internal void RaiseTapped(TappedRoutedEventArgs args) => _gestures.Value.RaiseTapped(this, args);
-
-		#region Tapped event
-		private void RegisterTapped(TappedEventHandler handler)
-		{
-			_gestures.Value.RegisterTapped(handler);
-		}
-
-		private void UnregisterTapped(TappedEventHandler handler)
-		{
-			_gestures.Value.UnregisterTapped(handler);
-		}
-		#endregion
 
 		protected virtual void OnVisibilityChanged(Visibility oldValue, Visibility newValue)
 		{
@@ -189,17 +106,6 @@ namespace Windows.UI.Xaml
 			Alpha = IsRenderingSuspended ? 0 : (float)Opacity;
 		}
 
-		partial void OnIsHitTestVisibleChangedPartial(bool oldValue, bool newValue)
-		{
-			base.SetNativeHitTestVisible(newValue);
-		}
-
-		// This section is using the UnoViewGroup overrides for performance reasons
-		// where most of the work is performed on the java side.
-
-		protected override bool NativeHitCheck() 
-			=> IsViewHit();
-
 		internal Windows.Foundation.Point GetPosition(Point position, global::Windows.UI.Xaml.UIElement relativeTo)
 		{
 			var currentViewLocation = new int[2];
@@ -212,33 +118,6 @@ namespace Windows.UI.Xaml
 				currentViewLocation[0] - relativeToLocation[0],
 				currentViewLocation[1] - relativeToLocation[1]
 			);
-		}
-
-		static partial void OnRenderTransformChanged(object dependencyObject, DependencyPropertyChangedEventArgs args)
-		{
-			if (args.NewValue is Transform newTransform)
-			{
-				var view = (UIElement)dependencyObject;
-
-				newTransform.View = view;
-				newTransform.Origin = view.RenderTransformOrigin;
-			}
-
-			if (args.OldValue is Transform oldTransform)
-			{
-				oldTransform.View = null;
-			}
-		}
-
-		static partial void OnRenderTransformOriginChanged(object dependencyObject, DependencyPropertyChangedEventArgs args)
-		{
-			if (
-				dependencyObject is UIElement view
-				&& view.RenderTransform != null
-			)
-			{
-				view.RenderTransform.Origin = (Point)args.NewValue;
-			}
 		}
 
 		/// <summary>
@@ -304,6 +183,8 @@ namespace Windows.UI.Xaml
 			return new Java.Lang.String(dpValue.ToString());
 		}
 
+		internal Rect? ArrangeLogicalSize { get; set; } // Used to keep "double" precision of arrange phase
+
 #if DEBUG
 		public static Predicate<View> ViewOfInterestSelector { get; set; } = v => (v as FrameworkElement)?.Name == "TargetView";
 
@@ -365,6 +246,7 @@ namespace Windows.UI.Xaml
 		public FrameworkElement FrameworkElementOfInterest => ViewOfInterest as FrameworkElement;
 
 		public string ShowDescendants() => ViewExtensions.ShowDescendants(this);
+		public string ShowLocalVisualTree(int fromHeight) => ViewExtensions.ShowLocalVisualTree(this, fromHeight);
 #endif
 	}
 }

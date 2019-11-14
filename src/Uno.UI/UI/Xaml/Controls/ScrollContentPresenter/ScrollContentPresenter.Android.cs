@@ -19,6 +19,8 @@ namespace Windows.UI.Xaml.Controls
 {
 	public partial class ScrollContentPresenter : UnoTwoDScrollView, IShadowChildrenProvider, DependencyObject
 	{
+		private static readonly List<View> _emptyList = new List<View>(0);
+
 		private ScrollBarVisibility _verticalScrollBarVisibility;
 		public ScrollBarVisibility VerticalScrollBarVisibility
 		{
@@ -87,7 +89,7 @@ namespace Windows.UI.Xaml.Controls
 			// Force scrollbars to initialize since we're not inflating from xml
 			if (Android.OS.Build.VERSION.SdkInt <= Android.OS.BuildVersionCodes.Kitkat)
 			{
-				var styledAttributes = Context.Theme.ObtainStyledAttributes(Resource.Styleable.View);
+				var styledAttributes = Context.Theme.ObtainStyledAttributes(Uno.UI.Resource.Styleable.View);
 				InitializeScrollbars(styledAttributes);
 				styledAttributes.Recycle();
 			}
@@ -97,7 +99,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
-		IReadOnlyList<View> IShadowChildrenProvider.ChildrenShadow => Content != null ? new[] { Content } : new View[0];
+		List<View> IShadowChildrenProvider.ChildrenShadow => Content != null ? new List<View>(1) { Content } : _emptyList;
 
 		partial void OnContentChanged(View previousView, View newView)
 		{
@@ -233,15 +235,15 @@ namespace Windows.UI.Xaml.Controls
 			protected override string Name => Panel.Name;
 		}
 
-		protected override void OnScrollChanged(int l, int t, int oldl, int oldt)
+		protected override void OnScrollChanged(int scrollX, int scrollY, bool isIntermediate)
 		{
-			base.OnScrollChanged(l, t, oldl, oldt);
+			// Does nothing, so avoid useless interop!
+			// base.OnScrollChanged(scrollX, scrollY, isIntermediate);
 
-			//TODO: support ScrollViewerViewChangedEventArgs.IsIntermediate from ScrollContentPresenter
 			(TemplatedParent as ScrollViewer)?.OnScrollInternal(
-				ViewHelper.PhysicalToLogicalPixels(l),
-				ViewHelper.PhysicalToLogicalPixels(t),
-				isIntermediate: false
+				ViewHelper.PhysicalToLogicalPixels(scrollX),
+				ViewHelper.PhysicalToLogicalPixels(scrollY),
+				isIntermediate
 			);
 		}
 
@@ -306,6 +308,7 @@ namespace Windows.UI.Xaml.Controls
 		}
 
 		private Thickness _occludedRectPadding;
+
 		private void SetOccludedRectPadding(Thickness occludedRectPadding)
 		{
 			_occludedRectPadding = occludedRectPadding;

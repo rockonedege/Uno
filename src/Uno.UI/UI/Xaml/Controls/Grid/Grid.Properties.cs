@@ -13,10 +13,11 @@ using UIKit;
 using View = UIKit.UIView;
 using Color = UIKit.UIColor;
 using Font = UIKit.UIFont;
-#elif XAMARIN_IOS
-using View = MonoTouch.UIKit.UIView;
-using Color = MonoTouch.UIKit.UIColor;
-using Font = MonoTouch.UIKit.UIFont;
+#elif __MACOS__
+using AppKit;
+using View = AppKit.NSView;
+using Color = AppKit.NSColor;
+using Font = AppKit.NSFont;
 #else
 using View = Windows.UI.Xaml.UIElement;
 #endif
@@ -82,6 +83,11 @@ namespace Windows.UI.Xaml.Controls
 
 		public static void SetRowSpan(View view, int rowSpan)
 		{
+			if (rowSpan <= 0)
+			{
+				throw new ArgumentException("The value must be above zero", nameof(rowSpan));
+			}
+
 			DependencyObjectExtensions.SetValue(view, RowSpanProperty, rowSpan);
 		}
 		#endregion
@@ -103,6 +109,11 @@ namespace Windows.UI.Xaml.Controls
 
 		public static void SetColumnSpan(View view, int columnSpan)
 		{
+			if(columnSpan <= 0)
+			{
+				throw new ArgumentException("The value must be above zero", nameof(columnSpan));
+			}
+
 			DependencyObjectExtensions.SetValue(view, ColumnSpanProperty, columnSpan);
 		}
 		#endregion

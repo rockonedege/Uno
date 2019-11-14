@@ -2,21 +2,15 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Xaml.Controls
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum NavigationViewDisplayMode 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Minimal,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Compact,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Expanded,
-		#endif
+		// Skipping already declared field Windows.UI.Xaml.Controls.NavigationViewDisplayMode.Minimal
+		// Skipping already declared field Windows.UI.Xaml.Controls.NavigationViewDisplayMode.Compact
+		// Skipping already declared field Windows.UI.Xaml.Controls.NavigationViewDisplayMode.Expanded
 	}
 	#endif
 }

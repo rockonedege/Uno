@@ -2,135 +2,53 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Xaml.Automation.Peers
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum AutomationControlType 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Button,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Calendar,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		CheckBox,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		ComboBox,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Edit,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Hyperlink,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Image,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		ListItem,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		List,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Menu,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		MenuBar,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		MenuItem,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		ProgressBar,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		RadioButton,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		ScrollBar,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Slider,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Spinner,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		StatusBar,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Tab,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		TabItem,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Text,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		ToolBar,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		ToolTip,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Tree,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		TreeItem,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Custom,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Group,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Thumb,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		DataGrid,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		DataItem,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Document,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		SplitButton,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Window,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Pane,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Header,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		HeaderItem,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Table,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		TitleBar,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Separator,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		SemanticZoom,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		AppBar,
-		#endif
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Button
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Calendar
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.CheckBox
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.ComboBox
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Edit
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Hyperlink
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Image
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.ListItem
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.List
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Menu
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.MenuBar
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.MenuItem
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.ProgressBar
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.RadioButton
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.ScrollBar
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Slider
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Spinner
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.StatusBar
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Tab
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.TabItem
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Text
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.ToolBar
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.ToolTip
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Tree
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.TreeItem
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Custom
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Group
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Thumb
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.DataGrid
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.DataItem
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Document
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.SplitButton
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Window
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Pane
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Header
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.HeaderItem
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Table
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.TitleBar
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.Separator
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.SemanticZoom
+		// Skipping already declared field Windows.UI.Xaml.Automation.Peers.AutomationControlType.AppBar
 	}
 	#endif
 }

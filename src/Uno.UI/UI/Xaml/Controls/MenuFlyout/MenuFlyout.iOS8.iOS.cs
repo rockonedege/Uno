@@ -7,11 +7,14 @@ using Uno.Extensions;
 using Uno.UI.Services;
 using UIKit;
 using Uno.UI.Controls;
+using Uno.UI;
 
 namespace Windows.UI.Xaml.Controls
 {
     public partial class MenuFlyout
     {
+		private static DependencyProperty IsDestructiveProperty = ToolkitHelper.GetProperty("Uno.UI.Toolkit.MenuFlyoutItemExtensions", "IsDestructive");
+
 		private UIAlertController _alertController;
 
 		private void ShowAlert(UIView placementTarget)
@@ -19,10 +22,12 @@ namespace Windows.UI.Xaml.Controls
 			_alertController = new UIAlertController();
 
 			Items
+				.OfType<MenuFlyoutItem>()
 				.Trim()
 				.Where(item => item.Visibility == Visibility.Visible)
 				.Select(item => UIAlertAction.Create(
-					item.Text, UIAlertActionStyle.Default,
+					item.Text,
+					true == (item.GetValue(IsDestructiveProperty) as bool?) ? UIAlertActionStyle.Destructive : UIAlertActionStyle.Default,
 					_ =>
 					{
 						item.Command.ExecuteIfPossible(item.CommandParameter);

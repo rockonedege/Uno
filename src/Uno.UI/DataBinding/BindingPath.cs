@@ -19,7 +19,6 @@ namespace Uno.UI.DataBinding
 	internal class BindingPath : IDisposable, IValueChangedListener
 	{
 		private static List<PropertyChangedRegistrationHandler> _propertyChangedHandlers = new List<PropertyChangedRegistrationHandler>();
-
 		private readonly string _path;
 
 		private BindingItem _chain;
@@ -55,7 +54,7 @@ namespace Uno.UI.DataBinding
 		/// <param name="path"></param>
 		/// <param name="fallbackValue">Provides the fallback value to apply when the source is invalid.</param>
 		public BindingPath(string path, object fallbackValue) :
-			this(path, fallbackValue, null)
+			this(path, fallbackValue, null, false)
 		{
 		}
 
@@ -65,7 +64,8 @@ namespace Uno.UI.DataBinding
 		/// <param name="path">The path to the property</param>
 		/// <param name="fallbackValue">Provides the fallback value to apply when the source is invalid.</param>
 		/// <param name="precedence">The precedence value to manipulate if the path matches to a DependencyProperty.</param>
-		internal BindingPath(string path, object fallbackValue, DependencyPropertyValuePrecedences? precedence)
+		/// <param name="allowPrivateMembers">Allows for the binding engine to include private properties in the lookup</param>
+		internal BindingPath(string path, object fallbackValue, DependencyPropertyValuePrecedences? precedence, bool allowPrivateMembers)
 		{
 			_path = (path ?? "").Trim();
 
@@ -77,7 +77,7 @@ namespace Uno.UI.DataBinding
 
 			foreach (var item in parsedItems.Reverse())
 			{
-				bindingItem = new BindingItem(bindingItem, item, fallbackValue, precedence);
+				bindingItem = new BindingItem(bindingItem, item, fallbackValue, precedence, allowPrivateMembers);
 				_chain = bindingItem;
 
 				if (_value == null)
@@ -97,7 +97,7 @@ namespace Uno.UI.DataBinding
 		/// </summary>
 		/// <returns>An enumerable of binding items</returns>
 		/// <remarks>
-		/// The DataContext and PropertyType of the descriptor may be null 
+		/// The DataContext and PropertyType of the descriptor may be null
 		/// if the binding is incomplete (the DataContext may be null, or the path is invalid)
 		/// </remarks>
 		public IEnumerable<IBindingItem> GetPathItems()
@@ -136,7 +136,7 @@ namespace Uno.UI.DataBinding
 		/// Registers a property changed registration handler.
 		/// </summary>
 		/// <param name="handler">The handled to be called when a property needs to be observed.</param>
-		/// <remarks>This method exists to provide layer separation, 
+		/// <remarks>This method exists to provide layer separation,
 		/// when BindingPath is in the presentation layer, and DependencyProperty is in the (some) Views layer.
 		/// </remarks>
 		public static void RegisterPropertyChangedRegistrationHandler(PropertyChangedRegistrationHandler handler)
@@ -153,7 +153,7 @@ namespace Uno.UI.DataBinding
 		}
 
 		/// <summary>
-		/// Provides the value of the <see cref="Path"/> using the 
+		/// Provides the value of the <see cref="Path"/> using the
 		/// current <see cref="DataContext"/> using the current precedence.
 		/// </summary>
 		public object Value
@@ -182,8 +182,8 @@ namespace Uno.UI.DataBinding
 		}
 
 		/// <summary>
-		/// Gets the value of the DependencyProperty with a 
-		/// precedence immediately below the one specified at the creation 
+		/// Gets the value of the DependencyProperty with a
+		/// precedence immediately below the one specified at the creation
 		/// of the BindingPath.
 		/// </summary>
 		/// <returns>The lower precedence value</returns>
@@ -200,38 +200,39 @@ namespace Uno.UI.DataBinding
 		}
 
 		/// <summary>
-		/// Clears the value of the current precendence.
+		/// Sets the value of the <see cref="DependencyPropertyValuePrecedences.Local"/>
 		/// </summary>
-		/// <remarks>After this call, the value returned 
+		/// <param name="value">The value to set</param>
+		internal void SetLocalValue(object value)
+		{
+			if (!_disposed)
+			{
+				_value?.SetLocalValue(value);
+			}
+		}
+
+		/// <summary>
+		/// Clears the value of the current precedence.
+		/// </summary>
+		/// <remarks>After this call, the value returned
 		/// by <see cref="Value"/> will be of the next available
 		///  precedence.</remarks>
 		public void ClearValue()
 		{
-			if (!_disposed
-				&& _value != null)
+			if (!_disposed)
 			{
-				_value.ClearValue();
+				_value?.ClearValue();
 			}
 		}
 
-		public Type ValueType
-		{
-			get
-			{
-				return _value.PropertyType;
-			}
-		}
+		public Type ValueType => _value.PropertyType;
+
+		internal object DataItem => _value.DataContext;
 
 		public object DataContext
 		{
-			get
-			{
-				return _dataContextWeakStorage?.Target;
-			}
-			set
-			{
-				SetWeakDataContext(Uno.UI.DataBinding.WeakReferencePool.RentWeakReference(this, value));
-			}
+			get => _dataContextWeakStorage?.Target;
+			set => SetWeakDataContext(Uno.UI.DataBinding.WeakReferencePool.RentWeakReference(this, value));
 		}
 
 		internal void SetWeakDataContext(ManagedWeakReference weakDataContext)
@@ -325,7 +326,7 @@ namespace Uno.UI.DataBinding
 				return Disposable.Create(() =>
 				{
 					// This weak reference ensure that the closure will not link
-					// the caller and the callee, in the same way "newValueActionWeak" 
+					// the caller and the callee, in the same way "newValueActionWeak"
 					// does not link the callee to the caller.
 					var that = dataContextReference.Target as INotifyPropertyChanged;
 
@@ -351,48 +352,54 @@ namespace Uno.UI.DataBinding
 			private bool _disposed;
 			private readonly DependencyPropertyValuePrecedences? _precedence;
 			private readonly object _fallbackValue;
-
+			private readonly bool _allowPrivateMembers;
 			private ValueGetterHandler _valueGetter;
 			private ValueGetterHandler _precedenceSpecificGetter;
 			private ValueGetterHandler _substituteValueGetter;
 			private ValueSetterHandler _valueSetter;
+			private ValueSetterHandler _localValueSetter;
 			private ValueUnsetterHandler _valueUnsetter;
 
 			private Type _dataContextType;
 
 			public BindingItem(BindingItem next, string property, object fallbackValue) :
-				this(next, property, fallbackValue, null)
+				this(next, property, fallbackValue, null, false)
 			{
 			}
 
-			internal BindingItem(BindingItem next, string property, object fallbackValue, DependencyPropertyValuePrecedences? precedence)
+			internal BindingItem(BindingItem next, string property, object fallbackValue, DependencyPropertyValuePrecedences? precedence, bool allowPrivateMembers)
 			{
 				Next = next;
 				PropertyName = property;
 				_precedence = precedence;
 				_fallbackValue = fallbackValue;
+				_allowPrivateMembers = allowPrivateMembers;
 			}
 
 			public object DataContext
 			{
 				get => _dataContextWeakStorage?.Target;
-				set => SetWeakDataContext(Uno.UI.DataBinding.WeakReferencePool.RentWeakReference(this, value));
+				set
+				{
+					if (!_disposed && DependencyObjectStore.AreDifferent(DataContext, value))
+					{
+						var weakDataContext = WeakReferencePool.RentWeakReference(this, value);
+						SetWeakDataContext(weakDataContext);
+					}
+				}
 			}
 
 			internal void SetWeakDataContext(ManagedWeakReference weakDataContext, bool transferReferenceOwnership = false)
 			{
-				if (!_disposed && DependencyObjectStore.AreDifferent(DataContext, weakDataContext?.Target))
-				{
-					var previousStorage = _dataContextWeakStorage;
+				var previousStorage = _dataContextWeakStorage;
 
-					_dataContextWeakStorage = weakDataContext;
-					OnDataContextChanged();
+				_dataContextWeakStorage = weakDataContext;
+				OnDataContextChanged();
 
-					// Return the reference to the pool after it's been released from the next BindingItem instances.
-					// Failing to do so makes the reference change without the bindings knowing about it,
-					// making the reference comparison always equal.
-					Uno.UI.DataBinding.WeakReferencePool.ReturnWeakReference(this, previousStorage);
-				}
+				// Return the reference to the pool after it's been released from the next BindingItem instances.
+				// Failing to do so makes the reference change without the bindings knowing about it,
+				// making the reference comparison always equal.
+				Uno.UI.DataBinding.WeakReferencePool.ReturnWeakReference(this, previousStorage);
 			}
 
 			public BindingItem Next { get; }
@@ -408,8 +415,28 @@ namespace Uno.UI.DataBinding
 				}
 				set
 				{
-					SetSourceValue(value);
+					SetValue(value);
 				}
+			}
+
+			/// <summary>
+			/// Sets the value using the <see cref="_precedence"/>
+			/// </summary>
+			/// <param name="value">The value to set</param>
+			private void SetValue(object value)
+			{
+				BuildValueSetter();
+				SetSourceValue(_valueSetter, value);
+			}
+
+			/// <summary>
+			/// Sets the value using the <see cref="DependencyPropertyValuePrecedences.Local"/>
+			/// </summary>
+			/// <param name="value">The value to set</param>
+			public void SetLocalValue(object value)
+			{
+				BuildLocalValueSetter();
+				SetSourceValue(_localValueSetter, value);
 			}
 
 			public Type PropertyType
@@ -441,15 +468,41 @@ namespace Uno.UI.DataBinding
 				return GetSourceValue(_substituteValueGetter);
 			}
 
+			private bool _isDataContextChanging;
+
 			private void OnDataContextChanged()
 			{
 				if (DataContext != null)
 				{
 					ClearCachedGetters();
+					if (_propertyChanged.Disposable != null)
+					{
+#if !HAS_EXPENSIVE_TRYFINALLY // Try/finally incurs a very large performance hit in mono-wasm - https://github.com/mono/mono/issues/13653
+						try
+#endif
+						{
+							_isDataContextChanging = true;
+							_propertyChanged.Disposable = null;
+						}
+#if !HAS_EXPENSIVE_TRYFINALLY // Try/finally incurs a very large performance hit in mono-wasm - https://github.com/mono/mono/issues/13653
+						finally
+#endif
+						{
+							_isDataContextChanging = false;
+						}
+					}
 
 					_propertyChanged.Disposable =
 							SubscribeToPropertyChanged((previousValue, newValue, shouldRaiseValueChanged) =>
 								{
+									if (_isDataContextChanging && newValue is UnsetValue)
+									{
+										// We're in a "resubscribe" scenario when the DataContext is provided a new non-null value, so we don't need to
+										// pass through the DependencyProperty.UnsetValue.
+										// We simply discard this update.
+										return;
+									}
+
 									if (Next != null)
 									{
 										Next.DataContext = newValue;
@@ -490,6 +543,7 @@ namespace Uno.UI.DataBinding
 					_valueGetter = null;
 					_precedenceSpecificGetter = null;
 					_substituteValueGetter = null;
+					_localValueSetter = null;
 					_valueSetter = null;
 					_valueUnsetter = null;
 				}
@@ -501,16 +555,28 @@ namespace Uno.UI.DataBinding
 			{
 				if (_valueSetter == null && _dataContextType != null)
 				{
-					_valueSetter = _precedence == null ?
-						BindingPropertyHelper.GetValueSetter(_dataContextType, PropertyName, convert: true) :
-						BindingPropertyHelper.GetValueSetter(_dataContextType, PropertyName, convert: true, precedence: _precedence.Value);
+					if (_precedence == null)
+					{
+						BuildLocalValueSetter();
+						_valueSetter = _localValueSetter;
+					}
+					else
+					{
+						_valueSetter = BindingPropertyHelper.GetValueSetter(_dataContextType, PropertyName, convert: true, precedence: _precedence.Value);
+					}
 				}
 			}
 
-			private void SetSourceValue(object value)
+			private void BuildLocalValueSetter()
 			{
-				BuildValueSetter();
+				if (_localValueSetter == null && _dataContextType != null)
+				{
+					_localValueSetter = BindingPropertyHelper.GetValueSetter(_dataContextType, PropertyName, convert: true);
+				}
+			}
 
+			private void SetSourceValue(ValueSetterHandler setter, object value)
+			{
 				// Capture the datacontext before the call to avoid a race condition with the GC.
 				var dataContext = DataContext;
 
@@ -518,7 +584,7 @@ namespace Uno.UI.DataBinding
 				{
 					try
 					{
-						_valueSetter(dataContext, value);
+						setter(dataContext, value);
 					}
 					catch (Exception exception)
 					{
@@ -541,9 +607,7 @@ namespace Uno.UI.DataBinding
 			{
 				if (_valueGetter == null && _dataContextType != null)
 				{
-					_valueGetter = _precedence == null ?
-						BindingPropertyHelper.GetValueGetter(_dataContextType, PropertyName) :
-						BindingPropertyHelper.GetValueGetter(_dataContextType, PropertyName, _precedence.Value);
+					_valueGetter = BindingPropertyHelper.GetValueGetter(_dataContextType, PropertyName, _precedence, _allowPrivateMembers);
 				}
 			}
 
@@ -551,9 +615,7 @@ namespace Uno.UI.DataBinding
 			{
 				if (_precedenceSpecificGetter == null && _dataContextType != null)
 				{
-					_precedenceSpecificGetter = _precedence == null ?
-						BindingPropertyHelper.GetValueGetter(_dataContextType, PropertyName) :
-						BindingPropertyHelper.GetPrecedenceSpecificValueGetter(_dataContextType, PropertyName, _precedence.Value);
+					_precedenceSpecificGetter = BindingPropertyHelper.GetValueGetter(_dataContextType, PropertyName, _precedence, _allowPrivateMembers);
 				}
 			}
 
@@ -582,7 +644,7 @@ namespace Uno.UI.DataBinding
 				{
 					try
 					{
-						return getter(dataContext);						
+						return getter(dataContext);
 					}
 					catch (Exception exception)
 					{
@@ -647,11 +709,10 @@ namespace Uno.UI.DataBinding
 			/// <returns>A disposable to be called when the subscription is disposed.</returns>
 			private IDisposable SubscribeToPropertyChanged(PropertyChangedHandler action)
 			{
-				var disposable = new CompositeDisposable();
-
+				var disposables = new CompositeDisposable((_propertyChangedHandlers.Count * 3));
 				foreach (var handler in _propertyChangedHandlers)
 				{
-					object previousValue = null;
+					object previousValue = default;
 
 					Action updateProperty = () =>
 					{
@@ -677,16 +738,15 @@ namespace Uno.UI.DataBinding
 						// in this disposable. The reference is attached to the source's
 						// object lifetime, to the target (bound) object.
 						//
-						// The registerations made by _propertyChangedHandlers are all 
+						// All registrations made by _propertyChangedHandlers are
 						// weak with regards to the delegates that are provided.
-						disposable.Add(() => updateProperty = null);
-
-						disposable.Add(handlerDisposable);
-						disposable.Add(disposeAction);
+						disposables.Add(() => updateProperty = null);
+						disposables.Add(handlerDisposable);
+						disposables.Add(disposeAction);
 					}
 				}
 
-				return disposable;
+				return disposables;
 			}
 
 			public void Dispose()

@@ -42,7 +42,7 @@ namespace Windows.UI.Xaml.Controls
 
 			if (_nativeWebView == null)
 			{
-				this.Log().Error($"No view of type {nameof(UnoWKWebView)} or {nameof(UnoUIWebView)} found in children, are you missing one of these types in a template ? ");
+				this.Log().Error($"No view of type {nameof(UnoWKWebView)} found in children, are you missing one of these types in a template ? ");
 			}
 
 			_nativeWebView?.RegisterNavigationEvents(this);
@@ -139,10 +139,10 @@ namespace Windows.UI.Xaml.Controls
 				WebErrorStatus = status
 			};
 
-			NavigationCompleted?.Invoke(this, args);
-
 			CanGoBack = _nativeWebView.CanGoBack;
 			CanGoForward = _nativeWebView.CanGoForward;
+
+			NavigationCompleted?.Invoke(this, args);
 		}
 
 		partial void StopPartial()
@@ -188,16 +188,16 @@ namespace Windows.UI.Xaml.Controls
 						var cc = new[] { "" };
 						var bcc = new[] { "" };
 
-						var recipients = mailtoUri.AbsoluteUri.Split(':')[1].Split('?')[0].Split(',');
-						var parameters = mailtoUri.Query.Split('?');
+						var recipients = mailtoUri.AbsoluteUri.Split(new[] { ':' })[1].Split(new[] { '?' })[0].Split(new[] { ',' });
+						var parameters = mailtoUri.Query.Split(new[] { '?' });
 
 						parameters = parameters.Length > 1 ?
-										parameters[1].Split('&') :
+										parameters[1].Split(new[] { '&' }) :
 										new string[0];
 
 						foreach (string param in parameters)
 						{
-							var keyValue = param.Split('=');
+							var keyValue = param.Split(new[] { '=' });
 							var key = keyValue[0];
 							var value = keyValue[1];
 
@@ -287,10 +287,9 @@ namespace Windows.UI.Xaml.Controls
 			NavigationFailed?.Invoke(this, args);
 		}
 
-		public static bool MustUseWebKitWebView()
-		{
-			return UIDevice.CurrentDevice.CheckSystemVersion(8, 0);
-		}
+
+		[Obsolete("https://github.com/unoplatform/uno/pull/1591")]
+		public static bool MustUseWebKitWebView() => true;
 
 		partial void OnScrollEnabledChangedPartial(bool isScrollingEnabled)
 		{

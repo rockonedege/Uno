@@ -13,6 +13,11 @@ using UIKit;
 using View = UIKit.UIView;
 using Color = UIKit.UIColor;
 using Font = UIKit.UIFont;
+#elif __MACOS__
+using AppKit;
+using View = AppKit.NSView;
+using Color = AppKit.NSColor;
+using Font = AppKit.NSFont;
 #endif
 
 namespace Windows.UI.Xaml.Controls
@@ -20,7 +25,7 @@ namespace Windows.UI.Xaml.Controls
 	/// <summary>
 	/// A border layouter, to apply Padding to the border.
 	/// </summary>
-	public partial class Border
+	public partial class Border : ICustomClippingElement
 	{
 		protected override Size MeasureOverride(Size availableSize)
 		{
@@ -61,5 +66,8 @@ namespace Windows.UI.Xaml.Controls
 
 			return finalSize;
 		}
+
+		bool ICustomClippingElement.AllowClippingToLayoutSlot => !(Child is UIElement ue) || ue.RenderTransform == null;
+		bool ICustomClippingElement.ForceClippingToLayoutSlot => false;
 	}
 }

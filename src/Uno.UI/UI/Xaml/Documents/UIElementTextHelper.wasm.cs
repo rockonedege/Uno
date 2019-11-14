@@ -35,7 +35,7 @@ namespace Uno.UI.UI.Xaml.Documents
 
 		internal static void SetFontStyle(this UIElement element, object localValue)
 		{
-			if (localValue == DependencyProperty.UnsetValue)
+			if (localValue is UnsetValue)
 			{
 				element.ResetStyle("font-style");
 			}
@@ -59,7 +59,7 @@ namespace Uno.UI.UI.Xaml.Documents
 
 		internal static void SetFontWeight(this UIElement element, object localValue)
 		{
-			if (localValue == DependencyProperty.UnsetValue)
+			if (localValue is UnsetValue)
 			{
 				element.ResetStyle("font-weight");
 			}
@@ -71,7 +71,7 @@ namespace Uno.UI.UI.Xaml.Documents
 
 		internal static void SetFontFamily(this UIElement element, object localValue)
 		{
-			if (localValue == DependencyProperty.UnsetValue)
+			if (localValue is UnsetValue)
 			{
 				element.ResetStyle("font-family");
 			}
@@ -94,7 +94,7 @@ namespace Uno.UI.UI.Xaml.Documents
 
 		internal static void SetFontSize(this UIElement element, object localValue)
 		{
-			if (localValue == DependencyProperty.UnsetValue)
+			if (localValue is UnsetValue)
 			{
 				element.ResetStyle("font-size");
 			}
@@ -112,41 +112,47 @@ namespace Uno.UI.UI.Xaml.Documents
 
 		internal static void SetTextTrimming(this UIElement element, object localValue)
 		{
-			if (localValue == DependencyProperty.UnsetValue)
+			switch (localValue)
 			{
-				element.ResetStyle("text-overflow");
-			}
-			else
-			{
-				element.SetStyle("text-overflow", ((TextTrimming)localValue).ToCssString());
+				case TextTrimming.CharacterEllipsis:
+				case TextTrimming.WordEllipsis: // Word-level ellipsis not supported by HTML/CSS
+					element.SetStyle("text-overflow", "ellipsis");
+					break;
+
+				case TextTrimming.Clip:
+					element.SetStyle("text-overflow", "clip");
+					break;
+
+				case UnsetValue uv:
+					element.ResetStyle("text-overflow");
+					break;
+
+				default:
+					element.SetStyle("text-overflow", "");
+					break;
 			}
 		}
 
 		internal static void SetForeground(this UIElement element, object localValue)
 		{
-			if (localValue == DependencyProperty.UnsetValue)
+			switch (localValue)
 			{
-				element.ResetStyle("color");
-			}
-			else
-			{
-				switch (localValue)
-				{
-					case SolidColorBrush scb:
-						element.SetStyle("color", scb.ColorWithOpacity.ToCssString());
-						break;
+				case SolidColorBrush scb:
+					element.SetStyle("color", scb.ColorWithOpacity.ToCssString());
+					break;
 
-					// TODO: support other foreground types
-					default:
-						element.ResetStyle("color");
-						break;
-				}
+				case UnsetValue uv:
+
+				// TODO: support other foreground types
+				default:
+					element.ResetStyle("color");
+					break;
 			}
 		}
 
 		internal static void SetCharacterSpacing(this UIElement element, object localValue)
 		{
-			if (localValue == DependencyProperty.UnsetValue)
+			if (localValue is UnsetValue)
 			{
 				element.ResetStyle("letter-spacing");
 			}
@@ -159,7 +165,7 @@ namespace Uno.UI.UI.Xaml.Documents
 
 		internal static void SetLineHeight(this UIElement element, object localValue)
 		{
-			if (localValue == DependencyProperty.UnsetValue)
+			if (localValue is UnsetValue)
 			{
 				element.ResetStyle("line-height");
 			}
@@ -179,7 +185,7 @@ namespace Uno.UI.UI.Xaml.Documents
 
 		internal static void SetTextAlignment(this UIElement element, object localValue)
 		{
-			if (localValue == DependencyProperty.UnsetValue)
+			if (localValue is UnsetValue)
 			{
 				element.ResetStyle("text-align");
 			}
@@ -188,10 +194,6 @@ namespace Uno.UI.UI.Xaml.Documents
 				var value = (TextAlignment) localValue;
 				switch (value)
 				{
-					case TextAlignment.DetectFromContent:
-					default:
-						element.ResetStyle("text-align");
-						break;
 					case TextAlignment.Left:
 						element.SetStyle("text-align", "left");
 						break;
@@ -204,13 +206,17 @@ namespace Uno.UI.UI.Xaml.Documents
 					case TextAlignment.Justify:
 						element.SetStyle("text-align", "justify");
 						break;
+					case TextAlignment.DetectFromContent:
+					default:
+						element.ResetStyle("text-align");
+						break;
 				}
 			}
 		}
 
 		internal static void SetTextWrapping(this UIElement element, object localValue)
 		{
-			if (localValue == DependencyProperty.UnsetValue)
+			if (localValue is UnsetValue)
 			{
 				element.ResetStyle("white-space", "word-break", "text-overflow");
 			}
@@ -226,49 +232,73 @@ namespace Uno.UI.UI.Xaml.Documents
 							("word-break", ""),
 							("text-overflow", ""));
 						break;
-					case TextWrapping.WordEllipsis:
-						element.SetAttribute("wrap", "soft");
-						element.SetStyle(
-							("white-space", "pre"),
-							("word-break", ""),
-							("text-overflow", "ellipsis"));
-						break;
 					case TextWrapping.Wrap:
 						element.SetAttribute("wrap", "soft");
 						element.SetStyle(
 							("white-space", ""),
-							("word-break", ""),
+							("word-break", "break-word"), // This is required to still wrap words that are longer than the ViewPort
 							("text-overflow", ""));
 						break;
 					case TextWrapping.WrapWholeWords:
 						element.SetAttribute("wrap", "soft");
 						element.SetStyle(
 							("white-space", ""),
-							("word-break", "keep-all"),
+							("word-break", "keep-all"), // This is required to still wrap words that are longer than the ViewPort
 							("text-overflow", ""));
 						break;
 				}
 			}
 		}
 
-		internal static void SetUnderlineStyle(this UIElement element, object localValue)
+		internal static void SetTextDecorations(this UIElement element, object localValue)
 		{
-			if (localValue == DependencyProperty.UnsetValue)
+			if (localValue is UnsetValue)
 			{
-				element.ResetStyle("line-height");
+				element.ResetStyle("text-decoration");
 			}
 			else
 			{
-				var value = (UnderlineStyle)localValue;
+				var value = (TextDecorations)localValue;
 				switch (value)
 				{
-					case UnderlineStyle.None:
+					case TextDecorations.None:
 						element.SetStyle("text-decoration", "none");
 						break;
-					case UnderlineStyle.Single:
+					case TextDecorations.Underline:
 						element.SetStyle("text-decoration", "underline");
 						break;
+					case TextDecorations.Strikethrough:
+						element.SetStyle("text-decoration", "line-through");
+						break;
+					case TextDecorations.Underline | TextDecorations.Strikethrough:
+						element.SetStyle("text-decoration", "underline line-through");
+						break;
 				}
+			}
+		}
+
+		internal static void SetTextPadding(this UIElement element, object localValue)
+		{
+			if (localValue is UnsetValue)
+			{
+				element.ResetStyle("padding");
+			}
+			else
+			{
+				var padding = (Thickness)localValue;
+				var paddingStr = new[]
+				{
+					padding.Top.ToStringInvariant(),
+					"px ",
+					padding.Right.ToStringInvariant(),
+					"px ",
+					padding.Bottom.ToStringInvariant(),
+					"px ",
+					padding.Left.ToStringInvariant(),
+					"px"
+				};
+
+				element.SetStyle("padding", string.Concat(paddingStr));
 			}
 		}
 	}

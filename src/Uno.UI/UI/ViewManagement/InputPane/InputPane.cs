@@ -2,6 +2,7 @@ using System;
 using Windows.Foundation;
 using Uno.UI;
 using Uno;
+using Uno.UI.Controls;
 
 namespace Windows.UI.ViewManagement
 {

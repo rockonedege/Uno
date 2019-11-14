@@ -2,12 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Xaml.Controls
 {
-	#if false || false || NET46 || __WASM__
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class AppBarButton : global::Windows.UI.Xaml.Controls.Button,global::Windows.UI.Xaml.Controls.ICommandBarElement,global::Windows.UI.Xaml.Controls.ICommandBarElement2
 	{
-		#if false || false || NET46 || __WASM__
+		#if false || false || false || false || false
 		[global::Uno.NotImplemented]
 		public  string Label
 		{
@@ -21,7 +21,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if false || false || NET46 || __WASM__
+		#if false || false || false || false || false
 		[global::Uno.NotImplemented]
 		public  global::Windows.UI.Xaml.Controls.IconElement Icon
 		{
@@ -35,7 +35,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if false || false || NET46 || __WASM__
+		#if false || false || false || false || false
 		[global::Uno.NotImplemented]
 		public  global::Windows.UI.Xaml.Controls.CommandBarLabelPosition LabelPosition
 		{
@@ -49,7 +49,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  string KeyboardAcceleratorTextOverride
 		{
@@ -63,17 +63,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.Controls.Primitives.AppBarButtonTemplateSettings TemplateSettings
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member AppBarButtonTemplateSettings AppBarButton.TemplateSettings is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if false || false || NET46 || __WASM__
+		#if false || false || false || false || false
 		[global::Uno.NotImplemented]
 		public  bool IsCompact
 		{
@@ -87,7 +77,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if false || false || NET46 || __WASM__
+		#if false || false || false || false || false
 		[global::Uno.NotImplemented]
 		public  int DynamicOverflowOrder
 		{
@@ -101,7 +91,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if false || false || NET46 || __WASM__
+		#if false || false || false || false || false
 		[global::Uno.NotImplemented]
 		public  bool IsInOverflow
 		{
@@ -111,7 +101,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if false || false || NET46 || __WASM__
+		#if false || false || false || false || false
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IconProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -119,7 +109,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.AppBarButton), 
 			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.Controls.IconElement)));
 		#endif
-		#if false || false || NET46 || __WASM__
+		#if false || false || false || false || false
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsCompactProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -127,7 +117,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.AppBarButton), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if false || false || NET46 || __WASM__
+		#if false || false || false || false || false
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty LabelProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -135,7 +125,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.AppBarButton), 
 			new FrameworkPropertyMetadata(default(string)));
 		#endif
-		#if false || false || NET46 || __WASM__
+		#if false || false || false || false || false
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty DynamicOverflowOrderProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -143,7 +133,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.AppBarButton), 
 			new FrameworkPropertyMetadata(default(int)));
 		#endif
-		#if false || false || NET46 || __WASM__
+		#if false || false || false || false || false
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsInOverflowProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -151,7 +141,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.AppBarButton), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if false || false || NET46 || __WASM__
+		#if false || false || false || false || false
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty LabelPositionProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -159,7 +149,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.AppBarButton), 
 			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.Controls.CommandBarLabelPosition)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty KeyboardAcceleratorTextOverrideProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -167,7 +157,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.AppBarButton), 
 			new FrameworkPropertyMetadata(default(string)));
 		#endif
-		#if false || false || NET46 || __WASM__
+		#if false || false || false || __WASM__ || false
 		[global::Uno.NotImplemented]
 		public AppBarButton() : base()
 		{
@@ -179,16 +169,16 @@ namespace Windows.UI.Xaml.Controls
 		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.Label.set
 		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.Icon.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.Icon.set
-		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.IsCompact.get
-		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.IsCompact.set
 		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.LabelPosition.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.LabelPosition.set
-		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.IsInOverflow.get
-		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.DynamicOverflowOrder.get
-		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.DynamicOverflowOrder.set
 		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.KeyboardAcceleratorTextOverride.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.KeyboardAcceleratorTextOverride.set
 		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.TemplateSettings.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.IsCompact.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.IsCompact.set
+		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.IsInOverflow.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.DynamicOverflowOrder.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.DynamicOverflowOrder.set
 		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.KeyboardAcceleratorTextOverrideProperty.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.LabelPositionProperty.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.AppBarButton.IsInOverflowProperty.get

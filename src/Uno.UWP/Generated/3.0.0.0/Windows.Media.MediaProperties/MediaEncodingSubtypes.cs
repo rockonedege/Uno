@@ -2,112 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Media.MediaProperties
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class MediaEncodingSubtypes 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string Eac3
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Eac3 is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string Aac
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Aac is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string AacAdts
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.AacAdts is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string Ac3
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Ac3 is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string AmrNb
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.AmrNb is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string AmrWb
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.AmrWb is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string Argb32
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Argb32 is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string Asf
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Asf is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string Avi
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Avi is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string Bgra8
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Bgra8 is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Bmp
 		{
@@ -117,167 +17,97 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string Nv12
+		public static string Aac
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Nv12 is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Aac is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string Float
+		public static string AacAdts
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Float is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.AacAdts is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string Gif
+		public static string Ac3
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Gif is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Ac3 is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string H263
+		public static string AmrNb
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.H263 is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.AmrNb is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string H264
+		public static string AmrWb
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.H264 is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.AmrWb is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string H264Es
+		public static string Argb32
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.H264Es is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Argb32 is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string Hevc
+		public static string Asf
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Hevc is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Asf is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string HevcEs
+		public static string Avi
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.HevcEs is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Avi is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string Iyuv
+		public static string Bgra8
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Iyuv is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Bgra8 is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string Jpeg
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Jpeg is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string JpegXr
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.JpegXr is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string Mjpg
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Mjpg is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string Mp3
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Mp3 is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string Mpeg
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Mpeg is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string Mpeg1
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Mpeg1 is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string Mpeg2
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Mpeg2 is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Mpeg4
 		{
@@ -287,7 +117,177 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string Eac3
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Eac3 is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string Float
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Float is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string Gif
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Gif is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string H263
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.H263 is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string H264
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.H264 is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string H264Es
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.H264Es is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string Hevc
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Hevc is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string HevcEs
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.HevcEs is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string Iyuv
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Iyuv is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string Jpeg
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Jpeg is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string JpegXr
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.JpegXr is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string Mjpg
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Mjpg is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string Mp3
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Mp3 is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string Mpeg
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Mpeg is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string Mpeg1
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Mpeg1 is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string Mpeg2
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Mpeg2 is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string Nv12
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Nv12 is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Pcm
 		{
@@ -297,7 +297,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Png
 		{
@@ -307,7 +307,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Rgb24
 		{
@@ -317,7 +317,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Rgb32
 		{
@@ -327,7 +327,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Tiff
 		{
@@ -337,7 +337,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Wave
 		{
@@ -347,7 +347,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Wma8
 		{
@@ -357,7 +357,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Wma9
 		{
@@ -367,7 +367,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Wmv3
 		{
@@ -377,7 +377,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Wvc1
 		{
@@ -387,7 +387,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Yuy2
 		{
@@ -397,7 +397,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Yv12
 		{
@@ -407,7 +407,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string D16
 		{
@@ -417,7 +417,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string L16
 		{
@@ -427,7 +427,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string L8
 		{
@@ -437,7 +437,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Vp9
 		{
@@ -447,7 +447,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Alac
 		{
@@ -457,7 +457,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string Flac
 		{
@@ -467,7 +467,7 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string P010
 		{
@@ -477,6 +477,17 @@ namespace Windows.Media.MediaProperties
 			}
 		}
 		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string Heif
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string MediaEncodingSubtypes.Heif is not implemented in Uno.");
+			}
+		}
+		#endif
+		// Forced skipping of method Windows.Media.MediaProperties.MediaEncodingSubtypes.Heif.get
 		// Forced skipping of method Windows.Media.MediaProperties.MediaEncodingSubtypes.P010.get
 		// Forced skipping of method Windows.Media.MediaProperties.MediaEncodingSubtypes.Alac.get
 		// Forced skipping of method Windows.Media.MediaProperties.MediaEncodingSubtypes.Flac.get

@@ -46,7 +46,9 @@ namespace MonoTests.Uno.Xaml
 
 		XamlReader GetReader (string filename, bool ignoreWhitespace = false)
 		{
-			string xml = File.ReadAllText (Path.Combine ("Test/XmlFiles", filename)).Replace ("System.Xaml_test_net_4_0", "Uno.Xaml.Tests");
+			var directory = Path.GetDirectoryName(new Uri(GetType().Assembly.CodeBase).LocalPath);
+
+			string xml = File.ReadAllText (Path.Combine (directory, "Test/XmlFiles", filename)).Replace ("System.Xaml_test_net_4_0", "Uno.Xaml.Tests");
 
 			var s = new XmlReaderSettings { IgnoreWhitespace = ignoreWhitespace };
 
@@ -359,7 +361,6 @@ namespace MonoTests.Uno.Xaml
 		public void Read_GenericWithProperty()
 		{
 			var sequence = new SequenceItem[] {
-				new SequenceItem { NodeType = XamlNodeType.NamespaceDeclaration, },
 				new SequenceItem { NodeType = XamlNodeType.NamespaceDeclaration, },
 				new SequenceItem { NodeType = XamlNodeType.NamespaceDeclaration, },
 				new SequenceItem { NodeType = XamlNodeType.NamespaceDeclaration, },
@@ -1435,6 +1436,36 @@ namespace MonoTests.Uno.Xaml
 		}
 
 		[Test]
+		public void Read_EmptyAttachedPropertyNode()
+		{
+			var r = GetReader("EmptyAttachedPropertyNode.xaml");
+
+			while (r.Read()) { }
+
+			var sequence = new SequenceItem[] 
+			{
+				new SequenceItem { NodeType = XamlNodeType.NamespaceDeclaration, },
+				new SequenceItem { NodeType = XamlNodeType.NamespaceDeclaration, },
+				new SequenceItem { NodeType = XamlNodeType.StartObject, TypeName = "{http://schemas.microsoft.com/winfx/2006/xaml/presentation}UserControl"},
+
+				new SequenceItem { NodeType = XamlNodeType.StartMember, MemberType = XamlLanguage.Base.ToString() },
+				new SequenceItem { NodeType = XamlNodeType.Value, Value = "", },
+				new SequenceItem { NodeType = XamlNodeType.EndMember, },
+
+				new SequenceItem { NodeType = XamlNodeType.StartMember, MemberType = "{http://schemas.microsoft.com/winfx/2006/xaml}_UnknownContent", },
+				new SequenceItem { NodeType = XamlNodeType.StartObject, TypeName = "{http://schemas.microsoft.com/winfx/2006/xaml/presentation}VisualState"},
+				new SequenceItem { NodeType = XamlNodeType.StartMember, MemberType = "{http://schemas.microsoft.com/winfx/2006/xaml/presentation}VisualState.Setters", },
+				new SequenceItem { NodeType = XamlNodeType.EndMember, },
+				new SequenceItem { NodeType = XamlNodeType.EndObject, },
+				new SequenceItem { NodeType = XamlNodeType.EndMember, },
+				new SequenceItem { NodeType = XamlNodeType.EndObject, },
+				new SequenceItem { NodeType = XamlNodeType.None, },
+			};
+
+			ReadSequence("EmptyAttachedPropertyNode.xaml", sequence);
+		}
+
+		[Test]
 		public void Read_RunSpace01()
 		{
 			var sequence = new SequenceItem[] 
@@ -1516,6 +1547,73 @@ namespace MonoTests.Uno.Xaml
 
 			ReadSequence("RunSpace02.xaml", sequence);
 		}
+
+		[Test]
+		public void Read_AttachedPropertyWithoutNamespace()
+		{
+			var sequence = new SequenceItem[]
+			{
+				new SequenceItem { NodeType = XamlNodeType.NamespaceDeclaration, },
+				new SequenceItem { NodeType = XamlNodeType.NamespaceDeclaration, },
+				new SequenceItem { NodeType = XamlNodeType.NamespaceDeclaration, },
+
+				new SequenceItem { NodeType = XamlNodeType.StartObject, TypeName = "{http://schemas.microsoft.com/winfx/2006/xaml/presentation}ResourceDictionary" },
+
+				new SequenceItem { NodeType = XamlNodeType.StartMember, MemberType = XamlLanguage.Base.ToString() },
+				new SequenceItem { NodeType = XamlNodeType.Value, Value = "", },
+				new SequenceItem { NodeType = XamlNodeType.EndMember, },
+
+				new SequenceItem { NodeType = XamlNodeType.StartMember, MemberType = "{http://schemas.microsoft.com/winfx/2006/xaml}_UnknownContent", },
+				new SequenceItem { NodeType = XamlNodeType.StartObject, TypeName = "{using:MyOtherNamespace}TestObject" },
+
+				new SequenceItem { NodeType = XamlNodeType.StartMember, MemberType = "{http://schemas.microsoft.com/winfx/2006/xaml/presentation}Attached.Original", },
+				new SequenceItem { NodeType = XamlNodeType.Value, Value = "test", },
+				new SequenceItem { NodeType = XamlNodeType.EndMember, },
+
+				new SequenceItem { NodeType = XamlNodeType.EndObject, },
+				new SequenceItem { NodeType = XamlNodeType.EndMember, },
+				new SequenceItem { NodeType = XamlNodeType.EndObject, },
+				new SequenceItem { NodeType = XamlNodeType.None, },
+			};
+
+			ReadSequence("AttachedPropertyWithoutNamespace.xaml", sequence);
+		}
+
+		[Test]
+		public void Read_AttachedPropertyWithNamespace()
+		{
+			var sequence = new SequenceItem[]
+			{
+				new SequenceItem { NodeType = XamlNodeType.NamespaceDeclaration, },
+				new SequenceItem { NodeType = XamlNodeType.NamespaceDeclaration, },
+				new SequenceItem { NodeType = XamlNodeType.NamespaceDeclaration, },
+				new SequenceItem { NodeType = XamlNodeType.NamespaceDeclaration, },
+				new SequenceItem { NodeType = XamlNodeType.StartObject, TypeName = "{http://schemas.microsoft.com/winfx/2006/xaml/presentation}ResourceDictionary"},
+
+				new SequenceItem { NodeType = XamlNodeType.StartMember, MemberType = XamlLanguage.Base.ToString() },
+				new SequenceItem { NodeType = XamlNodeType.Value, Value = "", },
+				new SequenceItem { NodeType = XamlNodeType.EndMember, },
+
+				new SequenceItem { NodeType = XamlNodeType.StartMember, MemberType = "{http://schemas.microsoft.com/winfx/2006/xaml}_UnknownContent", },
+				new SequenceItem { NodeType = XamlNodeType.StartObject, TypeName = "{using:MyOtherNamespace}TestObject"},
+
+				new SequenceItem { NodeType = XamlNodeType.StartMember, MemberType = "{using:MyOtherNamespace}Attached.Original", },
+				new SequenceItem { NodeType = XamlNodeType.Value, Value = "test", },
+				new SequenceItem { NodeType = XamlNodeType.EndMember, },
+
+				new SequenceItem { NodeType = XamlNodeType.StartMember, MemberType = "{using:MyOtherNamespace2}Attached2.Original", },
+				new SequenceItem { NodeType = XamlNodeType.Value, Value = "test", },
+				new SequenceItem { NodeType = XamlNodeType.EndMember, },
+
+				new SequenceItem { NodeType = XamlNodeType.EndObject, },
+				new SequenceItem { NodeType = XamlNodeType.EndMember, },
+				new SequenceItem { NodeType = XamlNodeType.EndObject, },
+				new SequenceItem { NodeType = XamlNodeType.None, },
+			};
+
+			ReadSequence("AttachedPropertyWithNamespace.xaml", sequence);
+		}
+
 		[Test]
 		public void Read_Int32 ()
 		{
@@ -2175,7 +2273,7 @@ namespace MonoTests.Uno.Xaml
 		[Test]
 		public void Bug680385 ()
 		{
-			XamlServices.Load ("Test/XmlFiles/CurrentVersion.xaml");
+			GetReader("CurrentVersion.xaml");
 		}
 		#endregion
 

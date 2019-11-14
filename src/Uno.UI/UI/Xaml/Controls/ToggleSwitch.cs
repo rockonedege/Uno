@@ -1,15 +1,20 @@
-﻿#if IS_UNO && !NET46
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using Uno.Disposables;
+using Windows.UI.Xaml.Automation.Peers;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Uno.UI;
+
+#if __IOS__
+using UIKit;
+#endif
 
 namespace Windows.UI.Xaml.Controls
 {
-	public partial class ToggleSwitch : Control
+	public partial class ToggleSwitch : Control, IFrameworkTemplatePoolAware
 	{
 		private readonly SerialDisposable _eventSubscriptions = new SerialDisposable();
 
@@ -31,9 +36,54 @@ namespace Windows.UI.Xaml.Controls
 		{
 		}
 
-		protected override void OnPointerPressed(PointerRoutedEventArgs args)
+		protected override void OnLoaded()
 		{
-			base.OnPointerPressed(args);
+			base.OnLoaded();
+
+			if (!IsNativeTemplate)
+			{
+				AddHandler(PointerPressedEvent, (PointerEventHandler)OnPointerPressed, true);
+				AddHandler(PointerExitedEvent, (PointerEventHandler)OnPointerExited, true);
+				AddHandler(PointerReleasedEvent, (PointerEventHandler)OnPointerReleased, true);
+				AddHandler(PointerCanceledEvent, (PointerEventHandler)OnPointerCanceled, true);
+				AddHandler(PointerEnteredEvent, (PointerEventHandler)OnPointerEntered, true);
+			}
+
+			OnLoadedPartial();
+		}
+
+		partial void OnLoadedPartial();
+
+		protected override void OnUnloaded()
+		{
+			base.OnUnloaded();
+
+			if (!IsNativeTemplate)
+			{
+				RemoveHandler(PointerPressedEvent, (PointerEventHandler) OnPointerPressed);
+				RemoveHandler(PointerExitedEvent, (PointerEventHandler) OnPointerExited);
+				RemoveHandler(PointerReleasedEvent, (PointerEventHandler) OnPointerReleased);
+				RemoveHandler(PointerCanceledEvent, (PointerEventHandler) OnPointerCanceled);
+				RemoveHandler(PointerEnteredEvent, (PointerEventHandler) OnPointerEntered);
+			}
+		}
+
+		private bool IsNativeTemplate
+		{
+			get
+			{
+#if __ANDROID__
+				return this.FindFirstChild<Uno.UI.Controls.BindableSwitchCompat>() != null;
+#elif __IOS__
+				return this.FindFirstChild<Uno.UI.Views.Controls.BindableUISwitch>() != null;
+#else
+				return false;
+#endif
+			}
+		}
+
+		private void OnPointerPressed(object sender, PointerRoutedEventArgs args)
+		{
 			IsPointerOver = true;
 			IsPointerPressed = true;
 			args.Handled = true;
@@ -41,16 +91,14 @@ namespace Windows.UI.Xaml.Controls
 			UpdateCommonState();
 		}
 
-		protected override void OnPointerExited(PointerRoutedEventArgs args)
+		private void OnPointerExited(object sender, PointerRoutedEventArgs args)
 		{
-			base.OnPointerExited(args);
 			IsPointerOver = false;
 			UpdateCommonState();
 		}
 
-		protected override void OnPointerReleased(PointerRoutedEventArgs args)
+		private void OnPointerReleased(object sender, PointerRoutedEventArgs args)
 		{
-			base.OnPointerReleased(args);
 			IsPointerOver = false;
 			IsPointerPressed = false;
 			UpdateCommonState();
@@ -61,25 +109,30 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
-		protected override void OnPointerCanceled(PointerRoutedEventArgs args)
+		private void OnPointerCanceled(object sender, PointerRoutedEventArgs args)
 		{
-			base.OnPointerCanceled(args);
 			IsPointerOver = false;
 			IsPointerPressed = false;
 			UpdateCommonState();
 		}
 
-		protected override void OnPointerEntered(PointerRoutedEventArgs args)
+		private void OnPointerEntered(object sender, PointerRoutedEventArgs args)
 		{
-			base.OnPointerEntered(args);
 			IsPointerOver = true;
 			UpdateCommonState();
 		}
 
+		protected virtual void OnToggled()
+		{
+			Toggled?.Invoke(this, new RoutedEventArgs(this));
+		}
+
+		public global::Windows.UI.Xaml.Controls.Primitives.ToggleSwitchTemplateSettings TemplateSettings { get; } = new ToggleSwitchTemplateSettings();
+
 		public bool IsOn
 		{
-			get { return (bool)this.GetValue(IsOnProperty); }
-			set { this.SetValue(IsOnProperty, value); }
+			get => (bool)GetValue(IsOnProperty);
+			set => SetValue(IsOnProperty, value);
 		}
 
 		public static readonly DependencyProperty IsOnProperty =
@@ -87,8 +140,8 @@ namespace Windows.UI.Xaml.Controls
 
 		public DataTemplate OnContentTemplate
 		{
-			get { return (DataTemplate)this.GetValue(OnContentTemplateProperty); }
-			set { this.SetValue(OnContentTemplateProperty, value); }
+			get => (DataTemplate)GetValue(OnContentTemplateProperty);
+			set => SetValue(OnContentTemplateProperty, value);
 		}
 
 		public static readonly DependencyProperty OnContentTemplateProperty =
@@ -96,8 +149,8 @@ namespace Windows.UI.Xaml.Controls
 
 		public DataTemplate OffContentTemplate
 		{
-			get { return (DataTemplate)this.GetValue(OffContentTemplateProperty); }
-			set { this.SetValue(OffContentTemplateProperty, value); }
+			get => (DataTemplate)GetValue(OffContentTemplateProperty);
+			set => SetValue(OffContentTemplateProperty, value);
 		}
 
 		public static readonly DependencyProperty OffContentTemplateProperty =
@@ -105,8 +158,8 @@ namespace Windows.UI.Xaml.Controls
 
 		public DataTemplate HeaderTemplate
 		{
-			get { return (DataTemplate)this.GetValue(HeaderTemplateProperty); }
-			set { this.SetValue(HeaderTemplateProperty, value); }
+			get => (DataTemplate)GetValue(HeaderTemplateProperty);
+			set => SetValue(HeaderTemplateProperty, value);
 		}
 
 		public static readonly DependencyProperty HeaderTemplateProperty =
@@ -114,8 +167,8 @@ namespace Windows.UI.Xaml.Controls
 
 		public object OnContent
 		{
-			get { return (object)this.GetValue(OnContentProperty); }
-			set { this.SetValue(OnContentProperty, value); }
+			get => (object)GetValue(OnContentProperty);
+			set => SetValue(OnContentProperty, value);
 		}
 
 		public static readonly DependencyProperty OnContentProperty =
@@ -123,8 +176,8 @@ namespace Windows.UI.Xaml.Controls
 
 		public object OffContent
 		{
-			get { return (object)this.GetValue(OffContentProperty); }
-			set { this.SetValue(OffContentProperty, value); }
+			get => (object)GetValue(OffContentProperty);
+			set => SetValue(OffContentProperty, value);
 		}
 
 		public static readonly DependencyProperty OffContentProperty =
@@ -132,8 +185,8 @@ namespace Windows.UI.Xaml.Controls
 
 		public object Header
 		{
-			get { return (object)this.GetValue(HeaderProperty); }
-			set { this.SetValue(HeaderProperty, value); }
+			get => (object)GetValue(HeaderProperty);
+			set => SetValue(HeaderProperty, value);
 		}
 
 		public static readonly DependencyProperty HeaderProperty =
@@ -180,7 +233,8 @@ namespace Windows.UI.Xaml.Controls
 		private void OnIsOnChanged(DependencyPropertyChangedEventArgs e)
 		{
 			// On windows the event is raised first, then the ui is updated
-			Toggled?.Invoke(this, new RoutedEventArgs());
+			OnToggled();
+			UpdateSwitchKnobPosition(0);
 			UpdateToggleState();
 			UpdateContentState();
 		}
@@ -294,6 +348,20 @@ namespace Windows.UI.Xaml.Controls
 				VisualStateManager.GoToState(this, "OffContent", useTransition);
 			}
 		}
+
+		public void OnTemplateRecycled()
+		{
+			IsOn = false;
+		}
+
+		protected override AutomationPeer OnCreateAutomationPeer()
+		{
+			return new ToggleSwitchAutomationPeer(this);
+		}
+
+		internal void AutomationPeerToggle()
+		{
+			IsOn = !IsOn;
+		}
 	}
 }
-#endif

@@ -1,60 +1,69 @@
 using System;
 using System.Linq;
-using Uno.UI.Views.Controls;
-using Uno.Extensions;
-using Windows.UI.Xaml;
 using Windows.UI.Xaml.Documents;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using Uno.Disposables;
-using System.Collections.Generic;
-using Uno.UI.Extensions;
 using Windows.UI.Xaml.Media;
 using Windows.Foundation;
 using Uno.UI.Controls;
 using Windows.UI.Xaml.Input;
-
-#if XAMARIN_IOS_UNIFIED
 using Foundation;
 using UIKit;
 using CoreGraphics;
-using CoreText;
-#elif XAMARIN_IOS
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
-using MonoTouch.CoreGraphics;
-using MonoTouch.CoreText;
-using CGRect = System.Drawing.RectangleF;
-using nfloat = System.Single;
-using CGPoint = System.Drawing.PointF;
-using nint = System.Int32;
-using CGSize = System.Drawing.SizeF;
-#endif
+using Windows.UI.Text;
+using Uno.UI;
 
 namespace Windows.UI.Xaml.Controls
 {
-	public partial class TextBlock : UILabel, IFrameworkElement, IFontScalable
+	public partial class TextBlock : FrameworkElement, IFontScalable
 	{
+
 		private bool _measureInvalidated;
-		private CGSize? _previousAvailableSize;
-		private CGSize _previousDesiredSize;
+		private Size? _previousAvailableSize;
+		private Size _previousDesiredSize;
+		private NSAttributedString _attributedString;
+		private NSTextContainer _textContainer;
+		private NSLayoutManager _layoutManager;
+		private NSTextStorage _textStorage;
 		private CGRect _drawRect;
 
-		private UIFont _currentFont;
-		private Color? _currentColor;
+		/// <summary>
+		/// Determines whether the TextBlock should use a NSLayoutManager for layouting and rendering.
+		/// </summary>
+		/// <remarks>
+		/// By default, TextBlock uses NSAttributedString for layouting and rendering.
+		/// However, NSAttributedString doesn't support the following scenarios:
+		/// - Finding the location of glyphs for hyperlink hit-testing
+		/// - Trimming the last line of wrapping text
+		/// - Limiting the number of lines in wrapping text
+		/// To enable these scenarios, we must use a (more expensive) NSLayoutManager for layouting and rendering.
+		/// </remarks>
+		private bool UseLayoutManager =>
+			HasHyperlink ||
+			CanWrap && CanTrim ||
+			CanWrap && MaxLines != 0;
+
+		private bool CanWrap => TextWrapping != TextWrapping.NoWrap;
+
+		private bool CanTrim => TextTrimming != TextTrimming.None;
 
 		private void InitializePartial()
 		{
-			InitializeBinder();
-
 			ClipsToBounds = true;
 			UserInteractionEnabled = true; // Required for Hyperlinks
+			ContentMode = UIViewContentMode.Redraw;
+			BackgroundColor = UIColor.Clear;
 		}
 
-		public override void DrawText(CGRect rect)
+		public override void Draw(CGRect rect)
 		{
 			_drawRect = GetDrawRect(rect);
-			base.DrawText(_drawRect);
+			if (UseLayoutManager)
+			{
+				_layoutManager?.DrawGlyphs(new NSRange(0, (nint)_layoutManager.NumberOfGlyphs), _drawRect.Location);
+			}
+			else
+			{
+				_attributedString?.DrawString(_drawRect, NSStringDrawingOptions.UsesLineFragmentOrigin, null);
+			}
 		}
 
 		private CGRect GetDrawRect(CGRect rect)
@@ -62,13 +71,6 @@ namespace Windows.UI.Xaml.Controls
 			// Reduce available size by Padding
 			rect.Width -= (nfloat)(Padding.Left + Padding.Right);
 			rect.Height -= (nfloat)(Padding.Top + Padding.Bottom);
-
-			// On Windows, text is vertically top-aligned by default.
-			// On iOS, text is vertically center-aligned by default.
-			// http://stackoverflow.com/questions/1054558/vertically-align-text-within-a-uilabel
-			// This ensures the text is drawn to be vertically top-aligned:
-			rect = TextRectForBounds(rect, Lines);
-			rect.Y = 0;
 
 			// Offset drawing location by Padding
 			rect.X += (nfloat)Padding.Left;
@@ -80,26 +82,31 @@ namespace Windows.UI.Xaml.Controls
 		/// <summary>
 		/// Invalidates the last cached measure
 		/// </summary>
-		partial void SetNeedsLayoutPartial()
+		protected internal override void OnInvalidateMeasure()
 		{
+			base.OnInvalidateMeasure();
+			SetNeedsDisplay();
 			_measureInvalidated = true;
 		}
 
 		#region Layout
 
-		public override CGSize SizeThatFits(CGSize size)
+		protected override Size MeasureOverride(Size size)
 		{
+			// Size used to compare with the previous one. We don't want to use this one for the calculation.
+			var ceiledNewSize = new CGSize(Math.Ceiling(size.Width), Math.Ceiling(size.Height));
+
 			var hasSameDesiredSize =
 				!_measureInvalidated
 				&& _previousAvailableSize != null
-				&& _previousDesiredSize.Width == size.Width
-				&& _previousDesiredSize.Height == size.Height;
+				&& _previousDesiredSize.Width == ceiledNewSize.Width
+				&& _previousDesiredSize.Height == ceiledNewSize.Height;
 
 			var isSingleLineNarrower =
 				!_measureInvalidated
 				&& _previousAvailableSize != null
-				&& _previousDesiredSize.Width <= size.Width
-				&& _previousDesiredSize.Height == size.Height;
+				&& _previousDesiredSize.Width <= ceiledNewSize.Width
+				&& _previousDesiredSize.Height == ceiledNewSize.Height;
 
 			if (hasSameDesiredSize || isSingleLineNarrower)
 			{
@@ -112,74 +119,44 @@ namespace Windows.UI.Xaml.Controls
 
 				UpdateTypography();
 
-				var horizontalPadding = Padding.Left + Padding.Right;
-				var verticalPadding = Padding.Top + Padding.Bottom;
-
-				// available size considering min/max width/height
-				// necessary, because the height of a wrapping TextBlock depends on its width
-				size = IFrameworkElementHelper.SizeThatFits(this, size);
+				var padding = Padding;
 
 				// available size considering padding
-				size.Width -= (nfloat)horizontalPadding;
-				size.Height -= (nfloat)verticalPadding;
+				size = size.Subtract(padding);
 
-				var result = base.SizeThatFits(size);
+				var result = LayoutTypography(size);
 
 				if (result.Height == 0) // this can happen when Text is null or empty
 				{
 					// This measures the height correctly, even if the Text is null or empty
 					// This matches Windows where empty TextBlocks still have a height (especially useful when measuring ListView items with no DataContext)
-					result = (Text ?? NSString.Empty).StringSize(this.Font, size);
+					var font = UIFontHelper.TryGetFont((float)FontSize, FontWeight, FontStyle, FontFamily);
+					result = (Text ?? NSString.Empty).StringSize(font, size);
 				}
 
-				if (AdjustsFontSizeToFitWidth && !nfloat.IsNaN(size.Width))
-				{
-					result.Width = size.Width;
-				}
+				result = result.Add(padding);
 
-				result.Width += (nfloat)horizontalPadding;
-				result.Height += (nfloat)verticalPadding;
-
-				result = IFrameworkElementHelper.SizeThatFits(this, result);
 				return _previousDesiredSize = new CGSize(Math.Ceiling(result.Width), Math.Ceiling(result.Height));
 			}
+		}
+
+		protected override Size ArrangeOverride(Size size)
+		{
+			var padding = Padding;
+
+			// final size considering padding
+			size = size.Subtract(padding);
+
+			var result = LayoutTypography(size);
+
+			result = result.Add(padding);
+
+			return new CGSize(Math.Ceiling(result.Width), Math.Ceiling(result.Height));
 		}
 
 		#endregion
 
 		#region Update
-
-		private void UpdateTypography()
-		{
-			UpdateWrapAndTrim();
-			UpdateFont();
-			UpdateTextColor();
-			UpdateTextAlignment();
-			UpdateText();
-		}
-
-		private void UpdateTextColor()
-		{
-			var color = (Foreground as SolidColorBrush)?.ColorWithOpacity;
-
-			if (_currentColor != color)
-			{
-				// Local cache is used to avoid the interop if the color has not changed.
-				_currentColor = color;
-				TextColor = color;
-			}
-		}
-
-		private void UpdateTextAlignment()
-		{
-			base.TextAlignment = TextAlignment.ToNativeTextAlignment();
-		}
-
-		private void UpdateWrapAndTrim()
-		{
-			Lines = GetLines();
-			LineBreakMode = GetLineBreakMode();
-		}
 
 		private int GetLines()
 		{
@@ -194,7 +171,7 @@ namespace Windows.UI.Xaml.Controls
 			{
 				return UILineBreakMode.TailTruncation;
 			}
-			else if (TextWrapping == TextWrapping.NoWrap)
+			else if (TextWrapping == TextWrapping.NoWrap || MaxLines == 1)
 			{
 				return UILineBreakMode.Clip;
 			}
@@ -204,67 +181,42 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
-		private void UpdateFont()
-		{
-			var newFont = UIFontHelper.TryGetFont((float)FontSize, FontWeight, FontStyle, FontFamily);
-			if (newFont != null && !ReferenceEquals(_currentFont, newFont))
-			{
-				// Local cache is used to avoid the interop if the font has not changed.
-				_currentFont = newFont;
-				base.Font = newFont;
-			}
-		}
-
-		private void UpdateText()
-		{
-			var attributedText = GetAttributedText();
-			if (attributedText != null)
-			{
-				AttributedText = attributedText;
-			}
-			else
-			{
-				base.Text = Text;
-			}
-		}
-
 		private NSAttributedString GetAttributedText()
 		{
-			if (UseInlinesFastPath && LineHeight == 0 && CharacterSpacing == 0)
+			var mutableAttributedString = new NSMutableAttributedString(Text);
+			mutableAttributedString.BeginEditing();
+
+			mutableAttributedString.AddAttributes(GetAttributes(), new NSRange(0, mutableAttributedString.Length));
+
+			// Apply Inlines
+			foreach (var inline in GetEffectiveInlines())
 			{
-				return null;
+				mutableAttributedString.AddAttributes(inline.inline.GetAttributes(), new NSRange(inline.start, inline.end - inline.start));
 			}
-			else
-			{
-				var mutableAttributedString = new NSMutableAttributedString(Text);
-				mutableAttributedString.BeginEditing();
 
-				// Apply CharacterSpacing
-				if (CharacterSpacing != 0)
-				{
-					mutableAttributedString.AddAttributes(GetCharacterSpacingAttributes(), new NSRange(0, mutableAttributedString.Length));
-				}
-
-				// Apply LineHeight
-				if (LineHeight != 0)
-				{
-					mutableAttributedString.AddAttributes(GetLineHeightAttributes(), new NSRange(0, mutableAttributedString.Length));
-				}
-
-				// Apply Inlines
-				foreach (var inline in GetEffectiveInlines())
-				{
-					mutableAttributedString.AddAttributes(inline.inline.GetAttributes(), new NSRange(inline.start, inline.end - inline.start));
-				}
-				
-				mutableAttributedString.EndEditing();
-				return mutableAttributedString;
-			}
+			mutableAttributedString.EndEditing();
+			return mutableAttributedString;
 		}
-		
-		private UIStringAttributes GetLineHeightAttributes()
+
+		private UIStringAttributes GetAttributes()
 		{
 			var attributes = new UIStringAttributes();
+
+			var font = UIFontHelper.TryGetFont((float)FontSize, FontWeight, FontStyle, FontFamily);
+
+			attributes.Font = font;
+			attributes.ForegroundColor = (Foreground as SolidColorBrush)?.ColorWithOpacity;
+
+			if (TextDecorations != TextDecorations.None)
+			{
+				attributes.UnderlineStyle = (TextDecorations & TextDecorations.Underline) == TextDecorations.Underline
+					? NSUnderlineStyle.Single
+					: NSUnderlineStyle.None;
+
+				attributes.StrikethroughStyle = (TextDecorations & TextDecorations.Strikethrough) == TextDecorations.Strikethrough
+					? NSUnderlineStyle.Single
+					: NSUnderlineStyle.None;
+			}
 
 			var paragraphStyle = new NSMutableParagraphStyle()
 			{
@@ -272,32 +224,40 @@ namespace Windows.UI.Xaml.Controls
 				Alignment = TextAlignment.ToNativeTextAlignment(),
 				LineBreakMode = GetLineBreakMode(),
 			};
+
+			// For unknown reasons, the LineBreakMode must be set to WordWrap
+			// when applied to a NSTextStorage for text to wrap.
+			if (UseLayoutManager)
+			{
+				paragraphStyle.LineBreakMode = UILineBreakMode.WordWrap;
+			}
+
 			if (LineStackingStrategy != LineStackingStrategy.MaxHeight)
 			{
 				paragraphStyle.MaximumLineHeight = (nfloat)LineHeight;
 			}
 			attributes.ParagraphStyle = paragraphStyle;
 
-			// BaselineOffset calculation is only required when the text's font size does not take up the entire line height
-			// Otherwise this calculation will result in invalid values causing the text to be pushed out of the UILabel's rect
-			if (Font != null && Font.LineHeight < LineHeight)
+			if (LineHeight != 0 && font != null)
 			{
-				// iOS puts text at the bottom of the line box, whereas Windows puts it at the top. Empirically this offset gives similar positioning to Windows. 
-				// (Note that Descender is typically a negative value.)
-				var verticalOffset = ((float)LineHeight - (float)Font.LineHeight) * .56f + (float)Font.Descender;
-				attributes.BaselineOffset = verticalOffset;
+				// iOS puts text at the bottom of the line box, whereas Windows puts it at the top. 
+				// Empirically this offset gives similar positioning to Windows. 
+				// Note: Descender is typically a negative value.
+				var verticalOffset = LineHeight - font.LineHeight + font.Descender;
+
+				// Because we're trying to move the text up (toward the top of the line box), 
+				// we only set BaselineOffset to a positive value. 
+				// A negative value indicates that the the text is already bottom-aligned.
+				attributes.BaselineOffset = Math.Max(0, (float)verticalOffset);
+			}
+
+			if (CharacterSpacing != 0)
+			{
+				//CharacterSpacing is in 1/1000 of an em, iOS KerningAdjustment is in points. 1 em = 12 points
+				attributes.KerningAdjustment = (CharacterSpacing / 1000f) * 12;
 			}
 
 			return attributes;
-		}
-
-		private UIStringAttributes GetCharacterSpacingAttributes()
-		{
-			return new UIStringAttributes()
-			{
-				//CharacterSpacing is in 1/1000 of an em, iOS KerningAdjustment is in points. 1 em = 12 points
-				KerningAdjustment = (CharacterSpacing / 1000f) * 12
-			};
 		}
 
 		#endregion
@@ -313,44 +273,46 @@ namespace Windows.UI.Xaml.Controls
 
 		#region Hyperlinks
 
-		partial void HitCheckOverridePartial(ref bool hitCheck)
+		internal override bool IsViewHit()
 		{
-			hitCheck = true;
+			return true;
 		}
 
-		public override void TouchesBegan(NSSet touches, UIEvent evt)
+		#endregion
+
+		private void UpdateTypography()
 		{
-			var point = (touches.AnyObject as UITouch).LocationInView(this);
-			var args = new PointerRoutedEventArgs(point);
-			OnPointerPressed(args);
-			if (!args.Handled)
+			_attributedString = GetAttributedText();
+
+			if (UseLayoutManager)
 			{
-				// Give parent a chance to handle the event.
-				base.TouchesBegan(touches, evt);
+				// Configure textContainer
+				_textContainer = new NSTextContainer();
+				_textContainer.LineFragmentPadding = 0;
+				_textContainer.LineBreakMode = GetLineBreakMode();
+				_textContainer.MaximumNumberOfLines = (nuint)GetLines();
+				
+				// Configure layoutManager
+				_layoutManager = new NSLayoutManager();
+				_layoutManager.AddTextContainer(_textContainer);
+
+				// Configure textStorage
+				_textStorage = new NSTextStorage();
+				_textStorage.AddLayoutManager(_layoutManager);
+				_textStorage.SetString(_attributedString);
 			}
 		}
 
-		public override void TouchesEnded(NSSet touches, UIEvent evt)
+		private Size LayoutTypography(Size size)
 		{
-			var point = (touches.AnyObject as UITouch).LocationInView(this);
-			var args = new PointerRoutedEventArgs(point);
-			OnPointerReleased(args);
-			if (!args.Handled)
+			if (UseLayoutManager)
 			{
-				// Give parent a chance to handle the event.
-				base.TouchesEnded(touches, evt);
+				_textContainer.Size = size;
+				return _layoutManager.GetUsedRectForTextContainer(_textContainer).Size;
 			}
-		}
-
-		public override void TouchesCancelled(NSSet touches, UIEvent evt)
-		{
-			var point = (touches.AnyObject as UITouch).LocationInView(this);
-			var args = new PointerRoutedEventArgs(point);
-			OnPointerCanceled(args);
-			if (!args.Handled)
+			else
 			{
-				// Give parent a chance to handle the event.
-				base.TouchesCancelled(touches, evt);
+				return _attributedString.GetBoundingRect(size, NSStringDrawingOptions.UsesLineFragmentOrigin, null).Size;
 			}
 		}
 
@@ -360,38 +322,15 @@ namespace Windows.UI.Xaml.Controls
 			{
 				return -1;
 			}
-			
-			// Configure textContainer
-			var textContainer = new NSTextContainer();
-			textContainer.LineFragmentPadding = 0;
-			textContainer.LineBreakMode = LineBreakMode;
-			textContainer.MaximumNumberOfLines = (nuint)Lines;
-			textContainer.Size = _drawRect.Size;
 
-			// Configure layoutManager
-			var layoutManager = new NSLayoutManager();
-			layoutManager.AddTextContainer(textContainer);
-
-			// Configure textStorage
-			var textStorage = new NSTextStorage();
-			textStorage.SetString(AttributedText);
-			textStorage.AddLayoutManager(layoutManager);
-			textStorage.SetAttributes(
-				new UIStringAttributes()
-				{
-					Font = Font
-				},
-				new NSRange(0, textStorage.Length)
-			);
-			
 			// Find the tapped character's index
 			var partialFraction = (nfloat)0;
 			var pointInTextContainer = new CGPoint(point.X - _drawRect.X, point.Y - _drawRect.Y);
-			var characterIndex = (int)layoutManager.CharacterIndexForPoint(pointInTextContainer, textContainer, ref partialFraction);
+#pragma warning disable CS0618 // Type or member is obsolete (For VS2017 compatibility)
+			var characterIndex = (int)_layoutManager.CharacterIndexForPoint(pointInTextContainer, _layoutManager.TextContainers.FirstOrDefault(), ref partialFraction);
+#pragma warning restore CS0618 // Type or member is obsolete
 
 			return characterIndex;
 		}
-
-		#endregion
 	}
 }

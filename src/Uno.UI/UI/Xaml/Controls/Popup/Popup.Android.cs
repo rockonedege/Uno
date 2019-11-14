@@ -7,14 +7,13 @@ using System.Collections.Generic;
 using System.Text;
 using static Android.Views.View;
 using Windows.UI.Xaml.Controls.Primitives;
+using Windows.UI.Xaml.Media;
 
 namespace Windows.UI.Xaml.Controls
 {
 	public partial class Popup
 	{
 		private readonly PopupWindow _popupWindow;
-
-		public View Anchor { get; set; }
 
 		internal FlyoutPlacementMode Placement { get; set; }
 
@@ -34,11 +33,8 @@ namespace Windows.UI.Xaml.Controls
 			PopupPanel = new PopupPanel(this);
 		}
 
-		partial void OnPopupPanelChanged(DependencyPropertyChangedEventArgs e)
+		partial void OnPopupPanelChangedPartial(PopupPanel previousPanel, PopupPanel newPanel)
 		{
-			var previousPanel = e.OldValue as PopupPanel;
-			var newPanel = e.NewValue as PopupPanel;
-
 			previousPanel?.Children.Clear();
 
 			if (PopupPanel != null)
@@ -49,15 +45,9 @@ namespace Windows.UI.Xaml.Controls
 				}
 			}
 
-			if (previousPanel != null)
-			{
-				previousPanel.PointerPressed -= Panel_PointerPressed;
-			}
-			if (newPanel != null)
-			{
-				newPanel.PointerPressed += Panel_PointerPressed;
-			}
 			_popupWindow.ContentView = newPanel;
+
+			UpdatePopupPanelDismissibleBackground(IsLightDismissEnabled);
 		}
 
 		private void OnPopupDismissed(object sender, EventArgs e)
@@ -75,7 +65,10 @@ namespace Windows.UI.Xaml.Controls
 			}
 			else
 			{
-				_popupWindow.Dismiss();
+				if(_popupWindow.IsShowing)
+				{
+					_popupWindow.Dismiss();
+				}
 				PopupPanel.Visibility = Visibility.Collapsed;
 			}
 		}
@@ -111,12 +104,41 @@ namespace Windows.UI.Xaml.Controls
 
 				_popupWindow.SetBackgroundDrawable(null);
 			}
+
+			UpdatePopupPanelDismissibleBackground(newIsLightDismissEnabled);
+		}
+
+		private void UpdatePopupPanelDismissibleBackground(bool isLightDismiss)
+		{
+			var popupPanel = PopupPanel;
+			if (popupPanel == null)
+			{
+				return; // nothing to do
+			}
+
+			if (isLightDismiss)
+			{
+				PopupPanel.Background = new SolidColorBrush(Colors.Transparent);
+			}
+			else
+			{
+				PopupPanel.Background = null;
+			}
 		}
 
 		protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
 		{
 			// Ensure Popup doesn't take any space.
 			this.SetMeasuredDimension(0, 0);
+		}
+
+		/// <summary>
+		/// Prevent the popup from stealing focus from views in the main window.
+		/// </summary>
+		internal void DisableFocus()
+		{
+			_popupWindow.Focusable = false;
+			_popupWindow.InputMethodMode = InputMethod.Needed;
 		}
 	}
 }

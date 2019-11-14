@@ -17,18 +17,19 @@ namespace Windows.UI.Xaml
 		private readonly static Dictionary<Type, Style> _defaultStyleCache = new Dictionary<Type, Style>(Uno.Core.Comparison.FastTypeComparer.Default);
 
 		/// <summary>
-		/// Default style precendece to apply when using the Style property.
+		/// Default style precedence to apply when using the Style property.
 		/// </summary>
 		internal static DependencyPropertyValuePrecedences DefaultStylePrecedence
 			 => DependencyPropertyValuePrecedences.ImplicitStyle;
 
 		// Note: These conditionals are placed for legacy reasons, when Uno.UI xaml-style code
-		// was considered. This is approach has been abandonned since then but style is still referenced 
+		// was considered. This is approach has been abandoned since then but style is still referenced 
 		// by windows platforms. Once it's removed we can safely remove these conditionals.
 		internal DependencyPropertyValuePrecedences Precedence { get; }
 
 		public Style()
 		{
+			Precedence = DependencyPropertyValuePrecedences.ExplicitStyle;
 		}
 
 		public Style(Type targetType)
@@ -41,7 +42,7 @@ namespace Windows.UI.Xaml
 			TargetType = targetType;
 
 			Precedence = DependencyPropertyValuePrecedences.ExplicitStyle;
-        }
+		}
 
 		public Style(Type targetType, Style basedOn)
 			: this(targetType, basedOn, false)

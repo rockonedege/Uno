@@ -1,48 +1,50 @@
 package Uno.UI;
 
+import android.graphics.Matrix;
 import android.view.*;
-import android.graphics.PointF;
-import android.graphics.Rect;
+import android.view.animation.Transformation;
 import android.util.Log;
-import android.support.v4.view.*;
+
 import java.lang.*;
 import java.lang.reflect.*;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 public abstract class UnoViewGroup
-        extends android.view.ViewGroup
-		implements UnoViewParent{
+	extends android.view.ViewGroup
+	implements Uno.UI.UnoMotionTarget {
 
-    private boolean _inLocalAddView, _inLocalRemoveView;
+	private static final String LOGTAG = "UnoViewGroup";
+	private static boolean _isLayoutingFromMeasure = false;
+	private static ArrayList<UnoViewGroup> callToRequestLayout = new ArrayList<UnoViewGroup>();
+
+	private boolean _inLocalAddView, _inLocalRemoveView;
 	private boolean _isEnabled;
-    private boolean _isHitTestVisible;
-    private UnoGestureDetector _gestureDetector;
-    
-    private boolean _childHandledTouchEvent;
-    private boolean _childBlockedTouchEvent;
-    private boolean _childIsUnoViewGroup;
+	private boolean _isHitTestVisible;
 
-	private boolean _isPointerCaptured;
-	private boolean _isPointInView;
+	private boolean _isManagedLoaded;
+	private boolean _needsLayoutOnAttachedToWindow;
 
-	private int _currentPointerId = -1;
+	private Map<View, Matrix> _childrenTransformations = new HashMap<View, Matrix>();
 
-    private static Method _setFrameMethod;
+	private static Method _setFrameMethod;
 
-    static {
-        try {
-            buildSetFrameReflection();
-        }
-        catch(Exception e) { 
-            Log.e("UnoViewGroup", "Failed to initialize NativeSetFrame method. " + e.toString());
-        }
-    }
+	static {
+		try {
+			buildSetFrameReflection();
+		}
+		catch(Exception e) {
+			Log.e(LOGTAG, "Failed to initialize NativeSetFrame method. " + e.toString());
+		}
+	}
 
 	private static void buildSetFrameReflection() throws ClassNotFoundException, InstantiationException, Exception
-    {
-        // This is required because we need to set the view bounds before calling onLayout()
-        Class viewClass = java.lang.Class.forName("android.view.View");
+	{
+		// This is required because we need to set the view bounds before calling onLayout()
+		Class viewClass = java.lang.Class.forName("android.view.View");
 
-        Method[] methods = viewClass.getDeclaredMethods();
+		Method[] methods = viewClass.getDeclaredMethods();
 
 		for(int i=0; i < methods.length; i++) {
 			if(methods[i].getName() == "setFrame" && methods[i].getParameterTypes().length == 4) {
@@ -52,92 +54,94 @@ public abstract class UnoViewGroup
 		}
 
 		// This block is commented for easier logging.
-		// 
+		//
 		// if(_setFrameMethod != null) {
-		// 	Log.i("UnoViewGroup", "Found android.view.View.setFrame(), arrange fast-path is ENABLED.");
+		// 	Log.i(LOGTAG, "Found android.view.View.setFrame(), arrange fast-path is ENABLED.");
 		// }
 		// else {
-		// 	Log.i("UnoViewGroup", "Unable to find android.view.View.setFrame(), arrange fast-path is DISABLED.");
+		// 	Log.i(LOGTAG, "Unable to find android.view.View.setFrame(), arrange fast-path is DISABLED.");
 		// }
-    }
+	}
 
 
-    public UnoViewGroup(android.content.Context ctx)
-    {
-        super(ctx);
+	public UnoViewGroup(android.content.Context ctx)
+	{
+		super(ctx);
 
 		_isEnabled = true;
-        _isHitTestVisible = true;
+		_isHitTestVisible = true;
 
-        setOnHierarchyChangeListener(
-                new OnHierarchyChangeListener()
-                {
-                    @Override
-                    public void onChildViewAdded(View parent, View child)
-                    {
-                        if(!_inLocalAddView)
-                        {
-                            onLocalViewAdded(child, indexOfChild(child));
-                        }
-                    }
+		setOnHierarchyChangeListener(
+			new OnHierarchyChangeListener()
+			{
+				@Override
+				public void onChildViewAdded(View parent, View child)
+				{
+					if(!_inLocalAddView)
+					{
+						onLocalViewAdded(child, indexOfChild(child));
+					}
+				}
 
-                    @Override
-                    public void onChildViewRemoved(View parent, View child)
-                    {
-                        if(!_inLocalRemoveView)
-                        {
-                            onLocalViewRemoved(child);
-                        }
-                    }
-                }
-        );
-    }
+				@Override
+				public void onChildViewRemoved(View parent, View child)
+				{
+					if(!_inLocalRemoveView)
+					{
+						onLocalViewRemoved(child);
+					}
+				}
+			}
+		);
 
-    private boolean _unoLayoutOverride;
+		setClipChildren(false); // The actual clipping will be calculated in managed code
+	}
 
-    public final void nativeStartLayoutOverride(int left, int top, int right, int bottom)  throws IllegalAccessException, InvocationTargetException {
-        _unoLayoutOverride = true;
+	private boolean _unoLayoutOverride;
 
-        if(_setFrameMethod != null) {
-            // When Uno overrides the layout pass, the setFrame method must be called to 
-            // set the bounds of the frame, while not calling layout(). 
+	public final void nativeStartLayoutOverride(int left, int top, int right, int bottom)  throws IllegalAccessException, InvocationTargetException {
+		_unoLayoutOverride = true;
 
-            _setFrameMethod.invoke(this, new Object[]{ left, top, right, bottom });
-        }
-        else {
-            // This method is present as a fallback in case google would remove the
-            // setFrame method.
-            layout(left, top, right, bottom);
+		if(_setFrameMethod != null) {
+			// When Uno overrides the layout pass, the setFrame method must be called to
+			// set the bounds of the frame, while not calling layout().
 
-            // Force layout is required to ensure that the children added during the layout phase
-            // are properly layouted. Failing to call this method will make controls 
-            // like the ContentPresenter not display their content, if added late.
-            forceLayout();
-        }
-    }
+			_setFrameMethod.invoke(this, new Object[]{ left, top, right, bottom });
+		}
+		else {
+			// This method is present as a fallback in case google would remove the
+			// setFrame method.
+			layout(left, top, right, bottom);
 
-    public final void nativeFinishLayoutOverride(){
-        // Call the actual layout method, so the FORCE_LAYOUT flag is cleared.
-        // This must be called before setting _unoLayoutOverride to false, to avoid onLayout calling
-        // onLayoutCore.
-        layout(getLeft(), getTop(), getRight(), getBottom());
+			// Force layout is required to ensure that the children added during the layout phase
+			// are properly layouted. Failing to call this method will make controls
+			// like the ContentPresenter not display their content, if added late.
+			forceLayout();
+		}
+	}
 
-        _unoLayoutOverride = false;
-    }
+	public final void nativeFinishLayoutOverride(){
+		// Call the actual layout method, so the FORCE_LAYOUT flag is cleared.
+		// This must be called before setting _unoLayoutOverride to false, to avoid onLayout calling
+		// onLayoutCore.
+		layout(getLeft(), getTop(), getRight(), getBottom());
 
-    protected abstract void onLayoutCore(boolean changed, int left, int top, int right, int bottom);
+		_unoLayoutOverride = false;
+	}
 
-    protected final void onLayout(boolean changed, int left, int top, int right, int bottom)
-    {
-        if(!_unoLayoutOverride)
-        {
-            onLayoutCore(changed, left, top, right, bottom);
-        }
-    }
+	protected abstract void onLayoutCore(boolean changed, int left, int top, int right, int bottom);
 
-    protected abstract void onLocalViewAdded(View view, int index);
+	protected final void onLayout(boolean changed, int left, int top, int right, int bottom)
+	{
+		if(!_unoLayoutOverride)
+		{
+			onLayoutCore(changed, left, top, right, bottom);
+		}
+	}
 
-    protected abstract void onLocalViewRemoved(View view);
+	protected abstract void onLocalViewAdded(View view, int index);
+
+	protected abstract void onLocalViewRemoved(View view);
 
 	public static long getMeasuredDimensions(View view) {
 		// This method is called often enough that returning one long
@@ -146,67 +150,67 @@ public abstract class UnoViewGroup
 		return view.getMeasuredWidth() | (((long)view.getMeasuredHeight()) << 32);
 	}
 
-    protected final void addViewFast(View view)
-    {
-        try
-        {
-            _inLocalAddView = true;
+	protected final void addViewFast(View view)
+	{
+		try
+		{
+			_inLocalAddView = true;
 
-            addView(view, -1, generateDefaultLayoutParams());
-        }
-        finally
-        {
-            _inLocalAddView = false;
-        }
-    }
+			addView(view, -1, generateDefaultLayoutParams());
+		}
+		finally
+		{
+			_inLocalAddView = false;
+		}
+	}
 
-    protected final void addViewFast(View view, int position)
-    {
-        try
-        {
-            _inLocalAddView = true;
+	protected final void addViewFast(View view, int position)
+	{
+		try
+		{
+			_inLocalAddView = true;
 
-            addView(view, position, generateDefaultLayoutParams());
-        }
-        finally
-        {
-            _inLocalAddView = false;
-        }
-    }
+			addView(view, position, generateDefaultLayoutParams());
+		}
+		finally
+		{
+			_inLocalAddView = false;
+		}
+	}
 
-    protected final void removeViewFast(View view)
-    {
-        try
-        {
-            _inLocalRemoveView = true;
+	protected final void removeViewFast(View view)
+	{
+		try
+		{
+			_inLocalRemoveView = true;
 
-            removeView(view);
-            
-            notifyChildRemoved(view);
-        }
-        finally
-        {
-            _inLocalRemoveView = false;
-        }
-    }
-	 
-    protected final void removeViewAtFast(int position)
-    {
-        try
-        { 
-            _inLocalRemoveView = true;
+			removeView(view);
 
-            View child = getChildAt(position);
+			notifyChildRemoved(view);
+		}
+		finally
+		{
+			_inLocalRemoveView = false;
+		}
+	}
 
-            removeViewAt(position);
+	protected final void removeViewAtFast(int position)
+	{
+		try
+		{
+			_inLocalRemoveView = true;
 
-            notifyChildRemoved(child);
-        }
-        finally
-        {
-            _inLocalRemoveView = false;
-        }
-    }
+			View child = getChildAt(position);
+
+			removeViewAt(position);
+
+			notifyChildRemoved(child);
+		}
+		finally
+		{
+			_inLocalRemoveView = false;
+		}
+	}
 
 	private android.text.Layout _textBlockLayout;
 	private int _leftTextBlockPadding, _topTextBlockPadding;
@@ -220,347 +224,237 @@ public abstract class UnoViewGroup
 	}
 
 	@Override
-    protected void onDraw(android.graphics.Canvas canvas)
+	protected void onDraw(android.graphics.Canvas canvas)
 	{
 		if(_textBlockLayout != null) {
 			canvas.translate(_leftTextBlockPadding, _topTextBlockPadding);
-            _textBlockLayout.draw(canvas);
+			_textBlockLayout.draw(canvas);
 		}
 	}
 
-    private void notifyChildRemoved(View child)
-    {
-        UnoViewGroup childViewGroup = child instanceof UnoViewGroup
-            ? (UnoViewGroup)child
-            : null;
+	private void notifyChildRemoved(View child)
+	{
+		UnoViewGroup childViewGroup = child instanceof UnoViewGroup
+			? (UnoViewGroup)child
+			: null;
 
-        if(childViewGroup != null)
-        {
-            // This is required because the Parent property is set to null
-            // after the onDetachedFromWindow is called.
-            childViewGroup.onRemovedFromParent();
-        }
-    }
+		if(childViewGroup != null)
+		{
+			// This is required because the Parent property is set to null
+			// after the onDetachedFromWindow is called.
+			childViewGroup.onRemovedFromParent();
+		}
+	}
 
-    protected abstract void onRemovedFromParent();
+	protected abstract void onRemovedFromParent();
 
-    protected final void measureChild(View view, int widthSpec, int heightSpec)
-    {
-        super.measureChild(view, widthSpec, heightSpec);
-    }
+	protected final void measureChild(View view, int widthSpec, int heightSpec)
+	{
+		super.measureChild(view, widthSpec, heightSpec);
+	}
 
-    public final boolean getIsNativeLoaded() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            return super.getWindowId() != null;
-        }
-        else {
-            return super.getWindowToken() != null;
-        }
-    }
-    
-    public final void requestLayout()
-    {
-        if(nativeRequestLayout())
-        {
-            super.requestLayout();
-        }
-    }
+	public final boolean getIsNativeLoaded() {
+		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
+			return super.getWindowId() != null;
+		}
+		else {
+			return super.getWindowToken() != null;
+		}
+	}
 
-    public final void invalidate()
-    {
-        super.invalidate();
-    }
+	public final void requestLayout()
+	{
+		if(nativeRequestLayout())
+		{
+			if (getIsManagedLoaded() && !getIsNativeLoaded()) {
+				// If we're here, managed load is enabled (AndroidUseManagedLoadedUnloaded = true) and requestLayout() has been called from OnLoaded
+				// prior to dispatchAttachedToWindow() being called. This can cause the request to fall through the cracks, because mAttachInfo
+				// isn't set yet. (See ViewRootImpl.requestLayoutDuringLayout()). If we're in a layout pass already, we have to ensure that requestLayout()
+				// is called again once the view is fully natively initialized.
+				_needsLayoutOnAttachedToWindow = true;
+			}
 
-    protected abstract boolean nativeRequestLayout();
+			if(_isLayoutingFromMeasure){
+				callToRequestLayout.add(this);
+				return;
+			}
 
-    public final boolean isLayoutRequested()
-    {
-        return super.isLayoutRequested();
-    }
+			super.requestLayout();
+		}
+	}
 
-    public final float getAlpha()
-    {
-        return super.getAlpha();
-    }
+	public final void invalidate()
+	{
+		super.invalidate();
+	}
 
-    public final void setAlpha(float opacity)
-    {
-        super.setAlpha(opacity);
-    }
+	protected abstract boolean nativeRequestLayout();
 
-    public boolean dispatchTouchEvent(MotionEvent e)
-    {
-        // The purpose of dispatchTouchEvent is to find the target (view) of a touch event. 
-        // When the user touches the screen, dispatchTouchEvent is called on the top-most view, and recursively passed down to all children.
-        // Once a view (that we will call target) decides to handle the touch event (generally when it has gesture detectors and none of its children handled the event), it returns true.
-        // The parent then gets notified that the event was handled by one of its child, stops passing down the touch event to the siblings of the target, 
-        // ignores the event (i.e., doesn't handle it itself even if it could), and returns true to its own parent (which bubbles all the way to the top-most view).
-        //
-        // Essentially, returning true means that you 'handled' (and implicitly also 'blocked') a touch event, where:
-        // - blocked -> prevent siblings from handling the event
-        // - handled -> prevent parents from handling the event
-        // Natively, you can't 'block' a touch event without also 'handling' it.
-        //
-        // In XAML, the distinction between 'blocking' and 'handling' is important, and a view must be able to 'block' a touch event without necessarily 'handling' it.
-        // Therefore, the single boolean offered by dispatchTouchEvent isn't enough, and we must allow UnoViewGroups to communicate these 'blocked' vs 'handled' nuances through some other channel.
-        // To do this, we introduce 3 boolean fields in UnoViewGroups: _childIsUnoViewGroup, _childBlockedTouchEvent, _childHandledTouchEvent (each with their own public setter).
-        // Because UnoViewGroup must be compatible with native (non-UnoViewGroup) views, we need to process the input (super.dispatchTouchEvent) and output (return) differently based on the nature of the parent and children.
-        //
-        // Input:
-        // - Child is UnoViewGroup (_childIsUnoViewGroup = true) -> 
-        //     - read the values of _childBlockedTouchEvent and _childHandledTouchEvent (set by the child in its own dispatchTouchEvent)
-        // - Child is native (_childIsUnoViewGroup = false) -> 
-        //     - set both the values of _childBlockedTouchEvent and _childHandledTouchEvent to the value of super.dispatchTouchEvent
-        //
-        // Output:
-        // - Parent is UnoViewGroup -> 
-        //     - set _childIsUnoViewGroup, _childBlockedTouchEvent and _childHandledTouchEvent on the parent
-        //     - return true if isBlockingTouchEvent to prevent siblings from receiving the touch event 
-        //       (returned value won't actually be read by parent, as it will prefer _childBlockedTouchEvent and _childHandledTouchEvent instead)
-        // - Parent is native ->
-        //	   - return true if isHandlingTouchEvent 
-        //       (because native views can't read _childBlockedTouchEvent and _childHandledTouchEvent, and will assume true to mean the event was handled)
-        
-        // Reset possibly invalid states (set by children in previous calls)
-        _childIsUnoViewGroup = false;
-        _childBlockedTouchEvent = false;
-        _childHandledTouchEvent = false;
+	public final boolean isLayoutRequested()
+	{
+		return super.isLayoutRequested();
+	}
 
-        if (!_isHitTestVisible || !_isEnabled)
-        {		
-            // Log.i(this.toString(), "!_isHitTestVisible: " + !_isHitTestVisible);
-            // Log.i(this.toString(), "!_isEnabled: " + !_isEnabled);
-            // ignore all touches
-			setIsPointerCaptured(false);
-            return false; 
-        }
+	public final float getAlpha()
+	{
+		return super.getAlpha();
+	}
 
-        // Always dispatch the touch events, otherwise system controls may not behave
-        // properly, such as not displaying "material design" animation cues (e.g. the 
-        // growing circles in buttons when keeping pressed).
-        boolean superDispatchTouchEvent = super.dispatchTouchEvent(e);
+	public final void setAlpha(float opacity)
+	{
+		super.setAlpha(opacity);
+	}
 
-        final boolean wasPointInView = _isPointInView;
+	private class TouchMotionTarget extends Uno.UI.TouchMotionTarget
+	{
+		TouchMotionTarget() { super(UnoViewGroup.this); }
+		@Override public boolean dispatchToSuper(MotionEvent event) { return Uno.UI.UnoViewGroup.super.dispatchTouchEvent(event); }
+	}
 
-        // It's possible that for visual constraints (e.g. clipping),
-        // the view must not handle the touch. If that's the case,
-        // the touch event must be dispatched to other controls. 
-        // This check must be done after the gestureDetector has been tested
-        // because some controls may want to react to the gesture (e.g. action_cancel, action_up)
-        // even if the point is outside the view bounds.
-        _isPointInView = isPointInView(new PointF(e.getRawX(), e.getRawY())); // takes clipping into account
-		final boolean didPointerExit = wasPointInView &&
-				!_isPointInView &&
-				(e.getActionMasked() == MotionEvent.ACTION_MOVE || e.getActionMasked() == MotionEvent.ACTION_CANCEL);
+	private class GenericMotionTarget extends Uno.UI.GenericMotionTarget
+	{
+		GenericMotionTarget() { super(UnoViewGroup.this); }
+		@Override public boolean dispatchToSuper(MotionEvent event) { return Uno.UI.UnoViewGroup.super.dispatchGenericMotionEvent(event); }
+	}
 
-		final boolean isCurrentPointer = isCurrentPointer(e, _isPointInView);
-        
-        if (!_childIsUnoViewGroup) // child is native
-        {		
-            // Log.i(this.toString(), "!_childIsUnoViewGroup: " + !_childIsUnoViewGroup);
-            _childBlockedTouchEvent = _childHandledTouchEvent = superDispatchTouchEvent;
-        }
+	private final Uno.UI.MotionTargetAdapter _thisAsTouchTarget = new TouchMotionTarget();
+	private final Uno.UI.MotionTargetAdapter _thisAsGenericMotionTarget = new GenericMotionTarget();
 
-        // Note: There is a bug (#14712) where the UnoViewGroup receives the MOTION_DOWN,
-        // is collapsed (or the child who received the MOTION_DOWN) (e.g. VisualState concurrency issue)
-        // and doesn't receive the MOTION_UP. This is because the control is removed
-        // from the visual tree when it's collapsed and won't get the dispatchTouchEvent. 
-        // To workaround this, simply put a transparent background on the clickable control
-        // so that it receives the touch (tryHandleTouchEvent) instead of its children.
+	@Override public /* TODO: final */ boolean dispatchTouchEvent(MotionEvent event) {
+		return Uno.UI.UnoMotionHelper.Instance.dispatchMotionEvent(_thisAsTouchTarget, event);
+	}
+	@Override public final boolean dispatchGenericMotionEvent(MotionEvent event) {
+		return Uno.UI.UnoMotionHelper.Instance.dispatchMotionEvent(_thisAsGenericMotionTarget, event);
+	}
 
-                                                               // only executed if left-hand side is false (prevents event from being handled twice)
-                                                               // gives the current view a chance to block/handle the touch event if none of its children have
-        boolean isBlockingTouchEvent = _childBlockedTouchEvent || nativeHitCheck(); 
-        boolean isHandlingTouchEvent = _childHandledTouchEvent ||
-				((isBlockingTouchEvent || didPointerExit) && tryHandleTouchEvent(e, _isPointInView, wasPointInView, isCurrentPointer));
+	private boolean _isNativeMotionEventsInterceptForbidden = false;
+	@Override public /* protected in C# */ final boolean getIsNativeMotionEventsInterceptForbidden(){ return _isNativeMotionEventsInterceptForbidden; }
+	public /* protected in C# */ final void setIsNativeMotionEventsInterceptForbidden(boolean isNativeMotionEventsInterceptForbidden){ _isNativeMotionEventsInterceptForbidden = isNativeMotionEventsInterceptForbidden; }
 
-        // Log.i(this.toString(), "MotionEvent: " + e.toString());
-        // Log.i(this.toString(), "superDispatchTouchEvent: " + superDispatchTouchEvent);
-        // Log.i(this.toString(), "_childBlockedTouchEvent: " + _childBlockedTouchEvent);
-        // Log.i(this.toString(), "_childHandledTouchEvent: " + _childHandledTouchEvent);
-        // Log.i(this.toString(), "isBlockingTouchEvent: " + isBlockingTouchEvent);
-        // Log.i(this.toString(), "isHandlingTouchEvent: " + isHandlingTouchEvent);
+	private boolean _isNativeMotionEventsEnabled = true;
+	@Override public /* protected in C# */ final boolean getIsNativeMotionEventsEnabled(){ return _isNativeMotionEventsEnabled; }
+	public /* protected in C# */ final void setIsNativeMotionEventsEnabled(boolean isNativeMotionEventsEnabled){ _isNativeMotionEventsEnabled = isNativeMotionEventsEnabled; }
 
-		UnoViewParent parentUnoViewGroup = getParentUnoViewGroup();
-        boolean parentIsUnoViewGroup = parentUnoViewGroup != null;
-        // Log.i(this.toString(), "parentIsUnoViewGroup: " + parentIsUnoViewGroup);
+	@Override public /* protected in C# */ boolean onNativeMotionEvent(MotionEvent event, View originalSource, boolean isInView) {
+		return false;
+	}
 
-        if (parentIsUnoViewGroup)
-        {
-            parentUnoViewGroup.setChildIsUnoViewGroup(true);			
-        }
+	public final void setNativeIsHitTestVisible(boolean hitTestVisible) { _isHitTestVisible = hitTestVisible; }
+	public /* hidden to C# */ final boolean getNativeIsHitTestVisible() { return _isHitTestVisible; }
 
-        if (!_isPointInView && !_isPointerCaptured)
-        {		
-            // Log.i(this.toString(), "!isPointInView: " + !isPointInView);
-            return false;
-        }
+	public final void setNativeIsEnabled(boolean isEnabled) { _isEnabled = isEnabled; }
+	public /* hidden to C# */ final boolean getNativeIsEnabled() { return _isEnabled; }
 
-		tryClearCapture(e);
-                
-        if (parentIsUnoViewGroup)
-        {
-            parentUnoViewGroup.setChildBlockedTouchEvent(isBlockingTouchEvent);
-            parentUnoViewGroup.setChildHandledTouchEvent(isHandlingTouchEvent);
-            
-            // Prevents siblings from receiving the touch event.
-            // Won't actually be read by parent (which will prefer _childBlockedTouchEvent and _childHandledTouchEvent).
-            return isBlockingTouchEvent; 
-        }
-        else // parent is native
-        {
-            // Native views don't understand the difference between 'blocked' and 'handled', 
-            // and will assume true to mean that the touch event was handled (which can cause problems when nested inside native controls like ListViews).
-            return isHandlingTouchEvent;
-        }
-    }
+	public /* protected in C# */ abstract boolean nativeHitCheck();
 
 	/**
-	 * Check if event corresponds to the 'current' pointer, and update current pointer if needed.
-	 * @param e The MotionEvent.
-	 * @param isPointInView Is the point within the bounds of this view.
-	 * @return Does this event correspond to the current pointer, ie the first pointer (finger) to touch this view during the current interaction.
+	 * Call this method if a view is to be laid out outside of a framework layout pass, to ensure that requestLayout() requests are captured
+	 * and propagated later. (Equivalent of ViewRootImpl.requestLayoutDuringLayout())
 	 */
-	public boolean isCurrentPointer(MotionEvent e, boolean isPointInView) {
-    	final int action = e.getActionMasked();
+	public static void startLayoutingFromMeasure() {
+		_isLayoutingFromMeasure = true;
+	}
 
-		final int pointerId = e.getPointerId(e.getActionIndex());
+	/**
+	 * This should always be called immediately after {{@link #startLayoutingFromMeasure()}} has been called.
+	 */
+	public static void endLayoutingFromMeasure() {
+		_isLayoutingFromMeasure = false;
+	}
 
-		switch (action) {
-			case MotionEvent.ACTION_CANCEL: {
-					// Unset currrent pointer
-					_currentPointerId = -1;
-					return true;
-			}
-			case MotionEvent.ACTION_DOWN:
-			case MotionEvent.ACTION_POINTER_DOWN: {
-					if (isPointInView && _currentPointerId == -1) {
-							// The first pointer we encounter during an interaction becomes the current pointer.
-							_currentPointerId = pointerId;
-							return true;
-					}
-					return false;
-			}
-			case MotionEvent.ACTION_UP:
-			case MotionEvent.ACTION_POINTER_UP: {
-				// True if this matches the pointer received during the down event.
-				final boolean isCurrentPointer = pointerId == _currentPointerId;
-				if (isCurrentPointer || action == MotionEvent.ACTION_UP) {
-					_currentPointerId = -1;
+	/**
+	 * This should be called subsequently to {{@link #endLayoutingFromMeasure()}}, typically during a true layout pass, to flush any captured layout requests.
+	 */
+	public static void measureBeforeLayout() {
+		if (_isLayoutingFromMeasure)
+		{
+			// This can happen when nested controls call startLayoutingFromMeasure()/measureBeforeLayout()
+			return;
+		}
+
+		try {
+			for (int i = 0; i < callToRequestLayout.size(); i++) {
+				UnoViewGroup view = callToRequestLayout.get(i);
+				if (view.isAttachedToWindow()) {
+					view.requestLayout();
 				}
-				return isCurrentPointer;
 			}
-			default:
-				// Since ActionIndex isn't supplied for events other than up/down, we don't actually
-				// know which pointer this is coming from.
-				return true;
+		}
+		finally {
+			callToRequestLayout.clear();
 		}
 	}
 
-	private boolean tryHandleTouchEvent(MotionEvent e, boolean isPointInView, boolean wasPointInView, boolean isCurrentPointer)
-    {
-        return _gestureDetector != null && _gestureDetector.onTouchEvent(e, isPointInView, wasPointInView, _isPointerCaptured, isCurrentPointer);
-    }
-
-	private void tryClearCapture(MotionEvent e) {
-		int action = e.getAction();
-		if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP || action == MotionEvent.ACTION_CANCEL) {
-			setIsPointerCaptured(false);
-		}
-	}
-
-	public final boolean getIsPointerCaptured() {
-		return _isPointerCaptured;
-	}
-
-	public final void setIsPointerCaptured(boolean value) {
-		_isPointerCaptured = value;
-	}
-
-    private UnoViewParent getParentUnoViewGroup()
-    {	
-        ViewParent parent = getParent();
-
-        return parent instanceof UnoViewParent
-            ? (UnoViewParent)parent
-            : null;
-    }
-    
-    public final void setChildHandledTouchEvent(boolean childHandledTouchEvent)
-    {
-        _childHandledTouchEvent |= childHandledTouchEvent;
-    }
-
-    public final void setChildBlockedTouchEvent(boolean childBlockedTouchEvent)
-    {
-        _childBlockedTouchEvent |= childBlockedTouchEvent;
-    }
-
-    public final void setChildIsUnoViewGroup(boolean childIsUnoViewGroup)
-    {
-        _childIsUnoViewGroup |= childIsUnoViewGroup;
-    }
-
-    public final void setNativeHitTestVisible(boolean hitTestVisible)
-    {
-        _isHitTestVisible = hitTestVisible;
-    }
-
-	public final void setNativeIsEnabled(boolean isEnabled)
+	protected final void onAttachedToWindow()
 	{
-		_isEnabled = isEnabled;
+		super.onAttachedToWindow();
+
+		if(!_isManagedLoaded) {
+			onNativeLoaded();
+			_isManagedLoaded = true;
+		}
+		else if (_needsLayoutOnAttachedToWindow && isInLayout()) {
+			requestLayout();
+		}
+
+		_needsLayoutOnAttachedToWindow = false;
 	}
 
-    protected abstract boolean nativeHitCheck();
+	protected abstract void onNativeLoaded();
 
-    protected final void onAttachedToWindow()
-    {
-        super.onAttachedToWindow();
-        onNativeLoaded();
-    }
+	protected final void onDetachedFromWindow()
+	{
+		super.onDetachedFromWindow();
 
-    protected abstract void onNativeLoaded();
+		if(_isManagedLoaded) {
+			onNativeUnloaded();
+			_isManagedLoaded = false;
+		}
+	}
 
-    protected final void onDetachedFromWindow()
-    {
-        super.onDetachedFromWindow();
-        onNativeUnloaded();
-    }
+	protected abstract void onNativeUnloaded();
 
-    protected abstract void onNativeUnloaded();
+	/**
+	 * Marks this view as loaded from the managed side, so onAttachedToWindow can skip
+	 * calling onNativeLoaded.
+	 */
+	public final void setIsManagedLoaded(boolean value)
+	{
+		_isManagedLoaded = value;
+	}
 
-    public final void setVisibility(int visibility)
-    {
-        super.setVisibility(visibility);
-    }
+	/**
+	 * Gets if this view is loaded from the managed side.
+	 */
+	public final boolean getIsManagedLoaded()
+	{
+		return _isManagedLoaded;
+	}
 
-    public final int getVisibility()
-    {
-        return super.getVisibility();
-    }
+	public final void setVisibility(int visibility)
+	{
+		super.setVisibility(visibility);
+	}
 
-    public final void setBackgroundColor(int color)
-    {
-        super.setBackgroundColor(color);
-    }
+	public final int getVisibility()
+	{
+		return super.getVisibility();
+	}
 
-    public final void setEnabled(boolean enabled)
-    {
-        super.setEnabled(enabled);
-    }
+	public final void setBackgroundColor(int color)
+	{
+		super.setBackgroundColor(color);
+	}
 
-    public final boolean isEnabled()
-    {
-        return super.isEnabled();
-    }
+	public final void setEnabled(boolean enabled)
+	{
+		super.setEnabled(enabled);
+	}
 
-    public UnoGestureDetector getGestureDetector() {
-        return _gestureDetector;
-    }
-
-    public void setGestureDetector(UnoGestureDetector gestureDetector) {
-        _gestureDetector = gestureDetector;
-    }
+	public final boolean isEnabled()
+	{
+		return super.isEnabled();
+	}
 
     /*
     // Not supported because set is no virtual
@@ -575,68 +469,91 @@ public abstract class UnoViewGroup
     }
     */
 
-    public boolean isPointInView(PointF point) {
+	/**
+	 * Sets the static transform matrix to apply to the given child view.
+	 * This will be used by the {@link #getChildStaticTransformation(View, Transformation)}
+	 *
+	 * @param child The view to which the matrix applies.
+	 * @param transform The transformation matrix to apply.
+	 */
+	protected final void setChildRenderTransform(View child, Matrix transform) {
+		_childrenTransformations.put(child, transform);
+		if (_childrenTransformations.size() == 1) {
+			setStaticTransformationsEnabled(true);
+		}
+	}
 
-        Rect bounds = getViewBoundsOnScreen(this);
+	/**
+	 * Removes the static transform matrix applied to the given child view.
+	 *
+	 * @param child The view to which the matrix applies.
+	 */
+	protected final void removeChildRenderTransform(View child) {
+		_childrenTransformations.remove(child);
+		if (_childrenTransformations.size() == 0) {
+			setStaticTransformationsEnabled(false);
+		}
+	}
 
-        return !(point.x < bounds.left || point.x > bounds.right || point.y < bounds.top || point.y > bounds.bottom);
-    }
+	@Override
+	protected final boolean getChildStaticTransformation(View child, Transformation outTransform) {
+		Matrix renderTransform = _childrenTransformations.get(child);
+		if (renderTransform == null || renderTransform.isIdentity()) {
+			outTransform.clear();
+		} else {
+			outTransform.getMatrix().set(renderTransform);
+		}
 
-    private Rect getViewBoundsOnScreen(View view) {
-        int[] viewLocationOnScreen = new int[2];
+		return true;
+	}
 
-        View tmpView = view;
-        Rect finalViewBoundsOnScreen = null;
-    
-        while (tmpView != null)
-        {
-            tmpView.getLocationOnScreen(viewLocationOnScreen);
+	public /* hidden to C# */ int getChildrenRenderTransformCount() { return _childrenTransformations.size(); }
+	public /* hidden to C# */ Matrix findChildRenderTransform(View child) { return _childrenTransformations.get(child); }
 
-            Rect tmpViewBoundsOnScreen = new Rect(
-                viewLocationOnScreen[0], 
-                viewLocationOnScreen[1], 
-                viewLocationOnScreen[0] + tmpView.getWidth(), 
-                viewLocationOnScreen[1] + tmpView.getHeight()
-            );
 
-            if (finalViewBoundsOnScreen == null)
-            {
-                finalViewBoundsOnScreen = tmpViewBoundsOnScreen;
-            }
+	@Override
+	public void getLocationInWindow(int[] outLocation) {
+		super.getLocationInWindow(outLocation);
+		ViewParent currentParent = getParent();
+		View currentChild = this;
 
-            // Apply view clipping if any
-            Rect clipBounds = android.support.v4.view.ViewCompat.getClipBounds(tmpView);
-            if (clipBounds != null)
-            {
-                // Offset the local clip bounds to get the clip bounds on screen
-                clipBounds.offsetTo(tmpViewBoundsOnScreen.left, tmpViewBoundsOnScreen.top);
+		float[] points = null;
+		while (currentParent instanceof View) {
+			if (currentParent instanceof UnoViewGroup) {
+				final UnoViewGroup currentUVGParent = (UnoViewGroup)currentParent;
+				Matrix parentMatrix = currentUVGParent.findChildRenderTransform(currentChild);
+				if (parentMatrix != null && !parentMatrix.isIdentity()) {
+					if (points == null) {
+						points = new float[2];
+					}
 
-                // The result is the intersection of the view bounds and the clip bounds
-                // If there is no intersection, keep the view bounds
-                tmpViewBoundsOnScreen.intersect(clipBounds);
-            }
-            
-            finalViewBoundsOnScreen.intersect(tmpViewBoundsOnScreen);
+					// Apply the offset from the ancestor's RenderTransform, because the base Android method doesn't take
+					// StaticTransformation into account.
+					Matrix inverse = new Matrix();
+					parentMatrix.invert(inverse);
+					inverse.mapPoints(points);
+				}
+			}
 
-            Object parent = tmpView.getParent();
-            tmpView = parent instanceof View ? (View) parent : null;
-        }
+			currentChild = (View)currentParent;
+			currentParent = currentParent.getParent();
+		}
 
-        return finalViewBoundsOnScreen;
-    }
-
-    // Allows UI automation operations to look for a single 'Text' property for both ViewGroup and TextView elements. 
-    // Is mapped to the UIAutomationText property
-    public String getText(){
-        return null;
-    }
-
-    boolean getIsPointInView() {
-    	return _isPointInView;
+		if (points != null) {
+			outLocation[0]-=(int)points[0];
+			outLocation[1]-=(int)points[1];
+		}
+	}	
+	
+	// Allows UI automation operations to look for a single 'Text' property for both ViewGroup and TextView elements.
+	// Is mapped to the UIAutomationText property
+	public String getText() {
+		return null;
 	}
 
 	/**
 	 * Get the depth of this view in the visual tree. For debugging use only.
+	 *
 	 * @return Depth
 	 */
 	public int getViewDepth() {

@@ -2,12 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Composition.Interactions
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class InteractionTrackerInertiaStateEnteredArgs 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Numerics.Vector3? ModifiedRestingPosition
 		{
@@ -17,7 +17,7 @@ namespace Windows.UI.Composition.Interactions
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float? ModifiedRestingScale
 		{
@@ -27,7 +27,7 @@ namespace Windows.UI.Composition.Interactions
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Numerics.Vector3 NaturalRestingPosition
 		{
@@ -37,7 +37,7 @@ namespace Windows.UI.Composition.Interactions
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float NaturalRestingScale
 		{
@@ -47,7 +47,7 @@ namespace Windows.UI.Composition.Interactions
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Numerics.Vector3 PositionVelocityInPixelsPerSecond
 		{
@@ -57,7 +57,7 @@ namespace Windows.UI.Composition.Interactions
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  int RequestId
 		{
@@ -67,13 +67,23 @@ namespace Windows.UI.Composition.Interactions
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float ScaleVelocityInPercentPerSecond
 		{
 			get
 			{
 				throw new global::System.NotImplementedException("The member float InteractionTrackerInertiaStateEnteredArgs.ScaleVelocityInPercentPerSecond is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsInertiaFromImpulse
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member bool InteractionTrackerInertiaStateEnteredArgs.IsInertiaFromImpulse is not implemented in Uno.");
 			}
 		}
 		#endif
@@ -84,5 +94,6 @@ namespace Windows.UI.Composition.Interactions
 		// Forced skipping of method Windows.UI.Composition.Interactions.InteractionTrackerInertiaStateEnteredArgs.PositionVelocityInPixelsPerSecond.get
 		// Forced skipping of method Windows.UI.Composition.Interactions.InteractionTrackerInertiaStateEnteredArgs.RequestId.get
 		// Forced skipping of method Windows.UI.Composition.Interactions.InteractionTrackerInertiaStateEnteredArgs.ScaleVelocityInPercentPerSecond.get
+		// Forced skipping of method Windows.UI.Composition.Interactions.InteractionTrackerInertiaStateEnteredArgs.IsInertiaFromImpulse.get
 	}
 }

@@ -2,18 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Xaml.Automation.Peers
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class PasswordBoxAutomationPeer : global::Windows.UI.Xaml.Automation.Peers.FrameworkElementAutomationPeer
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public PasswordBoxAutomationPeer( global::Windows.UI.Xaml.Controls.PasswordBox owner) : base(owner)
-		{
-			global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Automation.Peers.PasswordBoxAutomationPeer", "PasswordBoxAutomationPeer.PasswordBoxAutomationPeer(PasswordBox owner)");
-		}
-		#endif
+		// Skipping already declared method Windows.UI.Xaml.Automation.Peers.PasswordBoxAutomationPeer.PasswordBoxAutomationPeer(Windows.UI.Xaml.Controls.PasswordBox)
 		// Forced skipping of method Windows.UI.Xaml.Automation.Peers.PasswordBoxAutomationPeer.PasswordBoxAutomationPeer(Windows.UI.Xaml.Controls.PasswordBox)
 	}
 }

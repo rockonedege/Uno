@@ -34,9 +34,9 @@ namespace Windows.UI.Xaml.Controls
 				progressRing.IndeterminateDrawable?.SetColorFilter(foregroundColor.Color, PorterDuff.Mode.SrcIn);
 			}
 		}
-        
-        private static void OnIsActiveChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
-        {
+
+		private static void OnIsActiveChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
+		{
 			var progressRing = dependencyObject as ProgressRing;
 			var isActive = args.NewValue as bool?;
 
@@ -45,6 +45,7 @@ namespace Windows.UI.Xaml.Controls
 				if (isActive.Value)
 				{
 					progressRing.Visibility = Visibility.Visible;
+					progressRing.Invalidate();
 				}
 				else
 				{
@@ -52,5 +53,5 @@ namespace Windows.UI.Xaml.Controls
 				}
 			}
 		}
-    }
+	}
 }

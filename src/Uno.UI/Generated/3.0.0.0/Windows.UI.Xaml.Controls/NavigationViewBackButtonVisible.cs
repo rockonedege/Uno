@@ -2,21 +2,15 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Xaml.Controls
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum NavigationViewBackButtonVisible 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Collapsed,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Visible,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Auto,
-		#endif
+		// Skipping already declared field Windows.UI.Xaml.Controls.NavigationViewBackButtonVisible.Collapsed
+		// Skipping already declared field Windows.UI.Xaml.Controls.NavigationViewBackButtonVisible.Visible
+		// Skipping already declared field Windows.UI.Xaml.Controls.NavigationViewBackButtonVisible.Auto
 	}
 	#endif
 }

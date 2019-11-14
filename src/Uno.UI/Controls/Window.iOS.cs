@@ -27,7 +27,7 @@ namespace Uno.UI.Controls
 	/// </summary>
 	public partial class Window : UIWindow
 	{
-		//Impediment # 19821 A way the bypass the processing done in the HitTest override when thrid party controls are used.
+		//Impediment # 19821 A way the bypass the processing done in the HitTest override when third party controls are used.
 		public static bool BypassCheckToCloseKeyboard { get; set; }
 
 		private readonly static IEventProvider _trace = Tracing.Get(TraceProvider.Id);
@@ -79,7 +79,7 @@ namespace Uno.UI.Controls
 		public BringIntoViewMode? FocusedViewBringIntoViewOnKeyboardOpensMode { get; set; }
 
 		/// <summary>
-		/// The padding to add at top or bottom when bringin the focused item in the view when opening the keyboard.
+		/// The padding to add at top or bottom when bringing the focused item in the view when opening the keyboard.
 		/// </summary>
 		public int FocusedViewBringIntoViewOnKeyboardOpensPadding { get; set; }
 
@@ -106,7 +106,7 @@ namespace Uno.UI.Controls
 					// For some strange reasons, on iOS 8, when the app is sent in background (while the keyboard is open ?) and then restored,
 					// when user re-opens the keyboard we will get some HitTest also for touches which are made upon the keyboard.
 					// In this case we have to send back the currently focused view in order to prevent EndEditing which will cause 
-					// the keyboard to disapear and the feeling that touches are going "through the keyboard".
+					// the keyboard to disappear and the feeling that touches are going "through the keyboard".
 
 					return _focusedView;
 				}
@@ -124,7 +124,7 @@ namespace Uno.UI.Controls
 						// As soon as we are in a WebView the NeedsKeyboard will always returns false. So here we will complete
 						// edition as soon as the user touch anywhere on the screen. This is acceptable since there are dedicated
 						// buttons on the keyboard to focus the next/previous fields of a form.
-						previouslyFocusedView.EndEditing(true);
+						previouslyFocusedView?.EndEditing(true);
 					}
 					else if (previouslyFocusedView != null && IsFocusable(_focusedView))
 					{
@@ -296,7 +296,10 @@ namespace Uno.UI.Controls
 
 		private static bool GetNeedsKeyboard(UIView view)
 		{
-			return view != null && _attachedProperties.GetValue(view, NeedsKeyboardAttachedPropertyKey, () => default(bool?)).GetValueOrDefault();
+			var superViews = view.FindSuperviews().ToList();
+			superViews.Insert(0, view);
+
+			return superViews.Any(superView => _attachedProperties.GetValue(superView, NeedsKeyboardAttachedPropertyKey, () => default(bool?)).GetValueOrDefault());
 		}
 
 		private static bool NeedsKeyboard(UIView view)

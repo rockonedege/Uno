@@ -11,11 +11,17 @@ using System.Threading.Tasks;
 using Windows.UI.Xaml.Media.Animation;
 using Uno.Extensions;
 using Uno.Logging;
+using Windows.UI.Xaml.Automation.Peers;
+using Windows.UI.Xaml.Automation;
 #if XAMARIN_ANDROID
 using View = Android.Views.View;
 #elif XAMARIN_IOS_UNIFIED
 using View = UIKit.UIView;
 using UIKit;
+#elif __MACOS__
+using AppKit;
+using View = AppKit.NSView;
+using Color = Windows.UI.Color;
 #else
 using Color = System.Drawing.Color;
 using View = Windows.UI.Xaml.UIElement;
@@ -45,19 +51,31 @@ namespace Windows.UI.Xaml
 
 		private bool _constraintsChanged;
 
+		/// <remarks>
+		/// Both flags are present to avoid recursion (setting a style causes the root template
+		/// element to apply force the parent to apply its style, reverting the change that
+		/// is being made) caused by the shortcomings of the application of default styles
+		/// management. Once default/implicit styles are implemented properly,
+		/// this should be removed.
+		///
+		/// See https://github.com/unoplatform/uno/issues/119 for details.
+		/// </remarks>
+		private bool _styleChanging = false;
+		private bool _defaultStyleApplied = false;
+
 		internal bool RequiresArrange { get; private set; }
 
 		internal bool RequiresMeasure { get; private set; }
 
 		/// <summary>
-		/// Sets whether constraint-based optimizations are used to limit redrawing of the entire visual tree on Android. This can be 
+		/// Sets whether constraint-based optimizations are used to limit redrawing of the entire visual tree on Android. This can be
 		/// globally set to false if it is causing visual errors (eg views not updating properly). Note: this can still be overridden by
 		/// the <see cref="AreDimensionsConstrained"/> flag set on individual elements.
 		/// </summary>
 		public static bool UseConstraintOptimizations { get; set; } = false;
 
 		/// <summary>
-		/// If manually set, this flag overrides the constraint-based reasoning for optimizing layout calls. This may be useful for 
+		/// If manually set, this flag overrides the constraint-based reasoning for optimizing layout calls. This may be useful for
 		/// example if there are custom views in the visual hierarchy that do not implement <see cref="ILayoutConstraints"/>.
 		/// </summary>
 		public bool? AreDimensionsConstrained { get; set; }
@@ -104,24 +122,15 @@ namespace Windows.UI.Xaml
 		/// <returns>The size that this object determines it needs during layout, based on its calculations of the allocated sizes for child objects or based on other considerations such as a fixed container size.</returns>
 		protected virtual Size MeasureOverride(Size availableSize)
 		{
-			Size finalSize = new Size(0, 0);
+#if !__WASM__
+			LastAvailableSize = availableSize;
+#endif
 
 			var child = this.FindFirstChild();
-
-			if (child != null)
-			{
-#if __WASM__
-				child.Measure(availableSize);
-				finalSize = child.DesiredSize;
-#else
-				finalSize = MeasureElement(child, availableSize);
-#endif
-			}
-
-			return finalSize;
+			return child != null ? MeasureElement(child, availableSize) : new Size(0, 0);
 		}
 
-		/// <summary> 
+		/// <summary>
 		/// Provides the behavior for the "Arrange" pass of layout. Classes can override this method to define their own "Arrange" pass behavior.
 		/// </summary>
 		/// <param name="finalSize">The final area within the parent that this object should use to arrange itself and its children. </param>
@@ -147,12 +156,12 @@ namespace Windows.UI.Xaml
 
 #if !__WASM__
 		/// <summary>
-		/// Updates the DesiredSize of a UIElement. Typically, objects that implement custom layout for their 
-		/// layout children call this method from their own MeasureOverride implementations to form a recursive layout update. 
+		/// Updates the DesiredSize of a UIElement. Typically, objects that implement custom layout for their
+		/// layout children call this method from their own MeasureOverride implementations to form a recursive layout update.
 		/// </summary>
 		/// <param name="availableSize">
-		/// The available space that a parent can allocate to a child object. A child object can request a larger 
-		/// space than what is available; the provided size might be accommodated if scrolling or other resize behavior is 
+		/// The available space that a parent can allocate to a child object. A child object can request a larger
+		/// space than what is available; the provided size might be accommodated if scrolling or other resize behavior is
 		/// possible in that particular container.
 		/// </param>
 		/// <returns>The measured size.</returns>
@@ -167,14 +176,14 @@ namespace Windows.UI.Xaml
 		}
 
 		/// <summary>
-		/// Positions child objects and determines a size for a UIElement. Parent objects that implement custom layout 
-		/// for their child elements should call this method from their layout override implementations to form a recursive layout update. 
+		/// Positions child objects and determines a size for a UIElement. Parent objects that implement custom layout
+		/// for their child elements should call this method from their layout override implementations to form a recursive layout update.
 		/// </summary>
 		/// <param name="finalRect">The final size that the parent computes for the child in layout, provided as a <see cref="Windows.Foundation.Rect"/> value.</param>
 		public override void Arrange(Rect finalRect)
 		{
 			_layouter.Arrange(finalRect);
-			_layouter.ArrangeChild(this, finalRect);
+			_layouter.ArrangeChild(this, finalRect, raiseLayoutUpdated: false);
 		}
 #endif
 
@@ -185,8 +194,8 @@ namespace Windows.UI.Xaml
 		/// </summary>
 		/// <param name="view">The view to be measured.</param>
 		/// <param name="availableSize">
-		/// The available space that a parent can allocate to a child object. A child object can request a larger 
-		/// space than what is available; the provided size might be accommodated if scrolling or other resize behavior is 
+		/// The available space that a parent can allocate to a child object. A child object can request a larger
+		/// space than what is available; the provided size might be accommodated if scrolling or other resize behavior is
 		/// possible in that particular container.
 		/// </param>
 		/// <returns>The measured size.</returns>
@@ -201,14 +210,20 @@ namespace Windows.UI.Xaml
 		}
 
 		/// <summary>
-		/// Positions an object inside the current element and determines a size for a UIElement. Parent objects that implement custom layout 
-		/// for their child elements should call this method from their layout override implementations to form a recursive layout update. 
+		/// Positions an object inside the current element and determines a size for a UIElement. Parent objects that implement custom layout
+		/// for their child elements should call this method from their layout override implementations to form a recursive layout update.
 		/// </summary>
 		/// <param name="finalRect">The final size that the parent computes for the child in layout, provided as a <see cref="Windows.Foundation.Rect"/> value.</param>
 		protected void ArrangeElement(View view, Rect finalRect)
 		{
 #if __WASM__
-			view.Arrange(finalRect);
+			var adjust = GetThicknessAdjust();
+
+			// HTML moves the origin along with the border thickness.
+			// Adjust the child based on this element's border thickness.
+			var rect = new Rect(finalRect.X - adjust.Left, finalRect.Y - adjust.Top, finalRect.Width, finalRect.Height);
+
+			view.Arrange(rect);
 #else
 			_layouter.ArrangeElement(view, finalRect);
 #endif
@@ -233,7 +248,9 @@ namespace Windows.UI.Xaml
 
 		private void InitializeStyle()
 		{
-			if (!FeatureConfiguration.FrameworkElement.UseLegacyApplyStylePhase)
+			if (
+				!_styleChanging // See _styleChanging documentation for details
+				&& !FeatureConfiguration.FrameworkElement.UseLegacyApplyStylePhase)
 			{
 				(this.Parent as FrameworkElement)?.InitializeStyle();
 
@@ -241,7 +258,7 @@ namespace Windows.UI.Xaml
 			}
 		}
 
-#region Style DependencyProperty
+		#region Style DependencyProperty
 
 		public Style Style
 		{
@@ -260,37 +277,56 @@ namespace Windows.UI.Xaml
 				)
 			);
 
-#endregion
+		#endregion
 
 		protected virtual void OnStyleChanged(Style oldStyle, Style newStyle)
 		{
-			if (!FeatureConfiguration.FrameworkElement.UseLegacyApplyStylePhase)
+			try
 			{
-				ApplyDefaultStyle();
+				var currentStyleChanging = _styleChanging;
+				_styleChanging = true;
 
-				if (FeatureConfiguration.FrameworkElement.ClearPreviousOnStyleChange && 
-					// Don't clear the default Style, which should always be present.
-					!(bool)(oldStyle == Style.DefaultStyleForType(GetType()))
-				)
+				_defaultStyleApplied = false;
+
+				if (!FeatureConfiguration.FrameworkElement.UseLegacyApplyStylePhase)
 				{
-					oldStyle?.ClearStyle(this);
-				}
+					if (!currentStyleChanging)
+					{
+						// See _styleChanging documentation for details
+						ApplyDefaultStyle();
+					}
 
-				newStyle?.ApplyTo(this);
+					if (FeatureConfiguration.FrameworkElement.ClearPreviousOnStyleChange &&
+						// Don't clear the default Style, which should always be present.
+						!(bool)(oldStyle == Style.DefaultStyleForType(GetType()))
+					)
+					{
+						oldStyle?.ClearStyle(this);
+					}
+
+					newStyle?.ApplyTo(this);
+				}
+				else
+				{
+					newStyle?.ApplyTo(this);
+				}
 			}
-			else
+			finally
 			{
-				newStyle?.ApplyTo(this);
+				_styleChanging = false;
 			}
 		}
 
 		private void ApplyDefaultStyle()
 		{
 			if (
-				Style.DefaultStyleForType(GetType()) is Style defaultStyle
-				&& this.GetPrecedenceSpecificValue(StyleProperty, Style.DefaultStylePrecedence) == DependencyProperty.UnsetValue
+				!_defaultStyleApplied
+				&& Style.DefaultStyleForType(GetDefaultStyleType()) is Style defaultStyle
+				&& this.GetPrecedenceSpecificValue(StyleProperty, Style.DefaultStylePrecedence) is UnsetValue
 			)
 			{
+				_defaultStyleApplied = true;
+
 				// Force apply the style to the specific precedence
 				this.SetValue(StyleProperty, defaultStyle, Style.DefaultStylePrecedence);
 
@@ -301,6 +337,12 @@ namespace Windows.UI.Xaml
 				}
 			}
 		}
+
+		/// <summary>
+		/// This method is kept internal until https://github.com/unoplatform/uno/issues/119 is addressed.
+		/// </summary>
+		/// <returns></returns>
+		internal virtual Type GetDefaultStyleType() => GetType();
 
 		protected virtual void OnApplyTemplate()
 		{
@@ -313,7 +355,7 @@ namespace Windows.UI.Xaml
 
 
 		/// <summary>
-		/// Determines whether a measure/arrange invalidation on this element requires elements higher in the tree to be invalidated, 
+		/// Determines whether a measure/arrange invalidation on this element requires elements higher in the tree to be invalidated,
 		/// by determining recursively whether this element's dimensions are already constrained.
 		/// </summary>
 		/// <returns>True if a request should be elevated, false if only this view needs to be rearranged.</returns>
@@ -388,6 +430,17 @@ namespace Windows.UI.Xaml
 		/// </summary>
 		internal int[] DataTemplateRenderPhases { get; set; }
 
+		internal bool GoToElementState(string stateName, bool useTransitions) => GoToElementStateCore(stateName, useTransitions);
+
+		protected virtual bool GoToElementStateCore(string stateName, bool useTransitions) => false;
+
+		public event EventHandler<object> LayoutUpdated;
+
+		internal virtual void OnLayoutUpdated()
+		{
+			LayoutUpdated?.Invoke(this, new RoutedEventArgs(this));
+		}
+
 #if XAMARIN
 		private static FrameworkElement FindPhaseEnabledRoot(ContentControl content)
 		{
@@ -459,7 +512,7 @@ namespace Windows.UI.Xaml
 #if __ANDROID__
 					// Schedule on the animation dispatcher so the callback appears faster.
 					action = presenterRoot.Dispatcher.RunAnimation(ApplyPhase);
-#elif __IOS__
+#elif __IOS__ || __MACOS__
 					action = presenterRoot.Dispatcher.RunAsync(Core.CoreDispatcherPriority.High, ApplyPhase);
 #endif
 
@@ -469,7 +522,7 @@ namespace Windows.UI.Xaml
 							// If the view is recycled, don't process the other phases.
 							action?.Cancel();
 
-							// Reset to the original so the next datacontext assignment only 
+							// Reset to the original so the next datacontext assignment only
 							// impacts the least of the tree.
 							presenterRoot.ApplyBindingPhase(0);
 						}
@@ -478,6 +531,59 @@ namespace Windows.UI.Xaml
 			}
 		}
 #endif
+
+		#region AutomationPeer
+#if !__IOS__ && !__ANDROID__ && !__MACOS__ // This code is generated in FrameworkElementMixins
+		private AutomationPeer _automationPeer;
+
+		protected override AutomationPeer OnCreateAutomationPeer()
+		{
+			if (AutomationProperties.GetName(this) is string name && !string.IsNullOrEmpty(name))
+			{
+				return new FrameworkElementAutomationPeer(this);
+			}
+
+			return null;
+		}
+
+		public virtual string GetAccessibilityInnerText()
+		{
+			return null;
+		}
+
+		public AutomationPeer GetAutomationPeer()
+		{
+			if (_automationPeer == null)
+			{
+				_automationPeer = OnCreateAutomationPeer();
+			}
+
+			return _automationPeer;
+		}
+#elif __MACOS__
+		private AutomationPeer _automationPeer;
+
+		protected override AutomationPeer OnCreateAutomationPeer()
+		{
+			return null;
+		}
+
+		public virtual string GetAccessibilityInnerText()
+		{
+			return null;
+		}
+		public AutomationPeer GetAutomationPeer()
+		{
+			if (_automationPeer == null)
+			{
+				_automationPeer = OnCreateAutomationPeer();
+			}
+
+			return _automationPeer;
+		}
+#endif
+
+		#endregion
 
 #if !__WASM__
 		private class FrameworkElementLayouter : Layouter

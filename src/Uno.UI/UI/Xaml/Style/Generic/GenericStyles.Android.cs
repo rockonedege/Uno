@@ -238,16 +238,16 @@ namespace Windows.UI.Xaml
 			{
 				Setters =
 				{
-					new Setter<FlipView>("Template", t =>
-						t.Template = new ControlTemplate(() =>
-							new ItemsPresenter()
-						)
-					),
 					new Setter<FlipView>("ItemsPanel", t=>
 						t.ItemsPanel = new ItemsPanelTemplate(()=>
 							new NativePagedView()
 						)
-					)
+					),
+					new Setter<FlipView>("Template", t =>
+						t.Template = new ControlTemplate(() =>
+							new ItemsPresenter()
+						)
+					)					
 				}
 			};
 
@@ -263,11 +263,12 @@ namespace Windows.UI.Xaml
 						t.Template = Funcs.Create(() =>
 							{
 								var nativeToggleButton =
-									new BindableSwitch()
+									new BindableSwitchCompat()
 									.Binding("Checked", new TemplateBinding("IsOn") { Mode = BindingMode.TwoWay })
 									.Binding("Enabled", new Data.TemplateBinding("IsEnabled"))
+									.Binding("Text", new Data.TemplateBinding("Header"))
 									;
-
+							
 								return nativeToggleButton;
 							}
 						)

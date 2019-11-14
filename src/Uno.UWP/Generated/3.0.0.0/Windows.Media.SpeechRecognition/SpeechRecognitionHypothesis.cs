@@ -2,21 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Media.SpeechRecognition
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class SpeechRecognitionHypothesis 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  string Text
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string SpeechRecognitionHypothesis.Text is not implemented in Uno.");
-			}
-		}
-		#endif
+		// Skipping already declared property Text
 		// Forced skipping of method Windows.Media.SpeechRecognition.SpeechRecognitionHypothesis.Text.get
 	}
 }

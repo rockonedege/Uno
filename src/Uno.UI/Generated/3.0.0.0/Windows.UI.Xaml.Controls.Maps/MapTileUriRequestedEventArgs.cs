@@ -2,12 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Xaml.Controls.Maps
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class MapTileUriRequestedEventArgs 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.UI.Xaml.Controls.Maps.MapTileUriRequest Request
 		{
@@ -17,7 +17,7 @@ namespace Windows.UI.Xaml.Controls.Maps
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  int X
 		{
@@ -27,7 +27,7 @@ namespace Windows.UI.Xaml.Controls.Maps
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  int Y
 		{
@@ -37,7 +37,7 @@ namespace Windows.UI.Xaml.Controls.Maps
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  int ZoomLevel
 		{
@@ -47,7 +47,17 @@ namespace Windows.UI.Xaml.Controls.Maps
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  int FrameIndex
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member int MapTileUriRequestedEventArgs.FrameIndex is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public MapTileUriRequestedEventArgs() 
 		{
@@ -59,5 +69,6 @@ namespace Windows.UI.Xaml.Controls.Maps
 		// Forced skipping of method Windows.UI.Xaml.Controls.Maps.MapTileUriRequestedEventArgs.Y.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.Maps.MapTileUriRequestedEventArgs.ZoomLevel.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.Maps.MapTileUriRequestedEventArgs.Request.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.Maps.MapTileUriRequestedEventArgs.FrameIndex.get
 	}
 }

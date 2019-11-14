@@ -10,6 +10,7 @@ using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Media.Animation;
 using Uno;
 using Windows.UI.Xaml.Media;
+using Uno.UI;
 
 namespace Windows.UI.Xaml.Controls
 {
@@ -17,12 +18,19 @@ namespace Windows.UI.Xaml.Controls
 	{
 		private string _navigationState;
 
+		private static readonly PagePool _pool = new PagePool();
+
 		public Frame()
 		{
 			var backStack = new ObservableCollection<PageStackEntry>();
 			var forwardStack = new ObservableCollection<PageStackEntry>();
 
-			backStack.CollectionChanged += (s, e) => CanGoBack = BackStack.Any();
+			backStack.CollectionChanged += (s, e) =>
+			{
+				CanGoBack = BackStack.Any();
+				BackStackDepth = BackStack.Count;
+			};
+
 			forwardStack.CollectionChanged += (s, e) => CanGoForward = ForwardStack.Any();
 
 			BackStack = backStack;
@@ -31,7 +39,7 @@ namespace Windows.UI.Xaml.Controls
 
 		internal PageStackEntry CurrentEntry { get; set; }
 
-#region BackStackDepth DependencyProperty
+		#region BackStackDepth DependencyProperty
 
 		public int BackStackDepth
 		{
@@ -49,9 +57,9 @@ namespace Windows.UI.Xaml.Controls
 
 		}
 
-#endregion
+		#endregion
 
-#region BackStack DependencyProperty
+		#region BackStack DependencyProperty
 
 		public IList<PageStackEntry> BackStack
 		{
@@ -67,9 +75,9 @@ namespace Windows.UI.Xaml.Controls
 		{
 		}
 
-#endregion
+		#endregion
 
-#region CacheSize DependencyProperty
+		#region CacheSize DependencyProperty
 
 		public int CacheSize
 		{
@@ -86,9 +94,9 @@ namespace Windows.UI.Xaml.Controls
 		{
 		}
 
-#endregion
+		#endregion
 
-#region CanGoBack DependencyProperty
+		#region CanGoBack DependencyProperty
 
 		public bool CanGoBack
 		{
@@ -105,9 +113,9 @@ namespace Windows.UI.Xaml.Controls
 		{
 		}
 
-#endregion
+		#endregion
 
-#region CanGoForward DependencyProperty
+		#region CanGoForward DependencyProperty
 
 		public bool CanGoForward
 		{
@@ -125,9 +133,9 @@ namespace Windows.UI.Xaml.Controls
 
 		}
 
-#endregion
+		#endregion
 
-#region CurrentSourcePageType DependencyProperty
+		#region CurrentSourcePageType DependencyProperty
 
 		public Type CurrentSourcePageType
 		{
@@ -145,9 +153,9 @@ namespace Windows.UI.Xaml.Controls
 
 		}
 
-#endregion
+		#endregion
 
-#region ForwardStack DependencyProperty
+		#region ForwardStack DependencyProperty
 
 		public IList<PageStackEntry> ForwardStack
 		{
@@ -164,9 +172,9 @@ namespace Windows.UI.Xaml.Controls
 		{
 		}
 
-#endregion
+		#endregion
 
-#region SourcePageType DependencyProperty
+		#region SourcePageType DependencyProperty
 
 		public Type SourcePageType
 		{
@@ -182,7 +190,7 @@ namespace Windows.UI.Xaml.Controls
 		{
 		}
 
-#endregion
+		#endregion
 
 		public event NavigatedEventHandler Navigated;
 
@@ -267,9 +275,15 @@ namespace Windows.UI.Xaml.Controls
 				var previousEntry = CurrentEntry;
 				CurrentEntry = entry;
 
+				if (mode == NavigationMode.New)
+				{
+					// Doing this first allows CurrentEntry to reuse existing page if pooling is enabled
+					ReleasePages(ForwardStack);
+				}
+
 				if (CurrentEntry.Instance == null)
 				{
-					var page = CreatePageInstance(entry.SourcePageType);
+					var page = CreatePageInstanceCached(entry.SourcePageType);
 					if (page == null)
 					{
 						return false;
@@ -323,13 +337,46 @@ namespace Windows.UI.Xaml.Controls
 			catch (Exception exception)
 			{
 				NavigationFailed?.Invoke(this, new NavigationFailedEventArgs(entry.SourcePageType, exception));
+
+				if (NavigationFailed == null)
+				{
+					Application.Current.RaiseRecoverableUnhandledException(new InvalidOperationException("Navigation failed", exception));
+				}
+
 				return false;
 			}
 		}
 
+		/// <summary>
+		/// Return pages removed from the stack to the pool, if enabled.
+		/// </summary>
+		private void ReleasePages(IList<PageStackEntry> pageStackEntries)
+		{
+			foreach (var entry in pageStackEntries)
+			{
+				entry.Instance.Frame = null;
+			}
+
+			if (!FeatureConfiguration.Page.IsPoolingEnabled)
+			{
+				return;
+			}
+
+			foreach (var entry in pageStackEntries)
+			{
+				if (entry.Instance != null)
+				{
+					_pool.EnqueuePage(entry.SourcePageType, entry.Instance);
+				}
+			}
+		}
+
+
 		public void SetNavigationState(string navigationState) => _navigationState = navigationState;
 
-		private Page CreatePageInstance(Type sourcePageType)
+		private static Page CreatePageInstanceCached(Type sourcePageType) => _pool.DequeuePage(sourcePageType);
+
+		internal static Page CreatePageInstance(Type sourcePageType)
 		{
 			if (Uno.UI.DataBinding.BindingPropertyHelper.BindableMetadataProvider != null)
 			{

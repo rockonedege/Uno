@@ -20,6 +20,12 @@ namespace Windows.UI.Xaml.Controls
 	{
 		private readonly SerialDisposable _callbackSubscriptions = new SerialDisposable();
 
+		/// <summary>
+		/// This Uno-only flag sets whether the native list animates collection changes (insertions, deletions, etc). The default is true.
+		/// </summary>
+		[Uno.UnoOnly]
+		public bool UseCollectionAnimations { get; set; } = true;
+
 		private bool _animateScrollIntoView;
 		public bool AnimateScrollIntoView
 		{
@@ -34,19 +40,19 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
-		partial void OnApplyTemplatePartial()
+		private void InitializeNativePanel(NativeListViewBase panel)
 		{
-			var source = new ListViewBaseSource(NativePanel);
-			NativePanel.Source = source;
-			NativePanel.NativeLayout.Source = new WeakReference<ListViewBaseSource>(NativePanel.Source);
+			var source = new ListViewBaseSource(panel);
+			panel.Source = source;
+			panel.NativeLayout.Source = new WeakReference<ListViewBaseSource>(panel.Source);
 
-			BindToPanel(nameof(ItemsSource));
+			BindToPanel(panel, nameof(ItemsSource));
 
-			NativePanel.AnimateScrollIntoView = AnimateScrollIntoView;
+			panel.AnimateScrollIntoView = AnimateScrollIntoView;
 
 			var disposables = new CompositeDisposable();
 
-			Action headerFooterCallback = () => NativePanel?.UpdateHeaderAndFooter();
+			Action headerFooterCallback = () => panel?.UpdateHeaderAndFooter();
 			RegisterCallback(HeaderProperty, headerFooterCallback).DisposeWith(disposables);
 			RegisterCallback(HeaderTemplateProperty, headerFooterCallback).DisposeWith(disposables);
 			RegisterCallback(FooterProperty, headerFooterCallback).DisposeWith(disposables);
@@ -55,12 +61,19 @@ namespace Windows.UI.Xaml.Controls
 			_callbackSubscriptions.Disposable = disposables;
 		}
 
+		partial void CleanUpNativePanel(NativeListViewBase panel)
+		{
+			_callbackSubscriptions.Disposable = null;
+			panel.Source?.Dispose();
+			panel.Source = null;
+		}
+
 		/// <summary>
 		/// Bind a property on the native collection panel to its equivalent on ListViewBase
 		/// </summary>
-		private void BindToPanel(string propertyName, BindingMode bindingMode = BindingMode.OneWay)
+		private void BindToPanel(NativeListViewBase panel, string propertyName, BindingMode bindingMode = BindingMode.OneWay)
 		{
-			NativePanel.Binding(propertyName, propertyName, this, bindingMode);
+			panel.Binding(propertyName, propertyName, this, bindingMode);
 		}
 
 		private IDisposable RegisterCallback(DependencyProperty property, Action callback)

@@ -1,10 +1,12 @@
-﻿#if !NET46 && !NETSTANDARD2_0
+﻿#if !NET461 && !__WASM__ && !__MACOS__
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
 using System.Windows.Input;
 using Uno;
+using Uno.Extensions;
+using Uno.UI.DataBinding;
 using Windows.UI.Xaml.Controls.Primitives;
 
 namespace Windows.UI.Xaml.Controls
@@ -15,7 +17,17 @@ namespace Windows.UI.Xaml.Controls
 
 		public bool AreVerticalSnapPointsRegular => ((IScrollSnapPointsInfo)NativeLayout).AreVerticalSnapPointsRegular;
 
-		internal ListViewBase XamlParent { get; set; }
+		private ManagedWeakReference _xamlParentWeakReference;
+
+		internal ListViewBase XamlParent
+		{
+			get => _xamlParentWeakReference?.Target as ListViewBase;
+			set
+			{
+				WeakReferencePool.ReturnWeakReference(this, _xamlParentWeakReference);
+				_xamlParentWeakReference = WeakReferencePool.RentWeakReference(this, value);
+			}
+		}
 
 		[NotImplemented]
 		public event EventHandler<object> HorizontalSnapPointsChanged

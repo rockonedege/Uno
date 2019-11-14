@@ -2,111 +2,21 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.ApplicationModel
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class PackageId 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.System.ProcessorArchitecture Architecture
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member ProcessorArchitecture PackageId.Architecture is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  string FamilyName
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string PackageId.FamilyName is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  string FullName
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string PackageId.FullName is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  string Name
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string PackageId.Name is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  string Publisher
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string PackageId.Publisher is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  string PublisherId
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string PackageId.PublisherId is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  string ResourceId
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string PackageId.ResourceId is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.ApplicationModel.PackageVersion Version
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member PackageVersion PackageId.Version is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  string Author
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string PackageId.Author is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  string ProductId
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string PackageId.ProductId is not implemented in Uno.");
-			}
-		}
-		#endif
+		// Skipping already declared property Architecture
+		// Skipping already declared property FamilyName
+		// Skipping already declared property FullName
+		// Skipping already declared property Name
+		// Skipping already declared property Publisher
+		// Skipping already declared property PublisherId
+		// Skipping already declared property ResourceId
+		// Skipping already declared property Version
+		// Skipping already declared property Author
+		// Skipping already declared property ProductId
 		// Forced skipping of method Windows.ApplicationModel.PackageId.Name.get
 		// Forced skipping of method Windows.ApplicationModel.PackageId.Version.get
 		// Forced skipping of method Windows.ApplicationModel.PackageId.Architecture.get

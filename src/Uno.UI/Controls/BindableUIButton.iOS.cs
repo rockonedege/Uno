@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Drawing;
 using Uno.Extensions;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
@@ -35,8 +34,20 @@ namespace Uno.UI.Views.Controls
 			InitializeBinder();
 		}
 
-		public BindableUIButton(RectangleF frame)
+		public BindableUIButton(System.Drawing.RectangleF frame)
 			: base(frame)
+		{
+			InitializeBinder();
+		}
+
+		public BindableUIButton(NSCoder coder)
+			: base(coder)
+		{
+			InitializeBinder();
+		}
+
+		public BindableUIButton(NSObjectFlag t)
+			: base(t)
 		{
 			InitializeBinder();
 		}

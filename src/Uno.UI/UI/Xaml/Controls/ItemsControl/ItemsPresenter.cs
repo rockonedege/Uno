@@ -14,6 +14,9 @@ using View = Android.Views.View;
 #elif XAMARIN_IOS
 using UIKit;
 using View = UIKit.UIView;
+#elif __MACOS__
+using AppKit;
+using View = AppKit.NSView;
 #else
 using View = Windows.UI.Xaml.UIElement;
 #endif
@@ -22,10 +25,21 @@ namespace Windows.UI.Xaml.Controls
 {
 	public partial class ItemsPresenter : FrameworkElement, IScrollSnapPointsInfo
 	{
-		internal protected override void OnTemplatedParentChanged(DependencyPropertyChangedEventArgs e)
+		protected internal override void OnTemplatedParentChanged(DependencyPropertyChangedEventArgs e)
 		{
 			base.OnTemplatedParentChanged(e);
-			if (TemplatedParent is ItemsControl itemsControl)
+
+			if (TemplatedParent is ItemsControl itemsControl && IsLoaded)
+			{
+				itemsControl.SetItemsPresenter(this);
+			}
+		}
+
+		protected override void OnLoaded()
+		{
+			base.OnLoaded();
+
+			if (TemplatedParent is ItemsControl itemsControl && IsLoaded)
 			{
 				itemsControl.SetItemsPresenter(this);
 			}
@@ -45,8 +59,8 @@ namespace Windows.UI.Xaml.Controls
 
 		public Thickness Padding
 		{
-			get { return (Thickness)GetValue(PaddingProperty); }
-			set { SetValue(PaddingProperty, value); }
+			get => (Thickness)GetValue(PaddingProperty);
+			set => SetValue(PaddingProperty, value);
 		}
 
 		public static DependencyProperty PaddingProperty =
@@ -74,21 +88,16 @@ namespace Windows.UI.Xaml.Controls
 		/// for controls which delegate to a native implementation (eg <see cref="ListViewBase"/>).
 		/// </summary>
 		private bool IsWithinScrollableArea =>
-#if XAMARIN
+#if XAMARIN && !__MACOS__
 			!(_itemsPanel is NativeListViewBase);
 #else
 			true;
 #endif
 
-		private Thickness AppliedPadding
-		{
-			get
-			{
-				return IsWithinScrollableArea ?
-					Padding :
-					Thickness.Empty;
-			}
-		}
+		private Thickness AppliedPadding =>
+			IsWithinScrollableArea ?
+				Padding :
+				Thickness.Empty;
 
 		protected override bool IsSimpleLayout => true;
 
@@ -110,9 +119,9 @@ namespace Windows.UI.Xaml.Controls
 			}
 
 			_itemsPanel = panel;
-			
+
 			RemoveChildViews();
-			
+
 			if (_itemsPanel != null)
 			{
 #if XAMARIN_IOS
@@ -145,7 +154,7 @@ namespace Windows.UI.Xaml.Controls
 
 		private void PropagatePadding()
 		{
-#if XAMARIN
+#if XAMARIN && !__MACOS__
 			var asListViewBase = _itemsPanel as NativeListViewBase;
 			if (asListViewBase != null)
 			{

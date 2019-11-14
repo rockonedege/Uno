@@ -2,12 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Media.Import
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class PhotoImportItem 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool IsSelected
 		{
@@ -21,7 +21,7 @@ namespace Windows.Media.Import
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.Media.Import.PhotoImportContentType ContentType
 		{
@@ -31,7 +31,7 @@ namespace Windows.Media.Import
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.DateTimeOffset Date
 		{
@@ -41,7 +41,7 @@ namespace Windows.Media.Import
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Collections.Generic.IReadOnlyList<string> DeletedFileNames
 		{
@@ -51,7 +51,7 @@ namespace Windows.Media.Import
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Collections.Generic.IReadOnlyList<string> ImportedFileNames
 		{
@@ -61,7 +61,7 @@ namespace Windows.Media.Import
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  ulong ItemKey
 		{
@@ -71,7 +71,7 @@ namespace Windows.Media.Import
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  string Name
 		{
@@ -81,7 +81,7 @@ namespace Windows.Media.Import
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.Media.Import.PhotoImportSidecar Sibling
 		{
@@ -91,7 +91,7 @@ namespace Windows.Media.Import
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Collections.Generic.IReadOnlyList<global::Windows.Media.Import.PhotoImportSidecar> Sidecars
 		{
@@ -101,7 +101,7 @@ namespace Windows.Media.Import
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  ulong SizeInBytes
 		{
@@ -111,7 +111,7 @@ namespace Windows.Media.Import
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.Storage.Streams.IRandomAccessStreamReference Thumbnail
 		{
@@ -121,13 +121,23 @@ namespace Windows.Media.Import
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Collections.Generic.IReadOnlyList<global::Windows.Media.Import.PhotoImportVideoSegment> VideoSegments
 		{
 			get
 			{
 				throw new global::System.NotImplementedException("The member IReadOnlyList<PhotoImportVideoSegment> PhotoImportItem.VideoSegments is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  string Path
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string PhotoImportItem.Path is not implemented in Uno.");
 			}
 		}
 		#endif
@@ -144,5 +154,6 @@ namespace Windows.Media.Import
 		// Forced skipping of method Windows.Media.Import.PhotoImportItem.Thumbnail.get
 		// Forced skipping of method Windows.Media.Import.PhotoImportItem.ImportedFileNames.get
 		// Forced skipping of method Windows.Media.Import.PhotoImportItem.DeletedFileNames.get
+		// Forced skipping of method Windows.Media.Import.PhotoImportItem.Path.get
 	}
 }

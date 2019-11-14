@@ -151,7 +151,7 @@ namespace Windows.UI.Xaml
 		/// <param name="property">The dependency property to get</param>
 		/// <param name="precedence">The value precedence under which to fetch a value</param>
 		/// <returns></returns>
-		internal static object GetValueUnderPrecedence(this DependencyObject instance, DependencyProperty property, DependencyPropertyValuePrecedences precedence)
+		internal static (object value, DependencyPropertyValuePrecedences precedence) GetValueUnderPrecedence(this DependencyObject instance, DependencyProperty property, DependencyPropertyValuePrecedences precedence)
 		{
 			return GetStore(instance).GetValueUnderPrecedence(property, precedence);
 		}
@@ -161,7 +161,7 @@ namespace Windows.UI.Xaml
 		/// </summary>
 		/// <param name="instance">The instance on which the property is attached</param>
 		/// <param name="property">The dependency property to get</param>
-		/// <param name="precedence">The value precendence to assign</param>
+		/// <param name="precedence">The value precedence to assign</param>
 		internal static void ClearValue(this DependencyObject instance, DependencyProperty property, DependencyPropertyValuePrecedences precedence)
 		{
 			SetValue(instance, property, DependencyProperty.UnsetValue, precedence);
@@ -184,7 +184,7 @@ namespace Windows.UI.Xaml
 		/// <param name="instance">The instance on which the property is attached</param>
 		/// <param name="property">The dependency property to get</param>
 		/// <param name="value">The value to set</param>
-		/// <param name="precedence">The value precendence to assign</param>
+		/// <param name="precedence">The value precedence to assign</param>
 		public static void SetValue(this DependencyObject instance, DependencyProperty property, object value, DependencyPropertyValuePrecedences? precedence)
 		{
 			GetStore(instance).SetValue(property, value, precedence ?? DependencyPropertyValuePrecedences.Local);
@@ -196,7 +196,7 @@ namespace Windows.UI.Xaml
 		/// <param name="instance">The instance on which the property is attached</param>
 		/// <param name="property">The dependency property to get</param>
 		/// <param name="value">The value to set</param>
-		/// <param name="precedence">The value precendence to assign</param>
+		/// <param name="precedence">The value precedence to assign</param>
 		public static void SetValue(this object instance, DependencyProperty property, object value, DependencyPropertyValuePrecedences? precedence)
 		{
 			GetStore(instance).SetValue(property, value, precedence ?? DependencyPropertyValuePrecedences.Local);
@@ -217,7 +217,7 @@ namespace Windows.UI.Xaml
 		/// <summary>
 		/// Register for changes dependency property changes notifications.
 		/// </summary>
-		/// <param name="instance">The instance that owns the proeprty</param>
+		/// <param name="instance">The instance that owns the property</param>
 		/// <param name="property">The property to observe</param>
 		/// <param name="callback">The callback</param>
 		/// <returns>A disposable that will unregister the callback when disposed.</returns>
@@ -232,7 +232,7 @@ namespace Windows.UI.Xaml
 		/// <param name="instance">The instance for which to observe properties changes</param>
 		/// <param name="callback">The callback</param>
 		/// <returns>A disposable that will unregister the callback when disposed.</returns>
-		internal static IDisposable RegisterDisposablePropertyChangedCallback(this object instance, ExplicitPropertyChangedCallback handler)
+		public static IDisposable RegisterDisposablePropertyChangedCallback(this object instance, ExplicitPropertyChangedCallback handler)
 		{
 			return GetStore(instance).RegisterPropertyChangedCallback(handler);
 		}
@@ -292,7 +292,7 @@ namespace Windows.UI.Xaml
 		/// Register for changes all dependency properties changes notifications for the specified instance.
 		/// </summary>
 		/// <param name="instance">The instance for which to observe properties changes</param>
-		/// <param name="callback">The callback</param>
+		/// <param name="handler">The callback</param>
 		/// <returns>A disposable that will unregister the callback when disposed.</returns>
 		internal static IDisposable RegisterInheritedPropertyChangedCallback(this object instance, ExplicitPropertyChangedCallback handler)
 		{
@@ -300,10 +300,10 @@ namespace Windows.UI.Xaml
 		}
 
 		/// <summary>
-		/// Register for compiled bindinds updates progapation
+		/// Register for compiled bindings updates propagation
 		/// </summary>
 		/// <param name="instance">The instance for which to observe compiled bindings updates</param>
-		/// <param name="callback">The callback</param>
+		/// <param name="handler">The callback</param>
 		/// <returns>A disposable that will unregister the callback when disposed.</returns>
 		internal static IDisposable RegisterCompiledBindingsUpdateCallback(this object instance, Action handler) 
 			=> GetStore(instance).RegisterCompiledBindingsUpdateCallback(handler);
@@ -312,8 +312,8 @@ namespace Windows.UI.Xaml
 		/// Registers to parent changes.
 		/// </summary>
 		/// <param name="instance">The target dependency object</param>
-		/// <param name="key">A key to be passed to the callack parameter.</param>
-		/// <param name="callback">A callback to be called</param>
+		/// <param name="key">A key to be passed to the callback parameter.</param>
+		/// <param name="handler">A callback to be called</param>
 		/// <returns>A disposable that cancels the subscription.</returns>
 		internal static IDisposable RegisterParentChangedCallback(this DependencyObject instance, object key, ParentChangedCallback handler)
 		{

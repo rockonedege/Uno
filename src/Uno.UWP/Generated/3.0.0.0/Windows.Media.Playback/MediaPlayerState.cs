@@ -2,28 +2,28 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Media.Playback
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || NET461 || __WASM__ || __MACOS__
+	#if false || false || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum MediaPlayerState 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		Closed,
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		Opening,
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		Buffering,
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		Playing,
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		Paused,
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		Stopped,
 		#endif
 	}

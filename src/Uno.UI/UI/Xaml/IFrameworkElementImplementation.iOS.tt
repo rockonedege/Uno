@@ -11,6 +11,7 @@ using System.Runtime.CompilerServices;
 using Uno.UI.DataBinding;
 using Uno.Extensions;
 using Uno.UI;
+using Uno.UI.Media;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Data;
 using UIKit;
@@ -19,6 +20,9 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 using Uno.Logging;
 using Windows.Foundation;
+using Windows.UI.Xaml.Automation.Peers;
+using Windows.UI.Xaml.Automation.Provider;
+using Windows.UI.Xaml.Automation;
 
 <# 
 	foreach(var mixin in _mixins) { 
@@ -26,8 +30,10 @@ using Windows.Foundation;
 
 namespace <#= mixin.NamespaceName #>
 {
-    public partial class <#= mixin.ClassName #> : IFrameworkElement
+	public partial class <#= mixin.ClassName #> : IFrameworkElement, IXUidProvider
 	{		
+		string IXUidProvider.Uid { get; set; }
+
 #if !<#= mixin.IsFrameworkElement #>
 		/// <summary>
 		/// Gets the parent of this FrameworkElement in the object tree.
@@ -71,8 +77,6 @@ namespace <#= mixin.NamespaceName #>
 							((IDependencyObjectStoreProvider)this).Store.Parent = superView;
 						}
 
-						ApplyClipping(superView);
-
 						OnLoading();
 						OnLoaded();
 					}
@@ -94,14 +98,6 @@ namespace <#= mixin.NamespaceName #>
 				this.Log().Error($"Failed to process MoveToWindow for {GetType()}", e);
 			}
 		}
-
-		private void ApplyClipping(UIView superView)
-		{
-			if (!FeatureConfiguration.UIElement.UseLegacyClipping)
-			{
-				UIElement.UpdateMask(this, superView);
-			}
-		}
 #endif
 
 		// WillMoveToSuperview may not be called if the element is moved into Window immediately.
@@ -111,24 +107,30 @@ namespace <#= mixin.NamespaceName #>
 		{
 			base.WillMoveToSuperview(newsuper);
 
-			if(BinderReferenceHolder.IsEnabled)
+			try
 			{
-				if(newsuper != null)
+				if(BinderReferenceHolder.IsEnabled)
 				{
-					BinderReferenceHolder.AddNativeReference(this, newsuper);
+					if(newsuper != null)
+					{
+						BinderReferenceHolder.AddNativeReference(this, newsuper);
+					}
+					else
+					{
+						BinderReferenceHolder.RemoveNativeReference(this, _superViewRef.GetTarget() as global::Foundation.NSObject);
+					}
 				}
-				else
-				{
-					BinderReferenceHolder.RemoveNativeReference(this, _superViewRef.GetTarget() as global::Foundation.NSObject);
-				}
+
+				_superViewRef = new WeakReference<UIView>(newsuper);
+
+				WillMoveToSuperviewPartial(newsuper);
+				SyncBinder(newsuper, Window);
+				((IDependencyObjectStoreProvider)this).Store.Parent = newsuper;
 			}
-
-			_superViewRef = new WeakReference<UIView>(newsuper);
-
-			WillMoveToSuperviewPartial(newsuper);
-			SyncBinder(newsuper, Window);
-			((IDependencyObjectStoreProvider)this).Store.Parent = newsuper;
-
+			catch(Exception e)
+			{
+				Application.Current.RaiseRecoverableUnhandledExceptionOrLog(e, this);
+			}
 		}
 
 		partial void WillMoveToSuperviewPartial(UIView newsuper);
@@ -141,15 +143,13 @@ namespace <#= mixin.NamespaceName #>
 			}
 		}
 
-        public event TypedEventHandler<DependencyObject, object> Loading;
+		public event TypedEventHandler<DependencyObject, object> Loading;
 
 		public event RoutedEventHandler Loaded;
 
 		public event DependencyPropertyChangedEventHandler IsEnabledChanged;
 
 		public event RoutedEventHandler Unloaded;
-
-		public event EventHandler<object> LayoutUpdated;
 
 		public event SizeChangedEventHandler SizeChanged;
 		
@@ -197,16 +197,8 @@ namespace <#= mixin.NamespaceName #>
 			}
 		}
 
-
-		public virtual void OnLayoutUpdated ()
-		{
-			if (LayoutUpdated != null) {
-				LayoutUpdated (this, EventArgs.Empty);
-			}
-		}
-
 		partial void AdjustArrangePartial(ref Size size);
-        public virtual Size AdjustArrange(Size size)		
+		public virtual Size AdjustArrange(Size size)		
 		{
 			AdjustArrangePartial(ref size);
 
@@ -225,8 +217,17 @@ namespace <#= mixin.NamespaceName #>
 				"Name",
 				typeof(string),
 				typeof(<#= mixin.ClassName #>),
-				new PropertyMetadata("")
+				new PropertyMetadata("",
+					(s, e) => (s as <#= mixin.ClassName #>).OnNameChanged((string)e.OldValue, (string)e.NewValue)
+				)
 		);
+
+		private void OnNameChanged(string oldValue, string newValue) {
+			if (FrameworkElementHelper.IsUiAutomationMappingEnabled)
+			{
+				Windows.UI.Xaml.Automation.AutomationProperties.SetAutomationId(this, newValue);
+			}
+		}
 
 		public virtual string Name
 		{
@@ -444,10 +445,30 @@ namespace <#= mixin.NamespaceName #>
 				
 				if (previousSize != _actualSize)
 				{
-					SizeChanged?.Invoke(this, new SizeChangedEventArgs(previousSize, _actualSize));
-				}
+					SizeChanged?.Invoke(this, new SizeChangedEventArgs(this, previousSize, _actualSize));
 
-				if (oldTransform != null) 
+					if (_renderTransform != null)
+					{
+						// This will set the updated Transform
+						_renderTransform.UpdateSize(_actualSize);
+					}
+					else if (oldTransform.HasValue)
+					{
+						// We grudgingly support setting the native transform directly without going through RenderTransform.
+						Transform = oldTransform.Value;
+					}
+
+#if <#= mixin.IsFrameworkElement #>
+					if (Superview != null && !(Superview is DependencyObject))
+					{
+						// If this FrameworkElement has a native parent, then it probably wasn't measured prior to having its Frame changed.
+						// Set RequiresMeasure flag so that this branch of the visual tree will be measured before being arranged, this is
+						// required for some views (eg Image) to display correctly.
+						RequiresMeasure = true;
+					}
+#endif
+				}
+				else if (oldTransform.HasValue)
 				{
 					// We grudgingly support setting the native transform directly without going through RenderTransform.
 					Transform = oldTransform.Value;
@@ -461,6 +482,16 @@ namespace <#= mixin.NamespaceName #>
 		public Rect AppliedFrame { get; private set; }
 
 #if !<#= mixin.IsFrameworkElement #>
+
+		public event EventHandler<object> LayoutUpdated;
+
+		internal virtual void OnLayoutUpdated ()
+		{
+			if (LayoutUpdated != null) {
+				LayoutUpdated (this, EventArgs.Empty);
+			}
+		}
+
 		// This is also defined in UIElement for actual UIElement hierarchy
 		internal bool IsRenderingSuspended { get; set; }
 
@@ -563,7 +594,7 @@ namespace <#= mixin.NamespaceName #>
 		/// <summary>
 		/// Indicates if the view is currently loaded.
 		/// </summary>
-		protected bool IsLoaded { get; private set; }
+		public bool IsLoaded { get; private set; }
 
 		internal virtual void OnLoading()
 		{
@@ -581,7 +612,7 @@ namespace <#= mixin.NamespaceName #>
 			SetNeedsLayout();
 			OnLoadedPartial();
 
-			Loaded?.Invoke(this, RoutedEventArgs.Empty);
+			Loaded?.Invoke(this, new RoutedEventArgs(this));
 		}
 
 		partial void OnLoadedPartial();
@@ -594,7 +625,7 @@ namespace <#= mixin.NamespaceName #>
 
 			if (Unloaded != null)
 			{
-				Unloaded(this, RoutedEventArgs.Empty);
+				Unloaded(this, new RoutedEventArgs(this));
 			}
 		}
 
@@ -645,15 +676,15 @@ namespace <#= mixin.NamespaceName #>
 		public static readonly DependencyProperty OpacityProperty =
 			DependencyProperty.Register("Opacity", typeof(double), typeof(<#= mixin.ClassName #>), new PropertyMetadata(1.0, (s, a) => ((<#= mixin.ClassName #>)s).OnOpacityChanged(a)));
 
-        private void OnOpacityChanged(DependencyPropertyChangedEventArgs args)
-        {
+		private void OnOpacityChanged(DependencyPropertyChangedEventArgs args)
+		{
 			// Don't update the internal value if the value is being animated.
 			// The value is being animated by the platform itself.
 			if (!(args.NewPrecedence == DependencyPropertyValuePrecedences.Animations && args.BypassesPropagation))
 			{
 				Alpha = IsRenderingSuspended ? 0 : (nfloat)Opacity;
 			}
-        }
+		}
 		#endregion
 		
 		#region Visibility Dependency Property
@@ -766,18 +797,18 @@ namespace <#= mixin.NamespaceName #>
 	
 		#region Transitions Dependency Property
 
-        public TransitionCollection Transitions
-        {
-            get { return (TransitionCollection)this.GetValue(TransitionsProperty); }
-            set { this.SetValue(TransitionsProperty, value); }
-        }
-
-        public static readonly DependencyProperty TransitionsProperty =
-            DependencyProperty.Register("Transitions", typeof(TransitionCollection), typeof(<#= mixin.ClassName #>), new PropertyMetadata(null, OnTransitionsChanged));
-			
-	    private static void OnTransitionsChanged(object dependencyObject, DependencyPropertyChangedEventArgs args)
+		public TransitionCollection Transitions
 		{
-            var frameworkElement = dependencyObject as IFrameworkElement;
+			get { return (TransitionCollection)this.GetValue(TransitionsProperty); }
+			set { this.SetValue(TransitionsProperty, value); }
+		}
+
+		public static readonly DependencyProperty TransitionsProperty =
+			DependencyProperty.Register("Transitions", typeof(TransitionCollection), typeof(<#= mixin.ClassName #>), new PropertyMetadata(null, OnTransitionsChanged));
+			
+		private static void OnTransitionsChanged(object dependencyObject, DependencyPropertyChangedEventArgs args)
+		{
+			var frameworkElement = dependencyObject as IFrameworkElement;
 
 			if (frameworkElement != null)
 			{
@@ -785,7 +816,7 @@ namespace <#= mixin.NamespaceName #>
 
 				if (oldValue != null)				
 				{
-				    foreach (var item in oldValue)
+					foreach (var item in oldValue)
 					{
 						item.DetachFromElement(frameworkElement);
 					}					
@@ -795,7 +826,7 @@ namespace <#= mixin.NamespaceName #>
 
 				if (newValue != null)				
 				{
-				    foreach (var item in newValue)
+					foreach (var item in newValue)
 					{
 						item.AttachToElement(frameworkElement);
 					}					
@@ -806,65 +837,65 @@ namespace <#= mixin.NamespaceName #>
 
 #if !<#= mixin.IsFrameworkElement #>
 		#region RenderTransform Dependency Property
-       
+	
 		/// <summary>
-        /// This is a Transformation for a UIElement.  It binds the Render Transform to the View
-        /// </summary>
-        public Transform RenderTransform
-        {
-            get { return (Transform)this.GetValue(RenderTransformProperty); }
-            set { this.SetValue(RenderTransformProperty, value); }
-        }
-
-        // Using a DependencyProperty as the backing store for RenderTransform.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty RenderTransformProperty =
-            DependencyProperty.Register("RenderTransform", typeof(Transform), typeof(<#= mixin.ClassName #>), new PropertyMetadata(null, OnRenderTransformChanged));
-
-  
-    	private static void OnRenderTransformChanged(object dependencyObject, DependencyPropertyChangedEventArgs args)
+		/// This is a Transformation for a UIElement.  It binds the Render Transform to the View
+		/// </summary>
+		public Transform RenderTransform
 		{
-			var newValue = args.NewValue as Transform;
-			var oldValue = args.OldValue as Transform;
-			if (newValue != null)
-			{
-				var view = ((<#= mixin.ClassName #>)dependencyObject);
-				
-                newValue.View = view;
-				newValue.Origin = view.RenderTransformOrigin;
-			}        
-			if (oldValue != null)
-			{
-                oldValue.View =null;
-			} 
+			get => (Transform)this.GetValue(RenderTransformProperty);
+			set => this.SetValue(RenderTransformProperty, value);
 		}
 
+		/// <summary>
+		/// Backing dependency property for <see cref="RenderTransform"/>
+		/// </summary>
+		public static readonly DependencyProperty RenderTransformProperty =
+			DependencyProperty.Register("RenderTransform", typeof(Transform), typeof(<#= mixin.ClassName #>), new PropertyMetadata(null, OnRenderTransformChanged));
+
+		private static void OnRenderTransformChanged(object dependencyObject, DependencyPropertyChangedEventArgs args)
+		{
+			var view = (<#= mixin.ClassName #>)dependencyObject;
+
+			view._renderTransform?.Dispose();
+
+			if (args.NewValue is Transform transform)
+			{
+				view._renderTransform = new NativeRenderTransformAdapter(view, transform, view.RenderTransformOrigin);
+			}
+			else
+			{
+				// Sanity
+				view._renderTransform = null;
+			}
+		}
+
+		private NativeRenderTransformAdapter _renderTransform;
 		#endregion
 
 		#region RenderTransformOrigin Dependency Property
-       
+	
 		/// <summary>
-        /// This is a Transformation for a UIElement.  It binds the Render Transform to the View
-        /// </summary>
-        public Point RenderTransformOrigin
-        {
-            get { return (Point)this.GetValue(RenderTransformOriginProperty); }
-            set { this.SetValue(RenderTransformOriginProperty, value); }
-        }
+		/// This is a Transformation for a UIElement.  It binds the Render Transform to the View
+		/// </summary>
+		public Point RenderTransformOrigin
+		{
+			get => (Point)this.GetValue(RenderTransformOriginProperty);
+			set => this.SetValue(RenderTransformOriginProperty, value);
+		}
 
-        // Using a DependencyProperty as the backing store for RenderTransformOrigin.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty RenderTransformOriginProperty =
-            DependencyProperty.Register("RenderTransformOrigin", typeof(Point), typeof(<#= mixin.ClassName #>), new PropertyMetadata(default(Point), OnRenderTransformOriginChanged));
+		/// <summary>
+		/// Backing dependency property for <see cref="RenderTransformOrigin"/>
+		/// </summary>
+		public static readonly DependencyProperty RenderTransformOriginProperty =
+			DependencyProperty.Register("RenderTransformOrigin", typeof(Point), typeof(<#= mixin.ClassName #>), new PropertyMetadata(default(Point), OnRenderTransformOriginChanged));
 
-  
-    	private static void OnRenderTransformOriginChanged(object dependencyObject, DependencyPropertyChangedEventArgs args)
+		private static void OnRenderTransformOriginChanged(object dependencyObject, DependencyPropertyChangedEventArgs args)
 		{
 			var view = ((<#= mixin.ClassName #>)dependencyObject);
 			var point = (Point)args.NewValue;
 
-			if(view.RenderTransform != null)
-			{
-				view.RenderTransform.Origin = point;
-			}
+			view._renderTransform?.UpdateOrigin(point);
 		}
 
 		#endregion
@@ -938,6 +969,13 @@ namespace <#= mixin.NamespaceName #>
 			{
 				return null;
 			}
+#if <#= mixin.IsFrameworkElement #> //IsFrameworkElement
+			if (Clip?.Rect is Rect rect && !rect.Contains(point))
+			{
+				// Clipped region must not block touch to the rest of the visual tree
+				return null;
+			}
+#endif
 
 			var viewHit = base.HitTest(point, uievent);
 
@@ -973,7 +1011,8 @@ namespace <#= mixin.NamespaceName #>
 
 		static partial void OnGenericPropertyUpdatedPartial(object dependencyObject, DependencyPropertyChangedEventArgs args);
 		
-		public Uri BaseUri => new Uri("ms-appx:///");
+		private static readonly Uri _defaultUri = new Uri("ms-appx:///");
+		public Uri BaseUri { get; internal set; } = _defaultUri;
 
 		
 		/// <summary>
@@ -996,6 +1035,76 @@ namespace <#= mixin.NamespaceName #>
 			// If all else fails, just return the string representation of the DP's value
 			return new global::Foundation.NSString(dpValue.ToString());
 		}
+		
+		#region AutomationPeer
+
+		private AutomationPeer _automationPeer;
+
+#if !<#= mixin.HasAutomationPeer #>
+		private AutomationPeer OnCreateAutomationPeerOverride()
+		{
+			return null;
+		}
+		
+		private string GetAccessibilityInnerTextOverride()
+		{
+			return null;
+		}
+#endif
+
+		protected
+#if !<#= mixin.IsFrameworkElement #>
+		virtual
+#else
+		override
+#endif
+		AutomationPeer OnCreateAutomationPeer()
+		{
+			if (OnCreateAutomationPeerOverride() is AutomationPeer automationPeer)
+			{
+				return automationPeer;
+			}
+
+			if (AutomationProperties.GetName(this) is string name && !string.IsNullOrEmpty(name))
+			{
+				return new FrameworkElementAutomationPeer(this);
+			}
+
+			return null;
+		}
+
+		public virtual string GetAccessibilityInnerText() // TODO: internal
+		{
+			if (GetAccessibilityInnerTextOverride() is string innerText)
+			{
+				return innerText;
+			}
+
+			return null;
+		}
+
+		public AutomationPeer GetAutomationPeer() // TODO: internal
+		{
+			if (_automationPeer == null)
+			{
+				_automationPeer = OnCreateAutomationPeer();
+			}
+
+			return _automationPeer;
+		}
+
+		public override bool AccessibilityActivate()
+		{
+			return GetAutomationPeer()?.AccessibilityActivate() ?? false;
+		}
+
+		public override bool IsAccessibilityElement
+		{
+			get => GetAutomationPeer()?.UpdateAccessibilityElement() ?? false;
+			set => base.IsAccessibilityElement = value;
+		}
+		
+		#endregion
 	}
 }
 <#
@@ -1003,7 +1112,7 @@ namespace <#= mixin.NamespaceName #>
 #>
 
 <#+
-    public void AddClass(
+	public void AddClass(
 		string namespaceName, 
 		string className, 
 		bool defineSetNeedsLayout = true,
@@ -1011,10 +1120,11 @@ namespace <#= mixin.NamespaceName #>
 		bool isUIControl = false,
 		bool hasAttachedToWindow = true,
 		bool overridesAttachedToWindow = false,
-		bool isNewBackground = false
+		bool isNewBackground = false,
+		bool hasAutomationPeer = false
 	)
 	{
-        _mixins.Add(
+		_mixins.Add(
 			new MixinParams { 
 				NamespaceName = namespaceName, 
 				ClassName = className,
@@ -1025,9 +1135,10 @@ namespace <#= mixin.NamespaceName #>
 				OverridesAttachedToWindow = overridesAttachedToWindow ? "true" : "false",
 				IsNewBackground = isNewBackground ? "new" : "",
 				IsFrameworkElement = className == "FrameworkElement" ? "true" : "false",
+				HasAutomationPeer = hasAutomationPeer ? "true" : "false",
 			}
 		);
-    }
+	}
 
 	private class MixinParams
 	{
@@ -1040,6 +1151,7 @@ namespace <#= mixin.NamespaceName #>
 		public string OverridesAttachedToWindow;
 		public string IsNewBackground;
 		public string IsFrameworkElement;
+		public string HasAutomationPeer;
 	}
 
 	private List<MixinParams> _mixins = new List<MixinParams>();

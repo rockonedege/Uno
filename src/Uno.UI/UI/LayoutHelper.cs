@@ -10,7 +10,7 @@ namespace Uno.UI
 {
 	internal static class LayoutHelper
 	{
-		internal static (Size min, Size max) GetMinMax(this FrameworkElement e)
+		internal static (Size min, Size max) GetMinMax(this IFrameworkElement e)
 		{
 			var size = new Size(e.Width, e.Height);
 			var minSize = new Size(e.MinWidth, e.MinHeight);
@@ -29,7 +29,7 @@ namespace Uno.UI
 			return (minSize, maxSize);
 		}
 
-		internal static Size GetMarginSize(this FrameworkElement frameworkElement)
+		internal static Size GetMarginSize(this IFrameworkElement frameworkElement)
 		{
 			var margin = frameworkElement.Margin;
 			var marginWidth = margin.Left + margin.Right;
@@ -37,7 +37,7 @@ namespace Uno.UI
 			return new Size(marginWidth, marginHeight);
 		}
 
-		internal static Point GetAlignmentOffset(this FrameworkElement e, Size clientSize, Size renderSize)
+		internal static Point GetAlignmentOffset(this IFrameworkElement e, Size clientSize, Size renderSize)
 		{
 			// Start with Bottom-Right alignment, multiply by 0/0.5/1 for Top-Left/Center/Bottom-Right alignment
 			var offset = new Point(
@@ -102,6 +102,14 @@ namespace Uno.UI
 			);
 		}
 
+		internal static Size Add(this Size left, Thickness right)
+		{
+			return new Size(
+				left.Width + right.Left + right.Right,
+				left.Height + right.Top + right.Bottom
+			);
+		}
+
 		internal static Size Subtract(this Size left, Size right)
 		{
 			return new Size(
@@ -110,14 +118,22 @@ namespace Uno.UI
 			);
 		}
 
-		public static double NumberOrDefault(this double value, double defaultValue)
+		internal static Size Subtract(this Size left, Thickness right)
+		{
+			return new Size(
+				left.Width - right.Left - right.Right,
+				left.Height - right.Top - right.Bottom
+			);
+		}
+
+		internal static double NumberOrDefault(this double value, double defaultValue)
 		{
 			return IsNaN(value)
 				? defaultValue
 				: value;
 		}
 
-		public static Size NumberOrDefault(this Size value, Size defaultValue)
+		internal static Size NumberOrDefault(this Size value, Size defaultValue)
 		{
 			return new Size(
 				value.Width.NumberOrDefault(defaultValue.Width),
@@ -125,12 +141,12 @@ namespace Uno.UI
 			);
 		}
 
-		public static double AtMost(this double value, double most)
+		internal static double AtMost(this double value, double most)
 		{
 			return Math.Min(value, most);
 		}
 
-		public static Size AtMost(this Size value, Size most)
+		internal static Size AtMost(this Size value, Size most)
 		{
 			return new Size(
 				value.Width.AtMost(most.Width),
@@ -138,17 +154,120 @@ namespace Uno.UI
 			);
 		}
 
-		public static double AtLeast(this double value, double least)
+		internal static double AtLeast(this double value, double least)
 		{
 			return Math.Max(value, least);
 		}
 
-		public static Size AtLeast(this Size value, Size least)
+		internal static Size AtLeast(this Size value, Size least)
 		{
 			return new Size(
 				value.Width.AtLeast(least.Width),
 				value.Height.AtLeast(least.Height)
 			);
+		}
+
+		internal static double AspectRatio(this Rect rect) => rect.Size.AspectRatio();
+
+		internal static double AspectRatio(this Size size)
+		{
+			var w = size.Width;
+			var h = size.Height;
+
+			switch (w)
+			{
+				case NegativeInfinity:
+					return -1;
+				case PositiveInfinity:
+					return 1;
+				case NaN:
+					return 1;
+				case 0.0d:
+					return 1;
+			}
+
+			switch (h)
+			{
+				case NegativeInfinity:
+					return -1;
+				case PositiveInfinity:
+					return 1;
+				case NaN:
+					return 1;
+				case 0.0d:
+					return 1; // special case
+				case 1.0d:
+					return w;
+			}
+
+			return w / h;
+		}
+
+#if __IOS__ || __MACOS__
+		internal static double AspectRatio(this CoreGraphics.CGSize size)
+		{
+			var w = size.Width;
+			var h = size.Height;
+
+			if (w == nfloat.NegativeInfinity)
+			{
+				return -1;
+			}
+			else if (w == nfloat.PositiveInfinity)
+			{
+				return 1;
+			}
+			else if (w == nfloat.NaN)
+			{
+				return 1;
+			}
+			else if (w == 0.0d)
+			{
+				return 1;
+			}
+
+			if (h == nfloat.NegativeInfinity)
+			{
+				return -1;
+			}
+			else if (h == nfloat.PositiveInfinity)
+			{
+				return 1;
+			}
+			else if (h == nfloat.NaN)
+			{
+				return 1;
+			}
+			else if (h == 0.0d)
+			{
+				return 1; // special case
+			}
+			else if (h == 1.0d)
+			{
+				return w;
+			}
+
+			return w / h;
+		}
+#endif
+
+		internal static Rect GetBoundsRectRelativeTo(this UIElement element, UIElement relativeTo)
+		{
+			var elementRect = new Rect(default, element.RenderSize);
+			if (element.RenderTransform != null)
+			{
+				elementRect = element.RenderTransform.TransformBounds(elementRect);
+			}
+
+			var transformToRoot = element.TransformToVisual(relativeTo);
+			var rect = transformToRoot.TransformBounds(elementRect);
+			return rect;
+		}
+
+		internal static Rect GetAbsoluteBoundsRect(this UIElement element)
+		{
+			var root = Window.Current.Content;
+			return GetBoundsRectRelativeTo(element, root);
 		}
 	}
 }

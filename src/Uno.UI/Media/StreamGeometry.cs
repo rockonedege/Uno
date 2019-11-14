@@ -4,22 +4,20 @@ using System.Drawing;
 using System.Globalization;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
+using Uno.UI.Extensions;
 
 #if XAMARIN_IOS_UNIFIED
 using Foundation;
 using UIKit;
 using CoreGraphics;
 using Path = UIKit.UIBezierPath;
-#elif XAMARIN_IOS
-using MonoTouch.Foundation;
-using MonoTouch.UIKit;
-using MonoTouch.CoreGraphics;
-using CGRect = System.Drawing.Windows.Foundation.Rect;
-using nfloat = System.Single;
-using CGPoint = System.Drawing.PointF;
-using nint = System.Int32;
-using CGSize = System.Drawing.Windows.Foundation.Size;
-using Path = MonoTouch.UIKit.UIBezierPath;
+#elif __MACOS__
+using AppKit;
+using CoreGraphics;
+using UIImage = AppKit.NSImage;
+using UIColor = AppKit.NSColor;
+using UIGraphics = AppKit.NSGraphics;
+using Path = AppKit.NSBezierPath;
 #elif XAMARIN_ANDROID
 using Android.Graphics;
 #else
@@ -45,13 +43,13 @@ namespace Uno.Media
 			bezierPath = bezierPath_;
 		}
 
-#if XAMARIN_IOS_UNIFIED || XAMARIN_IOS
-		public override UIImage ToUIImage ()
+#if XAMARIN_IOS_UNIFIED || XAMARIN_IOS || __MACOS__
+		public override UIImage ToNativeImage ()
 		{
-			return (bezierPath == null) ? null : ToUIImage (bezierPath.Bounds.Size);
+			return (bezierPath == null) ? null : ToNativeImage (bezierPath.Bounds.Size);
 		}
 
-		public override UIImage ToUIImage (CGSize targetSize, UIColor color = default(UIColor), Thickness margin = default(Thickness))
+		public override UIImage ToNativeImage (CGSize targetSize, UIColor color = default(UIColor), Thickness margin = default(Thickness))
 		{
 			if (bezierPath == null) {
 				return null;
@@ -91,6 +89,7 @@ namespace Uno.Media
 
 			UIImage image;
 
+#if __IOS__
 			UIGraphics.BeginImageContextWithOptions (targetSize, false, 0);
 			using (var context = UIGraphics.GetCurrentContext ()) {
 				context.TranslateCTM (translate.X, translate.Y);
@@ -104,14 +103,16 @@ namespace Uno.Media
 				image = UIGraphics.GetImageFromCurrentImageContext ();
 				UIGraphics.EndImageContext ();
 			}
+#elif __MACOS__
+			// macOS TODO
+			image = null;
+#endif
 
 			return image;
 		}
 
-		public override CGPath ToCGPath ()
-		{
-			return(bezierPath != null) ?  new CGPath(bezierPath.CGPath) :  new CGPath();
-		}
+		public override CGPath ToCGPath()
+			=> bezierPath != null ? bezierPath.ToCGPath() : new CGPath();
 #endif
 
 		#region implemented abstract members of Geometry

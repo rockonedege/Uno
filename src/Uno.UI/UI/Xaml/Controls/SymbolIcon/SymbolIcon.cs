@@ -1,6 +1,7 @@
-﻿#if XAMARIN
+﻿#if XAMARIN || __WASM__
 
 using System;
+using Uno.UI.Controls;
 using Windows.Foundation;
 using Windows.Foundation.Metadata;
 using Windows.UI.Xaml.Media;
@@ -25,12 +26,11 @@ namespace Windows.UI.Xaml.Controls
 
 		public Symbol Symbol
 		{
-			get { return (Symbol)GetValue(SymbolProperty); }
-			set { SetValue(SymbolProperty, value); }
+			get => (Symbol)GetValue(SymbolProperty);
+			set => SetValue(SymbolProperty, value);
 		}
 
-		// Using a DependencyProperty as the backing store for Symbol.  This enables animation, styling, binding, etc...
-		public static readonly DependencyProperty SymbolProperty =
+		public static DependencyProperty SymbolProperty { get; } =
 			DependencyProperty.Register("Symbol", typeof(Symbol), typeof(SymbolIcon), new PropertyMetadata(Symbol.Home, OnSymbolChanged));
 
 		private static void OnSymbolChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)

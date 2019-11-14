@@ -2,12 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Media.Audio
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class CreateAudioGraphResult 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.Media.Audio.AudioGraph Graph
 		{
@@ -17,7 +17,7 @@ namespace Windows.Media.Audio
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.Media.Audio.AudioGraphCreationStatus Status
 		{
@@ -27,7 +27,18 @@ namespace Windows.Media.Audio
 			}
 		}
 		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::System.Exception ExtendedError
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member Exception CreateAudioGraphResult.ExtendedError is not implemented in Uno.");
+			}
+		}
+		#endif
 		// Forced skipping of method Windows.Media.Audio.CreateAudioGraphResult.Status.get
 		// Forced skipping of method Windows.Media.Audio.CreateAudioGraphResult.Graph.get
+		// Forced skipping of method Windows.Media.Audio.CreateAudioGraphResult.ExtendedError.get
 	}
 }

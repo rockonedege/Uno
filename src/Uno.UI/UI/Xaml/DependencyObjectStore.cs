@@ -56,18 +56,12 @@ namespace Windows.UI.Xaml
 
 
 		/// <summary>
-		/// A global static counter that is used to uniquely identify objects. 
+		/// A global static counter that is used to uniquely identify objects.
 		/// This is primarily used during trace profiling.
 		/// </summary>
 		private static long _objectIdCounter;
 
 		private bool _isDisposed;
-
-		/// <summary>
-		/// A stack of properties currently being set. This avoids loops in two-way bindings.
-		/// </summary>
-		private Stack<DependencyProperty> _currentlySettingPropertyStack = new Stack<DependencyProperty>(1);
-		private DependencyProperty _currentlySettingProperty;
 
 		private readonly DependencyPropertyDetailsCollection _properties;
 		private readonly DependencyPropertyDetails _dataContextPropertyDetails;
@@ -84,8 +78,8 @@ namespace Windows.UI.Xaml
 		private readonly ManagedWeakReference _originalObjectRef;
 
 		/// <summary>
-		/// This field is used to pass a reference to itself in the case 
-		/// of DependencyProperty changed registrations. This avoids creating many 
+		/// This field is used to pass a reference to itself in the case
+		/// of DependencyProperty changed registrations. This avoids creating many
 		/// weak references to the same object.
 		/// </summary>
 		private readonly ManagedWeakReference _thisWeakRef;
@@ -101,6 +95,7 @@ namespace Windows.UI.Xaml
 		private Dictionary<long, IDisposable> _propertyChangedTokens = new Dictionary<long, IDisposable>();
 
 		private bool _registeringInheritedProperties;
+		private bool _unregisteringInheritedProperties;
 
 		private static bool _validatePropertyOwner = Debugger.IsAttached;
 
@@ -108,7 +103,7 @@ namespace Windows.UI.Xaml
 		/// Provides the parent Dependency Object of this dependency object
 		/// </summary>
 		/// <remarks>
-		/// This property is an <see cref="object"/> as the parent of a <see cref="DependencyObject"/> may 
+		/// This property is an <see cref="object"/> as the parent of a <see cref="DependencyObject"/> may
 		/// not always be another <see cref="DependencyObject"/>, particularly in the case of the root element.
 		/// </remarks>
 		public object Parent
@@ -159,7 +154,7 @@ namespace Windows.UI.Xaml
 
 			_thisWeakRef = Uno.UI.DataBinding.WeakReferencePool.RentWeakReference(this, this);
 
-			_properties = new DependencyPropertyDetailsCollection(_originalObjectType, dataContextProperty, templatedParentProperty);
+			_properties = new DependencyPropertyDetailsCollection(_originalObjectType, _originalObjectRef, dataContextProperty, templatedParentProperty);
 			_dataContextPropertyDetails = _properties.DataContextPropertyDetails;
 			_templatedParentPropertyDetails = _properties.TemplatedParentPropertyDetails;
 
@@ -180,7 +175,7 @@ namespace Windows.UI.Xaml
 		}
 
 		/// <summary>
-		/// Determines if the dependency object automatically registers for inherited 
+		/// Determines if the dependency object automatically registers for inherited
 		/// properties such as <see cref="DataContextProperty"/> or <see cref="TemplatedParentProperty"/>.
 		/// </summary>
 		/// <remarks>
@@ -244,7 +239,7 @@ namespace Windows.UI.Xaml
 
 		private object GetValue(DependencyPropertyDetails propertyDetails, DependencyPropertyValuePrecedences? precedence = null, bool isPrecedenceSpecific = false)
 		{
-			if(propertyDetails == _dataContextPropertyDetails || propertyDetails == _templatedParentPropertyDetails)
+			if (propertyDetails == _dataContextPropertyDetails || propertyDetails == _templatedParentPropertyDetails)
 			{
 				TryRegisterInheritedProperties(force: true);
 			}
@@ -304,9 +299,23 @@ namespace Windows.UI.Xaml
 			}
 			else
 			{
+				if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
+				{
+					this.Log().Debug($"OverrideLocalPrecedence({precedence})");
+				}
+
 				_precedenceOverride = precedence;
 
-				return Disposable.Create(() => _precedenceOverride = null);
+				return Disposable.Create(() =>
+				{
+
+					_precedenceOverride = null;
+
+					if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
+					{
+						this.Log().Debug("OverrideLocalPrecedence(None)");
+					}
+				});
 			}
 		}
 
@@ -355,7 +364,7 @@ namespace Windows.UI.Xaml
 		/// </summary>
 		/// <param name="instance">The instance on which the property is attached</param>
 		/// <param name="property">The dependency property to get</param>
-		/// <param name="precedence">The value precendence to assign</param>
+		/// <param name="precedence">The value precedence to assign</param>
 		public void ClearValue(DependencyProperty property)
 		{
 			SetValue(property, DependencyProperty.UnsetValue, DependencyPropertyValuePrecedences.Local);
@@ -366,7 +375,7 @@ namespace Windows.UI.Xaml
 		/// </summary>
 		/// <param name="instance">The instance on which the property is attached</param>
 		/// <param name="property">The dependency property to get</param>
-		/// <param name="precedence">The value precendence to assign</param>
+		/// <param name="precedence">The value precedence to assign</param>
 		internal void ClearValue(DependencyProperty property, DependencyPropertyValuePrecedences precedence)
 		{
 			SetValue(property, DependencyProperty.UnsetValue, precedence);
@@ -374,97 +383,98 @@ namespace Windows.UI.Xaml
 
 		internal void SetValue(DependencyProperty property, object value, DependencyPropertyValuePrecedences precedence, DependencyPropertyDetails propertyDetails = null)
 		{
-			// Determines the state of the currently being set property
-			// to avoid two-way bindings to do a ping-pong.
-			var currentlySettingPropertyPushed = false;
-
-			try
+			if (_trace.IsEnabled)
 			{
-				if (precedence == DependencyPropertyValuePrecedences.Coercion)
+				using (WritePropertyEventTrace(TraceProvider.SetValueStart, TraceProvider.SetValueStop, property, precedence))
 				{
-					throw new ArgumentException("SetValue must not be called with precedence DependencyPropertyValuePrecedences.Coercion, as it expects a non-coerced value to function properly.");
-				}
-
-				if (
-					IsCurrentlySettingProperty(property)
-					&& !ReferenceEquals(property, _dataContextProperty)
-				)
-				{
-					// This check is present to avoid having update loops in cases
-					// of multiple two-way bindings having ConvertBack implemented to invert its content.
-
-					if (property.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
-					{
-						property.Log().DebugFormat(
-							"Ignoring new property value [{1}] on [{0}] as it is already being updated."
-							, property.Name
-							, value
-						);
-					}
-
-					return;
-				}
-
-				var actualInstanceAlias = ActualInstance;
-
-				if (actualInstanceAlias != null)
-				{
-					PushCurrentlySettingProperty(property);
-
-					currentlySettingPropertyPushed = true;
-
-					using (WritePropertyEventTrace(TraceProvider.SetValueStart, TraceProvider.SetValueStop, property, precedence))
-					{
-						ApplyPrecedenceOverride(ref precedence);
-
-						if ((value == DependencyProperty.UnsetValue) && precedence == DependencyPropertyValuePrecedences.DefaultValue)
-						{
-							throw new InvalidOperationException("The default value must be a valid value");
-						}
-
-						ValidatePropertyOwner(property);
-
-						// Resolve the stack once for the instance, for performance.
-						propertyDetails = propertyDetails ?? _properties.GetPropertyDetails(property);
-
-						var previousValue = GetValue(propertyDetails);
-						var previousPrecedence = GetCurrentHighestValuePrecedence(propertyDetails);
-
-						// Set even if they are different to make sure the value is now set on the right precedence
-						SetValueInternal(value, precedence, propertyDetails);
-
-						ApplyCoercion(actualInstanceAlias, propertyDetails, previousValue, value);
-
-						// Value may or may not have changed based on the precedence
-						var newValue = GetValue(propertyDetails);
-						var newPrecedence = GetCurrentHighestValuePrecedence(propertyDetails);
-
-						if (property == _dataContextProperty)
-						{
-							OnDataContextChanged(value, newValue, precedence);
-						}
-
-						RaiseCallbacks(actualInstanceAlias, propertyDetails, previousValue, previousPrecedence, newValue, newPrecedence);
-					}
-				}
-				else
-				{
-					// The store has lost its current instance, renove it from its parent.
-					Parent = null;
+					InnerSetValue(property, value, precedence, propertyDetails);
 				}
 			}
-			finally
+			else
 			{
-				if (currentlySettingPropertyPushed)
+				InnerSetValue(property, value, precedence, propertyDetails);
+			}
+
+		}
+
+		private void InnerSetValue(DependencyProperty property, object value, DependencyPropertyValuePrecedences precedence, DependencyPropertyDetails propertyDetails)
+		{
+			if (precedence == DependencyPropertyValuePrecedences.Coercion)
+			{
+				throw new ArgumentException("SetValue must not be called with precedence DependencyPropertyValuePrecedences.Coercion, as it expects a non-coerced value to function properly.");
+			}
+
+			var actualInstanceAlias = ActualInstance;
+
+			if (actualInstanceAlias != null)
+			{
+				ApplyPrecedenceOverride(ref precedence);
+
+				if ((value is UnsetValue) && precedence == DependencyPropertyValuePrecedences.DefaultValue)
 				{
-					PopCurrentlySettingProperty(property);
+					throw new InvalidOperationException("The default value must be a valid value");
 				}
+
+				ValidatePropertyOwner(property);
+
+				// Resolve the stack once for the instance, for performance.
+				propertyDetails = propertyDetails ?? _properties.GetPropertyDetails(property);
+
+				var previousValue = GetValue(propertyDetails);
+				var previousPrecedence = GetCurrentHighestValuePrecedence(propertyDetails);
+
+				// Set even if they are different to make sure the value is now set on the right precedence
+				SetValueInternal(value, precedence, propertyDetails);
+
+				ApplyCoercion(actualInstanceAlias, propertyDetails, previousValue, value);
+
+				// Value may or may not have changed based on the precedence
+				var newValue = GetValue(propertyDetails);
+				var newPrecedence = GetCurrentHighestValuePrecedence(propertyDetails);
+
+				if (property == _dataContextProperty)
+				{
+					OnDataContextChanged(value, newValue, precedence);
+				}
+
+				TryUpdateInheritedAttachedProperty(property, propertyDetails);
+
+				if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
+				{
+					var name = (_originalObjectRef.Target as IFrameworkElement)?.Name ?? _originalObjectRef.Target?.GetType().Name;
+					var hashCode = _originalObjectRef.Target?.GetHashCode();
+
+					this.Log().Debug(
+						$"SetValue on [{name}/{hashCode:X8}] for [{property.Name}] to [{newValue}] (req:{value} reqp:{precedence} p:{previousValue} pp:{previousPrecedence} np:{newPrecedence})"
+					);
+				}
+
+				RaiseCallbacks(actualInstanceAlias, propertyDetails, previousValue, previousPrecedence, newValue, newPrecedence);
+			}
+			else
+			{
+				// The store has lost its current instance, renove it from its parent.
+				Parent = null;
+			}
+		}
+
+		private void TryUpdateInheritedAttachedProperty(DependencyProperty property, DependencyPropertyDetails propertyDetails)
+		{
+			if (
+				property.IsAttached
+				&& propertyDetails.Metadata is FrameworkPropertyMetadata fm
+				&& fm.Options.HasInherits())
+			{
+				// Add inheritable attached properties to the inherited forwarded
+				// properties, so they can be automatically propagated when a child
+				// store is late added.
+				_inheritedForwardedProperties[property] = _originalObjectRef;
 			}
 		}
 
 		private void ApplyCoercion(DependencyObject actualInstanceAlias, DependencyPropertyDetails propertyDetails, object previousValue, object baseValue)
 		{
-			if (baseValue == DependencyProperty.UnsetValue)
+			if (baseValue is UnsetValue)
 			{
 				// Removing any previously applied coercion
 				SetValueInternal(DependencyProperty.UnsetValue, DependencyPropertyValuePrecedences.Coercion, propertyDetails);
@@ -480,19 +490,25 @@ namespace Windows.UI.Xaml
 				return;
 			}
 
-			var coercedValue = coerceValueCallback(actualInstanceAlias, baseValue);
-			if (coercedValue == DependencyProperty.UnsetValue)
+			if (!propertyDetails.Metadata.CoerceWhenUnchanged && Equals(previousValue, baseValue))
 			{
-				// The property system will treat any CoerceValueCallback that returns the value UnsetValue as a special case. 
-				// This special case means that the property change that resulted in the CoerceValueCallback being called 
-				// should be rejected by the property system, and that the property system should instead report whatever 
+				// Value hasn't changed, don't coerce.
+				return;
+			}
+
+			var coercedValue = coerceValueCallback(actualInstanceAlias, baseValue);
+			if (coercedValue is UnsetValue)
+			{
+				// The property system will treat any CoerceValueCallback that returns the value UnsetValue as a special case.
+				// This special case means that the property change that resulted in the CoerceValueCallback being called
+				// should be rejected by the property system, and that the property system should instead report whatever
 				// previous value the property had.
 				// Source: https://msdn.microsoft.com/en-us/library/ms745795%28v=vs.110%29.aspx?f=255&MSPPError=-2147217396
 				SetValueInternal(previousValue, DependencyPropertyValuePrecedences.Coercion, propertyDetails);
 			}
 			else if (!Equals(coercedValue, baseValue))
 			{
-				// The base value and the coerced value are different, which means that coercion must be applied.  
+				// The base value and the coerced value are different, which means that coercion must be applied.
 				// Set value using DependencyPropertyValuePrecedences.Coercion, which has the highest precedence.
 				SetValueInternal(coercedValue, DependencyPropertyValuePrecedences.Coercion, propertyDetails);
 			}
@@ -506,51 +522,8 @@ namespace Windows.UI.Xaml
 		internal void CoerceValue(DependencyProperty property)
 		{
 			// Trigger the coercion mechanism of SetValue, by re-applying the base value (non-coerced value).
-			var baseValue = GetValueUnderPrecedence(property, DependencyPropertyValuePrecedences.Coercion);
-			SetValue(property, baseValue);
-		}
-
-		/// <summary>
-		/// Determines if the specified property is currently being set for this instance.
-		/// </summary>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private bool IsCurrentlySettingProperty(DependencyProperty property)
-		{
-			return _currentlySettingProperty == property
-				|| (
-				_currentlySettingProperty != null
-				&& _currentlySettingPropertyStack.Contains(property, DependencyPropertyComparer.Default)
-			);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void PushCurrentlySettingProperty(DependencyProperty property)
-		{
-			if (_currentlySettingProperty == null)
-			{
-				_currentlySettingProperty = property;
-			}
-			else
-			{
-				_currentlySettingPropertyStack.Push(property);
-			}
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void PopCurrentlySettingProperty(DependencyProperty property)
-		{
-			var popped = _currentlySettingProperty ?? _currentlySettingPropertyStack.Pop();
-
-			_currentlySettingProperty = null;
-
-			if (popped != property && property.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
-			{
-				property.Log().DebugFormat(
-					"Invalid stack state for DependecyObject.SetValue()."
-					, property.Name
-					, _originalObjectType
-				);
-			}
+			var (baseValue, basePrecedence) = GetValueUnderPrecedence(property, DependencyPropertyValuePrecedences.Coercion);
+			SetValue(property, baseValue, basePrecedence);
 		}
 
 		private void WritePropertyEventTrace(int eventId, DependencyProperty property, DependencyPropertyValuePrecedences? precedence)
@@ -602,7 +575,7 @@ namespace Windows.UI.Xaml
 		}
 
 		/// <summary>
-		/// Validates that the DependencyProperty type is 
+		/// Validates that the DependencyProperty type is
 		/// </summary>
 		/// <param name="property">A dependency property</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -610,7 +583,17 @@ namespace Windows.UI.Xaml
 		{
 			if (_validatePropertyOwner)
 			{
-				if (!_originalObjectType.Is(property.OwnerType) && !property.IsAttached)
+				var isFrameworkElement = _originalObjectType.Is(typeof(FrameworkElement));
+				var isMixinFrameworkElement = _originalObjectRef.Target is IFrameworkElement && !isFrameworkElement;
+
+				if (
+					!_originalObjectType.Is(property.OwnerType)
+					&& !property.IsAttached
+
+					// Don't fail validation for properties that are located on non-FrameworkElement types
+					// e.g. ScrollContentPresenter, for which using the Name property should not fail.
+					&& !isMixinFrameworkElement
+				)
 				{
 					throw new InvalidOperationException(
 						$"The Dependency Property [{property.Name}] is owned by [{property.OwnerType}] and cannot be used on [{_originalObjectType}]"
@@ -659,7 +642,7 @@ namespace Windows.UI.Xaml
 				() =>
 				{
 					// This weak reference ensure that the closure will not link
-					// the caller and the callee, in the same way "newValueActionWeak" 
+					// the caller and the callee, in the same way "newValueActionWeak"
 					// does not link the callee to the caller.
 					var that = instanceRef.Target as DependencyObjectStore;
 
@@ -668,7 +651,7 @@ namespace Windows.UI.Xaml
 						cookie.Dispose();
 						weakDelegate.release.Dispose();
 
-						// Force a closure on the callback, to make its lifetime as long 
+						// Force a closure on the callback, to make its lifetime as long
 						// as the subscription being held by the callee.
 						callback = null;
 					}
@@ -683,7 +666,7 @@ namespace Windows.UI.Xaml
 			_genericCallbacks = _genericCallbacks.Add(weakDelegate.callback);
 
 			// This weak reference ensure that the closure will not link
-			// the caller and the callee, in the same way "newValueActionWeak" 
+			// the caller and the callee, in the same way "newValueActionWeak"
 			// does not link the callee to the caller.
 			var instanceRef = _thisWeakRef;
 
@@ -693,7 +676,7 @@ namespace Windows.UI.Xaml
 				() =>
 				{
 					// This weak reference ensure that the closure will not link
-					// the caller and the callee, in the same way "newValueActionWeak" 
+					// the caller and the callee, in the same way "newValueActionWeak"
 					// does not link the callee to the caller.
 					var that = instanceRef.Target as DependencyObjectStore;
 
@@ -705,7 +688,7 @@ namespace Windows.UI.Xaml
 
 					weakDelegate.release.Dispose();
 
-					// Force a closure on the callback, to make its lifetime as long 
+					// Force a closure on the callback, to make its lifetime as long
 					// as the subscription being held by the callee.
 					handler = null;
 				}
@@ -725,7 +708,7 @@ namespace Windows.UI.Xaml
 			PropagateInheritedProperties(childStore);
 
 			// This weak reference ensure that the closure will not link
-			// the caller and the callee, in the same way "newValueActionWeak" 
+			// the caller and the callee, in the same way "newValueActionWeak"
 			// does not link the callee to the caller.
 			var instanceRef = _thisWeakRef;
 
@@ -755,7 +738,7 @@ namespace Windows.UI.Xaml
 			_compiledBindingsCallbacks = _compiledBindingsCallbacks.Add(weakDelegate.callback);
 
 			// This weak reference ensure that the closure will not link
-			// the caller and the callee, in the same way "newValueActionWeak" 
+			// the caller and the callee, in the same way "newValueActionWeak"
 			// does not link the callee to the caller.
 			var instanceRef = _thisWeakRef;
 
@@ -774,7 +757,7 @@ namespace Windows.UI.Xaml
 
 					weakDelegate.release.Dispose();
 
-					// Force a closure on the callback, to make its lifetime as long 
+					// Force a closure on the callback, to make its lifetime as long
 					// as the subscription being held by the callee.
 					handler = null;
 				}
@@ -794,7 +777,7 @@ namespace Windows.UI.Xaml
 		/// <summary>
 		/// Registers to parent changes.
 		/// </summary>
-		/// <param name="key">A key to be passed to the callack parameter.</param>
+		/// <param name="key">A key to be passed to the callback parameter.</param>
 		/// <param name="callback">A callback to be called</param>
 		internal IDisposable RegisterParentChangedCallback(object key, ParentChangedCallback callback)
 		{
@@ -806,7 +789,7 @@ namespace Windows.UI.Xaml
 			_parentChangedCallbacks = _parentChangedCallbacks.Add(weakDelegate);
 
 			// This weak reference ensure that the closure will not link
-			// the caller and the callee, in the same way "newValueActionWeak" 
+			// the caller and the callee, in the same way "newValueActionWeak"
 			// does not link the callee to the caller.
 			var instanceRef = _thisWeakRef;
 
@@ -823,16 +806,16 @@ namespace Windows.UI.Xaml
 						that._parentChangedCallbacks = that._parentChangedCallbacks.Remove(weakDelegate);
 					}
 
-					WeakReferencePool.ReturnWeakReference(this, wr);
+					WeakReferencePool.ReturnWeakReference(that, wr);
 
-					// Force a closure on the callback, to make its lifetime as long 
+					// Force a closure on the callback, to make its lifetime as long
 					// as the subscription being held by the callee.
 					callback = null;
 				}
 			);
 		}
 
-		internal object GetValueUnderPrecedence(DependencyProperty property, DependencyPropertyValuePrecedences precedence)
+		internal (object value, DependencyPropertyValuePrecedences precedence) GetValueUnderPrecedence(DependencyProperty property, DependencyPropertyValuePrecedences precedence)
 		{
 			var stack = _properties.GetPropertyDetails(property);
 
@@ -863,13 +846,14 @@ namespace Windows.UI.Xaml
 			}
 			else
 			{
-				// Always update the inherited properties with the new value, the instance 
+				// Always update the inherited properties with the new value, the instance
 				// may change if a far ancestor changed.
 				_inheritedForwardedProperties[parentProperty] = sourceInstance;
 
 				// If not, propagate the DP down to the child listeners, if any.
-				foreach (var child in _childrenStores)
+				for (var storeIndex = 0; storeIndex < _childrenStores.Count; storeIndex++)
 				{
+					var child = _childrenStores[storeIndex];
 					child.OnParentPropertyChangedCallback(sourceInstance, parentProperty, args);
 				}
 			}
@@ -879,33 +863,40 @@ namespace Windows.UI.Xaml
 		{
 			if (
 				!_registeringInheritedProperties
-				&& _inheritedProperties.Disposable == null 
+				&& !_unregisteringInheritedProperties
+				&& _inheritedProperties.Disposable == null
 				&& (
-					IsAutoPropertyInheritanceEnabled 
+					IsAutoPropertyInheritanceEnabled
 					|| force
 
 					// these two cases may be required in case the
-					// graph is built in reverse (such as with the 
+					// graph is built in reverse (such as with the
 					// XamlReader)
 					|| _properties.HasBindings
-					|| _childrenStores.Count != 0 
+					|| _childrenStores.Count != 0
 				)
 			)
 			{
-				if(parentProvider == null && Parent is IDependencyObjectStoreProvider p)
+				if (parentProvider == null && Parent is IDependencyObjectStoreProvider p)
 				{
-					parentProvider = p; 
+					parentProvider = p;
 				}
 
 				if (parentProvider != null)
 				{
+#if !HAS_EXPENSIVE_TRYFINALLY
+					// The try/finally incurs a very large performance hit in mono-wasm, and SetValue is in a very hot execution path.
+					// See https://github.com/mono/mono/issues/13653 for more details.
 					try
+#endif
 					{
 						_registeringInheritedProperties = true;
 
 						_inheritedProperties.Disposable = RegisterInheritedProperties(parentProvider);
 					}
+#if !HAS_EXPENSIVE_TRYFINALLY
 					finally
+#endif
 					{
 						_registeringInheritedProperties = false;
 					}
@@ -916,7 +907,7 @@ namespace Windows.UI.Xaml
 		internal IDisposable RegisterInheritedProperties(IDependencyObjectStoreProvider parentProvider)
 		{
 
-			// Initialze at two as there is at most two disposables added below, and 
+			// Initialize at two as there is at most two disposables added below, and
 			// there is no need to allocate for more internally.
 			var disposable = new CompositeDisposable(2);
 
@@ -925,7 +916,7 @@ namespace Windows.UI.Xaml
 
 			// The propagation of the inherited properties is performed by setting the
 			// Inherited precedence level value of each control of the visual tree.
-			// This is performed in three ways: 
+			// This is performed in three ways:
 			//    - By listening to the parent's property changes,
 			//    - By replicating the parent's current state when a DependencyObject parent's is set
 			//    - By forcing a property update notification down to a DependencyObject's children when the parent is set.
@@ -942,17 +933,32 @@ namespace Windows.UI.Xaml
 			// Register for unset values
 			disposable.Add(() =>
 			{
-				_inheritedForwardedProperties.Clear();
-
-				if (ActualInstance != null)
+#if !HAS_EXPENSIVE_TRYFINALLY
+				// The try/finally incurs a very large performance hit in mono-wasm, and SetValue is in a very hot execution path.
+				// See https://github.com/mono/mono/issues/13653 for more details.
+				try
+#endif
 				{
-					foreach (var dp in _updatedProperties)
-					{
-						SetValue(dp, DependencyProperty.UnsetValue, DependencyPropertyValuePrecedences.Inheritance);
-					}
+					_unregisteringInheritedProperties = true;
 
-					SetValue(_dataContextProperty, DependencyProperty.UnsetValue, DependencyPropertyValuePrecedences.Inheritance);
-					SetValue(_templatedParentProperty, DependencyProperty.UnsetValue, DependencyPropertyValuePrecedences.Inheritance);
+					_inheritedForwardedProperties.Clear();
+
+					if (ActualInstance != null)
+					{
+						foreach (var dp in _updatedProperties)
+						{
+							SetValue(dp, DependencyProperty.UnsetValue, DependencyPropertyValuePrecedences.Inheritance);
+						}
+
+						SetValue(_dataContextProperty, DependencyProperty.UnsetValue, DependencyPropertyValuePrecedences.Inheritance);
+						SetValue(_templatedParentProperty, DependencyProperty.UnsetValue, DependencyPropertyValuePrecedences.Inheritance);
+					}
+				}
+#if !HAS_EXPENSIVE_TRYFINALLY
+				finally
+#endif
+				{
+					_unregisteringInheritedProperties = false;
 				}
 			});
 
@@ -984,6 +990,19 @@ namespace Windows.UI.Xaml
 						return (localProperty, propertyDetails);
 					}
 				}
+
+				// Then look for attached inheritable properties, only if a property details
+				// has been initialized. This avoids creating the details if the property has
+				// not been attached on a child, or if there's no property changed callback
+				// attached to a child.
+				else if (
+					property.IsAttached
+					&& _properties.FindPropertyDetails(property) is DependencyPropertyDetails attachedDetails
+					&& HasInherits(attachedDetails)
+				)
+				{
+					return (property, attachedDetails);
+				}
 			}
 
 			return (null, null);
@@ -991,8 +1010,9 @@ namespace Windows.UI.Xaml
 
 		private void InvokeCompiledBindingsCallbacks()
 		{
-			foreach (var callback in _compiledBindingsCallbacks.Data)
+			for (var compiledBindingsCBIndex = 0; compiledBindingsCBIndex < _compiledBindingsCallbacks.Data.Length; compiledBindingsCBIndex++)
 			{
+				var callback = _compiledBindingsCallbacks.Data[compiledBindingsCBIndex];
 				callback.Invoke();
 			}
 		}
@@ -1010,8 +1030,10 @@ namespace Windows.UI.Xaml
 
 			void Propagate(DependencyObjectStore store)
 			{
-				foreach (var prop in props)
+				for (var propertyIndex = 0; propertyIndex < props.Length; propertyIndex++)
 				{
+					var prop = props[propertyIndex];
+
 					store.OnParentPropertyChangedCallback(instanceRef, prop, new DependencyPropertyChangedEventArgs(
 						prop,
 						null,
@@ -1028,8 +1050,9 @@ namespace Windows.UI.Xaml
 			}
 			else
 			{
-				foreach (var child in _childrenStores)
+				for (var childStoreIndex = 0; childStoreIndex < _childrenStores.Count; childStoreIndex++)
 				{
+					var child = _childrenStores[childStoreIndex];
 					Propagate(child);
 				}
 			}
@@ -1039,7 +1062,7 @@ namespace Windows.UI.Xaml
 
 		private void PropagateInheritedNonLocalProperties(DependencyObjectStore childStore)
 		{
-			// Propagate the properties that have been inherited from an other 
+			// Propagate the properties that have been inherited from an other
 			// parent, but that are not defined in the current instance.
 			// This is used when a child is being added after the parent has already set its inheritable
 			// properties.
@@ -1053,7 +1076,13 @@ namespace Windows.UI.Xaml
 
 			foreach (var sourceInstanceProperties in _inheritedForwardedProperties)
 			{
-				if (IsAncestor(actualInstanceAlias, ancestors, sourceInstanceProperties.Value.Target))
+				if (
+					IsAncestor(actualInstanceAlias, ancestors, sourceInstanceProperties.Value.Target)
+					|| (
+						sourceInstanceProperties.Key.IsAttached
+						&& actualInstanceAlias == sourceInstanceProperties.Value.Target
+					)
+				)
 				{
 					void Propagate(DependencyObjectStore store)
 					{
@@ -1178,9 +1207,9 @@ namespace Windows.UI.Xaml
 		/// This method is used to avoid creating a hard link between the source instance
 		/// and the stored delegate for the instance, thus avoid memory leaks.
 		/// We also do not need to clear the delegate created because it is already associated with the instance.
-		/// 
+		///
 		/// Note that this method is not generic to avoid the cost of trampoline resolution
-		/// on Mono 4.2 and earlier, when Full AOT is enabled. This should be revised once this behavior is updated, or 
+		/// on Mono 4.2 and earlier, when Full AOT is enabled. This should be revised once this behavior is updated, or
 		/// the cost of calling generic delegates is lowered.
 		/// </remarks>
 		private static (PropertyChangedCallback callback, IDisposable release) CreateWeakDelegate(PropertyChangedCallback callback)
@@ -1201,9 +1230,9 @@ namespace Windows.UI.Xaml
 		/// This method is used to avoid creating a hard link between the source instance
 		/// and the stored delegate for the instance, thus avoid memory leaks.
 		/// We also do not need to clear the delegate created because it is already associated with the instance.
-		/// 
+		///
 		/// Note that this method is not generic to avoid the cost of trampoline resolution
-		/// on Mono 4.2 and earlier, when Full AOT is enabled. This should be revised once this behavior is updated, or 
+		/// on Mono 4.2 and earlier, when Full AOT is enabled. This should be revised once this behavior is updated, or
 		/// the cost of calling generic delegates is lowered.
 		/// </remarks>
 		private static (Action callback, IDisposable release) CreateWeakDelegate(Action callback)
@@ -1224,9 +1253,9 @@ namespace Windows.UI.Xaml
 		/// This method is used to avoid creating a hard link between the source instance
 		/// and the stored delegate for the instance, thus avoid memory leaks.
 		/// We also do not need to clear the delegate created because it is already associated with the instance.
-		/// 
+		///
 		/// Note that this method is not generic to avoid the cost of trampoline resolution
-		/// on Mono 4.2 and earlier, when Full AOT is enabled. This should be revised once this behavior is updated, or 
+		/// on Mono 4.2 and earlier, when Full AOT is enabled. This should be revised once this behavior is updated, or
 		/// the cost of calling generic delegates is lowered.
 		/// </remarks>
 		private static (ExplicitPropertyChangedCallback callback, IDisposable release) CreateWeakDelegate(ExplicitPropertyChangedCallback callback)
@@ -1266,11 +1295,11 @@ namespace Windows.UI.Xaml
 			}
 			else if (
 				hasPropagationBypass
-				&& _propagationBypassed.ContainsKey(propertyPath) 
+				&& _propagationBypassed.ContainsKey(propertyPath)
 				&& !_propagationBypass.Contains(propertyPath, DependencyPropertyPath.Comparer.Default)
 			)
 			{
-				// If unchanged, but previous value was set with propagation bypass enabled (and we are currently being set without bypass enabled), 
+				// If unchanged, but previous value was set with propagation bypass enabled (and we are currently being set without bypass enabled),
 				// then we should invoke callbacks so that the value can be propagated. This arises in animation scenarios.
 				var unpropagatedPrevious = _propagationBypassed[propertyPath];
 				_propagationBypassed.Remove(propertyPath);
@@ -1300,14 +1329,13 @@ namespace Windows.UI.Xaml
 			var propertyMetadata = propertyDetails.Metadata;
 
 			// We can reuse the weak reference, otherwise capture the weak reference to this instance.
-			var instanceRef = _originalObjectRef != null ? _originalObjectRef : _thisWeakRef;
+			var instanceRef = _originalObjectRef ?? _thisWeakRef;
 
 			if (propertyMetadata is FrameworkPropertyMetadata frameworkPropertyMetadata)
 			{
 				if (frameworkPropertyMetadata.Options.HasLogicalChild())
 				{
-					var dependencyObject = newValue as DependencyObject;
-					dependencyObject?.SetParent(actualInstanceAlias);
+					UpdateAutoParent(actualInstanceAlias, previousValue, newValue);
 				}
 
 				if (frameworkPropertyMetadata.Options.HasAffectsMeasure())
@@ -1328,10 +1356,23 @@ namespace Windows.UI.Xaml
 				// Raise the property change for generic handlers for inheritance
 				if (frameworkPropertyMetadata.Options.HasInherits())
 				{
-					foreach (var store in _childrenStores)
+					for (var storeIndex = 0; storeIndex < _childrenStores.Count; storeIndex++)
 					{
+						var store = _childrenStores[storeIndex];
 						store.OnParentPropertyChangedCallback(instanceRef, property, eventArgs);
 					}
+				}
+			}
+			else
+			{
+				if (property.IsDependencyObjectCollection)
+				{
+					// Force the parent of a DependencyObjectCollection to the current instance/
+					// There is no public UWP API that allows to set the parent of a DependencyObject,
+					// even though defining a DependencyObjectCollection dependency property automatically propagates
+					// the compiled and normal bindings properly. We emulate this behavior here, but only if the
+					// metadata is PropertyMetadata, not FrameworkPropertyMetadata.
+					UpdateAutoParent(actualInstanceAlias, previousValue, newValue);
 				}
 			}
 
@@ -1344,9 +1385,30 @@ namespace Windows.UI.Xaml
 			OnDependencyPropertyChanged(propertyDetails, eventArgs);
 
 			// Raise the property change for generic handlers
-			foreach (var callback in _genericCallbacks.Data)
+			for (var callbackIndex = 0; callbackIndex < _genericCallbacks.Data.Length; callbackIndex++)
 			{
+				var callback = _genericCallbacks.Data[callbackIndex];
 				callback.Invoke(instanceRef, property, eventArgs);
+			}
+		}
+
+		/// <summary>
+		/// Updates the parent of the <paramref name="newValue"/> to the
+		/// <paramref name="actualInstanceAlias"/> and resets the parent of <paramref name="previousValue"/>.
+		/// </summary>
+		private static void UpdateAutoParent(DependencyObject actualInstanceAlias, object previousValue, object newValue)
+		{
+			if (
+				previousValue is DependencyObject previousObject
+				&& ReferenceEquals(previousObject.GetParent(), actualInstanceAlias)
+			)
+			{
+				previousObject.SetParent(null);
+			}
+
+			if (newValue is DependencyObject newObject)
+			{
+				newObject.SetParent(actualInstanceAlias);
 			}
 		}
 
@@ -1355,7 +1417,7 @@ namespace Windows.UI.Xaml
 		/// </summary>
 		/// <param name="instance">The instance on which the property is attached</param>
 		/// <param name="value">The value to set</param>
-		/// <param name="precedence">The value precendence to assign</param>
+		/// <param name="precedence">The value precedence to assign</param>
 		private void SetValueInternal(
 			object value,
 			DependencyPropertyValuePrecedences precedence,
@@ -1405,8 +1467,9 @@ namespace Windows.UI.Xaml
 
 				var args = new DependencyObjectParentChangedEventArgs(previousParent, value);
 
-				foreach (var handler in _parentChangedCallbacks.Data)
+				for (var parentCallbackIndex = 0; parentCallbackIndex < _parentChangedCallbacks.Data.Length; parentCallbackIndex++)
 				{
+					var handler = _parentChangedCallbacks.Data[parentCallbackIndex];
 					handler.Invoke(actualInstanceAlias, null, args);
 				}
 			}

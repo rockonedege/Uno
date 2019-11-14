@@ -11,6 +11,7 @@ using System.Diagnostics;
 using Uno.UI;
 using Uno.Disposables;
 using Windows.UI.Xaml.Data;
+using Uno.UI.DataBinding;
 
 namespace Windows.UI.Xaml.Controls.Primitives
 {
@@ -19,6 +20,7 @@ namespace Windows.UI.Xaml.Controls.Primitives
 		public event SelectionChangedEventHandler SelectionChanged;
 
 		private readonly SerialDisposable _collectionViewSubscription = new SerialDisposable();
+		private BindingPath _path;
 
 		/// <summary>
 		/// This is always true for <see cref="FlipView"/> and <see cref="ComboBox"/>, and depends on the value of <see cref="ListViewBase.SelectionMode"/> for <see cref="ListViewBase"/>.
@@ -43,8 +45,8 @@ namespace Windows.UI.Xaml.Controls.Primitives
 
 		public object SelectedItem
 		{
-			get { return (object)this.GetValue(SelectedItemProperty); }
-			set { this.SetValue(SelectedItemProperty, value); }
+			get => this.GetValue(SelectedItemProperty);
+			set => this.SetValue(SelectedItemProperty, value);
 		}
 
 		internal virtual void OnSelectedItemChanged(object oldSelectedItem, object selectedItem)
@@ -83,19 +85,47 @@ namespace Windows.UI.Xaml.Controls.Primitives
 				isSelectionUnset ? new object[] { } : new[] { selectedItem }
 			);
 			OnSelectedItemChangedPartial(oldSelectedItem, selectedItem);
+
+			UpdateSelectedValue();
 		}
+
+		private void UpdateSelectedValue()
+		{
+			if (SelectedValuePath.HasValue())
+			{
+				if(_path?.Path != SelectedValuePath)
+				{
+					_path = new Uno.UI.DataBinding.BindingPath(SelectedValuePath, null);
+				}
+			}
+			else
+			{
+				_path = null;
+			}
+
+			if (_path != null)
+			{
+				_path.DataContext = SelectedItem;
+				SelectedValue = _path.Value;
+			}
+			else
+			{
+				SelectedValue = SelectedItem;
+			}
+		}
+
 
 		partial void OnSelectedItemChangedPartial(object oldSelectedItem, object selectedItem);
 
 		internal void InvokeSelectionChanged(object[] removedItems, object[] addedItems)
 		{
-			SelectionChanged?.Invoke(this, new SelectionChangedEventArgs(removedItems, addedItems));
+			SelectionChanged?.Invoke(this, new SelectionChangedEventArgs(this, removedItems, addedItems));
 		}
 
 		public int SelectedIndex
 		{
-			get { return (int)this.GetValue(SelectedIndexProperty); }
-			set { this.SetValue(SelectedIndexProperty, value); }
+			get => (int)this.GetValue(SelectedIndexProperty);
+			set => this.SetValue(SelectedIndexProperty, value);
 		}
 
 		// Using a DependencyProperty as the backing store for SelectedIndex.  This enables animation, styling, binding, etc...
@@ -122,6 +152,79 @@ namespace Windows.UI.Xaml.Controls.Primitives
 			SelectedIndexPath = GetIndexPathFromIndex(SelectedIndex);
 		}
 
+		public string SelectedValuePath
+		{
+			get => (string)this.GetValue(SelectedValuePathProperty);
+			set => this.SetValue(SelectedValuePathProperty, value);
+		}
+
+		public static global::Windows.UI.Xaml.DependencyProperty SelectedValuePathProperty { get; } =
+		Windows.UI.Xaml.DependencyProperty.Register(
+			name: nameof(SelectedValuePath),
+			propertyType: typeof(string),
+			ownerType: typeof(Selector),
+			typeMetadata: new FrameworkPropertyMetadata("", propertyChangedCallback: (s, e) => (s as Selector)?.UpdateSelectedValue())
+		);
+
+		public object SelectedValue
+		{
+			get => this.GetValue(SelectedValueProperty);
+			set => this.SetValue(SelectedValueProperty, value);
+		}
+
+		public static global::Windows.UI.Xaml.DependencyProperty SelectedValueProperty { get; } =
+		Windows.UI.Xaml.DependencyProperty.Register(
+			name: nameof(SelectedValue),
+			propertyType: typeof(object),
+			ownerType: typeof(Selector),
+			typeMetadata: new FrameworkPropertyMetadata(null, SelectedValueChanged, SelectedValueCoerce)
+		);
+
+		private static void SelectedValueChanged(DependencyObject snd, DependencyPropertyChangedEventArgs args)
+		{
+			var selector = (Selector)snd;
+			if (selector?._path != null)
+			{
+				return; // Setting the SelectedValue won't update the index when a _path is used.
+			}
+			selector.SelectedIndex = selector.GetItems()?.IndexOf(args.NewValue) ?? -1;
+		}
+
+		private static object SelectedValueCoerce(DependencyObject snd, object baseValue)
+		{
+			var selector = (Selector)snd;
+			if (selector?._path != null)
+			{
+				return baseValue; // Setting the SelectedValue won't update the index when a _path is used.
+			}
+			return selector.GetItems()?.Contains(baseValue) ?? false ? baseValue : null;
+		}
+
+		public bool? IsSynchronizedWithCurrentItem
+		{
+			get => (bool?)GetValue(IsSynchronizedWithCurrentItemProperty);
+			set => SetValue(IsSynchronizedWithCurrentItemProperty, value);
+		}
+
+		public static DependencyProperty IsSynchronizedWithCurrentItemProperty { get; } =
+			Windows.UI.Xaml.DependencyProperty.Register(
+				nameof(IsSynchronizedWithCurrentItem),
+				typeof(bool?),
+				typeof(Selector),
+				new FrameworkPropertyMetadata(
+					default(bool?),
+					propertyChangedCallback: (s, e) => (s as Selector)?.IsSynchronizedWithCurrentItemChanged((bool?)e.OldValue, (bool?)e.NewValue)));
+
+		private void IsSynchronizedWithCurrentItemChanged(bool? oldValue, bool? newValue)
+		{
+			if(newValue == true)
+			{
+				throw new ArgumentOutOfRangeException("True is not a supported value for this property");
+			}
+
+			TrySubscribeToCurrentChanged();
+		}
+
 		/// <summary>
 		/// The selected index as an <see cref="IndexPath"/> of (group, group position), where group=0 if the source is ungrouped.
 		/// </summary>
@@ -130,10 +233,20 @@ namespace Windows.UI.Xaml.Controls.Primitives
 		protected override void OnItemsSourceChanged(DependencyPropertyChangedEventArgs e)
 		{
 			base.OnItemsSourceChanged(e);
-			if (ItemsSource is ICollectionView collectionView)
+			TrySubscribeToCurrentChanged();
+		}
+
+		private void TrySubscribeToCurrentChanged()
+		{
+			var trackCurrentItem = IsSynchronizedWithCurrentItem ?? true;
+
+			if (ItemsSource is ICollectionView collectionView && trackCurrentItem)
 			{
-				_collectionViewSubscription.Disposable = Disposable.Create(() => collectionView.CurrentChanged -= OnCollectionViewCurrentChanged);
-				collectionView.CurrentChanged += OnCollectionViewCurrentChanged;
+				// This is a workaround to support the use of EventRegistrationTokenTable in consumer code. EventRegistrationTokenTable 
+				// currently has a bug on Xamarin that prevents instance methods subscribed directly from ever being unsubscribed.
+				EventHandler<object> currentChangedHandler = OnCollectionViewCurrentChanged;
+				_collectionViewSubscription.Disposable = Disposable.Create(() => collectionView.CurrentChanged -= currentChangedHandler);
+				collectionView.CurrentChanged += currentChangedHandler;
 				SelectedIndex = collectionView.CurrentPosition;
 			}
 			else
@@ -162,19 +275,7 @@ namespace Windows.UI.Xaml.Controls.Primitives
 			{
 				selectorItem.IsSelected = IsSelected(IndexFromContainer(element));
 			}
-
-			PrepareContainerForItemOverridePartial(element, item);
 		}
-
-		protected override void ClearContainerForItemOverride(DependencyObject element, object item)
-		{
-			base.ClearContainerForItemOverride(element, item);
-
-			ClearContainerForItemOverridePartial(element, item);
-		}
-
-		partial void PrepareContainerForItemOverridePartial(DependencyObject element, object item);
-		partial void ClearContainerForItemOverridePartial(DependencyObject element, object item);
 
 		internal virtual bool IsSelected(int index)
 		{

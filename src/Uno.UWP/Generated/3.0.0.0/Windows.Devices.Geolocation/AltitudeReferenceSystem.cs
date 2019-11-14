@@ -2,27 +2,17 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Devices.Geolocation
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum AltitudeReferenceSystem 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Unspecified,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Terrain,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Ellipsoid,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Geoid,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Surface,
-		#endif
+		// Skipping already declared field Windows.Devices.Geolocation.AltitudeReferenceSystem.Unspecified
+		// Skipping already declared field Windows.Devices.Geolocation.AltitudeReferenceSystem.Terrain
+		// Skipping already declared field Windows.Devices.Geolocation.AltitudeReferenceSystem.Ellipsoid
+		// Skipping already declared field Windows.Devices.Geolocation.AltitudeReferenceSystem.Geoid
+		// Skipping already declared field Windows.Devices.Geolocation.AltitudeReferenceSystem.Surface
 	}
 	#endif
 }

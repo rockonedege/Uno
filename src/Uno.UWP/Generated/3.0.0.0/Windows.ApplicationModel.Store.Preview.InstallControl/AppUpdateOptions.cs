@@ -2,12 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.ApplicationModel.Store.Preview.InstallControl
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class AppUpdateOptions 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  string CatalogId
 		{
@@ -21,7 +21,7 @@ namespace Windows.ApplicationModel.Store.Preview.InstallControl
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool AllowForcedAppRestart
 		{
@@ -35,7 +35,21 @@ namespace Windows.ApplicationModel.Store.Preview.InstallControl
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool AutomaticallyDownloadAndInstallUpdateIfFound
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member bool AppUpdateOptions.AutomaticallyDownloadAndInstallUpdateIfFound is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.ApplicationModel.Store.Preview.InstallControl.AppUpdateOptions", "bool AppUpdateOptions.AutomaticallyDownloadAndInstallUpdateIfFound");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public AppUpdateOptions() 
 		{
@@ -47,5 +61,7 @@ namespace Windows.ApplicationModel.Store.Preview.InstallControl
 		// Forced skipping of method Windows.ApplicationModel.Store.Preview.InstallControl.AppUpdateOptions.CatalogId.set
 		// Forced skipping of method Windows.ApplicationModel.Store.Preview.InstallControl.AppUpdateOptions.AllowForcedAppRestart.get
 		// Forced skipping of method Windows.ApplicationModel.Store.Preview.InstallControl.AppUpdateOptions.AllowForcedAppRestart.set
+		// Forced skipping of method Windows.ApplicationModel.Store.Preview.InstallControl.AppUpdateOptions.AutomaticallyDownloadAndInstallUpdateIfFound.get
+		// Forced skipping of method Windows.ApplicationModel.Store.Preview.InstallControl.AppUpdateOptions.AutomaticallyDownloadAndInstallUpdateIfFound.set
 	}
 }

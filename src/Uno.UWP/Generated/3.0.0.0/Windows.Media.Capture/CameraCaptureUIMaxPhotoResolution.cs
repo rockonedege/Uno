@@ -2,30 +2,18 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Media.Capture
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum CameraCaptureUIMaxPhotoResolution 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		HighestAvailable,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		VerySmallQvga,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		SmallVga,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		MediumXga,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Large3M,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		VeryLarge5M,
-		#endif
+		// Skipping already declared field Windows.Media.Capture.CameraCaptureUIMaxPhotoResolution.HighestAvailable
+		// Skipping already declared field Windows.Media.Capture.CameraCaptureUIMaxPhotoResolution.VerySmallQvga
+		// Skipping already declared field Windows.Media.Capture.CameraCaptureUIMaxPhotoResolution.SmallVga
+		// Skipping already declared field Windows.Media.Capture.CameraCaptureUIMaxPhotoResolution.MediumXga
+		// Skipping already declared field Windows.Media.Capture.CameraCaptureUIMaxPhotoResolution.Large3M
+		// Skipping already declared field Windows.Media.Capture.CameraCaptureUIMaxPhotoResolution.VeryLarge5M
 	}
 	#endif
 }

@@ -8,7 +8,8 @@
 
 	<Import Project="$(SourceGeneratorBasePath)Uno.UI.SourceGenerators.props" />
 	<Import Project="$(UnoUIMSBuildTasksTargetPath)Uno.UI.Tasks.targets" />
-	<Target Name="_UnoFeatureDefines" BeforeTargets="BeforeCompile">
+	<Target Name="_UnoFeatureDefines"
+            BeforeTargets="BeforeCompile">
 
 		<!-- 
 			Defines Uno features. 
@@ -30,5 +31,23 @@
 		</CreateProperty>
 
 	</Target>
+
+  <Target Name="ReplaceRefAssemblies" AfterTargets="_ResolveAssemblies" Condition="'$(AndroidApplication)'=='true'">
+	<!-- This is a workaround for https://github.com/xamarin/xamarin-android/issues/1162#issuecomment-359475008 -->
+	<ItemGroup>
+	  <ResolvedAssembliesFixedWindows Include="@(ResolvedAssemblies->Replace('\ref\','\lib\'))" />
+	  <ResolvedAssembliesFixedUnix Include="@(ResolvedAssemblies->Replace('/ref/','/lib/'))" />
+	  <ResolvedAssembliesFixed Include="@(ResolvedAssembliesFixedWindows)" Condition="@(ResolvedAssembliesFixedWindows) != @(ResolvedAssemblies)" />
+	  <ResolvedAssembliesFixed Include="@(ResolvedAssembliesFixedUnix)" Condition="@(ResolvedAssembliesFixedUnix) != @(ResolvedAssemblies)" />
+	  <ResolvedAssemblies Condition="'@(ResolvedAssembliesFixed->Count())' &gt; 0" Remove="@(ResolvedAssemblies)" />
+	  <ResolvedAssemblies Include="@(ResolvedAssembliesFixed)" />
+	</ItemGroup>
+  </Target>
+  
+  <ItemGroup>
+    <!-- Properties that will be automatically forwarded to the source generators -->
+    <UnoSourceGeneratorAdditionalProperty Include="UnoRemoteControlPort" />
+    <UnoSourceGeneratorAdditionalProperty Include="UnoRemoteControlHost" />
+  </ItemGroup>
 
 </Project>

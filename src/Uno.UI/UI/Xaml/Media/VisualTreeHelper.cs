@@ -11,6 +11,10 @@ using Uno.Disposables;
 using UIKit;
 using _View = UIKit.UIView;
 using _ViewGroup = UIKit.UIView;
+#elif __MACOS__
+using AppKit;
+using _View = AppKit.NSView;
+using _ViewGroup = AppKit.NSView;
 #elif XAMARIN_ANDROID
 using _ViewGroup = Android.Views.ViewGroup;
 using _View = Android.Views.ViewGroup;
@@ -20,8 +24,8 @@ using _View = System.Object;
 
 namespace Windows.UI.Xaml.Media
 {
-    public partial class VisualTreeHelper
-    {
+	public partial class VisualTreeHelper
+	{
 		private static List<WeakReference<IPopup>> _openPopups = new List<WeakReference<IPopup>>();
 
 		internal static IDisposable RegisterOpenPopup(IPopup popup)
@@ -92,11 +96,11 @@ namespace Windows.UI.Xaml.Media
 #endif
 		}
 
-		public static IReadOnlyList<IPopup> GetOpenPopups(Window window)
+		public static IReadOnlyList<Popup> GetOpenPopups(Window window)
 		{
 			return _openPopups
 				.Select(WeakReferenceExtensions.GetTarget)
-				.Trim()
+				.OfType<Popup>()
 				.ToList()
 				.AsReadOnly();
 		}

@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Drawing;
 using Uno.Disposables;
+using Windows.UI.Xaml.Automation.Peers;
 using Windows.UI.Xaml.Controls.Primitives;
 
 namespace Windows.UI.Xaml.Controls.Primitives
 {
-	public partial class ToggleButton : ButtonBase
+	public partial class ToggleButton : ButtonBase, IFrameworkTemplatePoolAware
 	{
 		//Renamed to have the same naming as Windows.
 		//https://msdn.microsoft.com/en-us/library/system.windows.controls.primitives.togglebutton.checked(v=vs.110).aspx
@@ -18,14 +19,7 @@ namespace Windows.UI.Xaml.Controls.Primitives
 
 			Click += (s, e) =>
 			{
-				if (CanRevertState)
-				{
-					IsChecked = IsChecked.HasValue ? !IsChecked.Value : true;
-				}
-				else
-				{
-					IsChecked = true;
-				}
+				OnToggle();
 			};
 		}
 
@@ -34,7 +28,7 @@ namespace Windows.UI.Xaml.Controls.Primitives
 		/// </summary>
 		internal bool CanRevertState { get; set; } = true;
 
-#region IsChecked DependencyProperty
+		#region IsChecked DependencyProperty
 
 		public bool? IsChecked
 		{
@@ -52,18 +46,45 @@ namespace Windows.UI.Xaml.Controls.Primitives
 					propertyChangedCallback: (s, e) => ((ToggleButton)s).OnIsCheckedChanged(e.OldValue as bool?, e.NewValue as bool?)
 				)
 			);
-#endregion
+		#endregion
 
 		protected virtual void OnIsCheckedChanged(bool? oldValue, bool? newValue)
 		{
 			if (newValue.HasValue && newValue.Value)
 			{
-				Checked?.Invoke(this, new RoutedEventArgs());
+				Checked?.Invoke(this, new RoutedEventArgs(this));
 			}
 			else
 			{
-				Unchecked?.Invoke(this, new RoutedEventArgs());
+				Unchecked?.Invoke(this, new RoutedEventArgs(this));
 			}
+		}
+
+		public void OnTemplateRecycled()
+		{
+			IsChecked = false;
+		}
+
+		protected virtual void OnToggle()
+		{
+			if (CanRevertState)
+			{
+				IsChecked = IsChecked.HasValue ? !IsChecked.Value : true;
+			}
+			else
+			{
+				IsChecked = true;
+			}
+		}
+
+		internal void AutomationPeerToggle()
+		{
+			OnToggle();
+		}
+
+		protected override AutomationPeer OnCreateAutomationPeer()
+		{
+			return new ToggleButtonAutomationPeer(this);
 		}
 	}
 }

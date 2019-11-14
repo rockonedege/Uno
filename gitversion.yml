@@ -1,15 +1,39 @@
 assembly-versioning-scheme: MajorMinorPatch
 mode: ContinuousDeployment
-next-version: 1.31.0
+next-version: 2.0.512
 continuous-delivery-fallback-tag: ""
+tag-prefix: 'version-tags-are-disabled'
+
 branches:
   master:
+    regex: master
     tag: dev
-  (stable):
-    tag: 
-  dev/.*?/(.*?):
+    increment: none
+  beta:
+    regex: release/beta/
+    tag: beta
+    increment: none
+    source-branches: ['master']
+  stable:
+    regex: release/stable/
+    tag: ''
+    increment: none
+    source-branches: ['master']
+  dev:
+    regex: dev/.*?/(.*?)
     tag: dev.{BranchName}
-  projects/(.*?):
-    tag: proj-{BranchName}
+    increment: none
+    source-branches: ['master']
+  projects:
+    regex: projects/(.*?)
+    tag: proj.{BranchName}
+    increment: none
+    source-branches: ['master']
+  feature:
+    regex: feature/(.*?)
+    tag: feature.{BranchName}
+    increment: minor
+    source-branches: ['master']
+
 ignore:
   sha: []

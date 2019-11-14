@@ -3,33 +3,32 @@ using System.Collections.Generic;
 using System.Text;
 using Windows.Devices.Input;
 using Windows.Foundation;
+using Windows.UI.Input;
+using Uno.UI.Xaml.Input;
 
 namespace Windows.UI.Xaml.Input
 {
-	public sealed partial class DoubleTappedRoutedEventArgs : RoutedEventArgs
+	public sealed partial class DoubleTappedRoutedEventArgs : RoutedEventArgs, ICancellableRoutedEventArgs
 	{
 		private readonly Point _position;
 
-		public DoubleTappedRoutedEventArgs() 
-			: this(new Point())
-		{
-		}
+		public DoubleTappedRoutedEventArgs() { }
 
-		internal DoubleTappedRoutedEventArgs(Point position)
+		internal DoubleTappedRoutedEventArgs(object originalSource, TappedEventArgs args)
+			: base(originalSource)
 		{
-			_position = position;
+			PointerDeviceType = args.PointerDeviceType;
+			_position = args.Position;
 		}
 
 		public Point GetPosition()
-		{
-			return _position;
-		}
+			=> _position;
 
 		public bool Handled { get; set; }
 
 		public PointerDeviceType PointerDeviceType { get; internal set; }
 
-		public global::Windows.Foundation.Point GetPosition(global::Windows.UI.Xaml.UIElement relativeTo)
+		public Point GetPosition(UIElement relativeTo)
 		{
 			if (relativeTo == null)
 			{

@@ -1,18 +1,9 @@
 using System;
-using System.Drawing;
-using Uno.Extensions;
-using Uno.UI.Views;
-using Uno.UI.Views.Controls;
-using Windows.UI.Xaml;
-using Uno.Disposables;
-using System.Windows.Input;
-using Uno.Client;
 using System.Linq;
-using Foundation;
-using CoreGraphics;
-using Uno.UI.Extensions;
-using Windows.UI.Xaml.Input;
+using Uno.Extensions;
+using Uno.Disposables;
 using Uno.Logging;
+using Windows.UI.Xaml.Input;
 
 #if XAMARIN_IOS_UNIFIED
 using UIKit;
@@ -52,38 +43,47 @@ namespace Windows.UI.Xaml.Controls.Primitives
 				return;
 			}
 
-			var uiButton = GetContentElement() as UIButton;
+			if (!(GetContentElement() is UIControl uiControl))
+			{
+				// Button is using Windows template, no native events to register to
+				return;
+			}
 
-			if (uiButton != null)
+			if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
+			{
+				this.Log().Debug("ControlTemplateRoot is a UIControl, hooking on to AllTouchEvents and TouchUpInside");
+			}
+
+			void clickHandler(object e, EventArgs s)
 			{
 				if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
 				{
-					this.Log().Debug("ControlTemplateRoot is a UIButton, hooking on to TouchUpInside");
+					this.Log().Debug("TouchUpInside, executing command");
 				}
 
-				CompositeDisposable subscriptions = new CompositeDisposable();
-				_clickSubscription.Disposable = subscriptions;
+				OnClick();
 
-				EventHandler clickHandler = (e, s) =>
-				{
-					if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
-					{
-						this.Log().Debug("TouchUpInside, executing command");
-					}
-
-					OnClick();
-				};
-
-				uiButton.TouchUpInside += clickHandler;
-				subscriptions.Add(() => uiButton.TouchUpInside -= clickHandler);
-
-				//
-				// Bind the enabled handler
-				// 
-				var enabledHandler = (DependencyPropertyChangedEventHandler)((e, s) => uiButton.Enabled = IsEnabled);
-				IsEnabledChanged += enabledHandler;
-				subscriptions.Add(() => IsEnabledChanged -= enabledHandler);
+				RaiseEvent(TappedEvent, new TappedRoutedEventArgs { OriginalSource = this });
 			}
+
+			//
+			// Bind the enabled handler
+			// 
+			void enabledHandler(object e, DependencyPropertyChangedEventArgs s)
+			{
+				uiControl.Enabled = IsEnabled;
+			}
+
+			uiControl.TouchUpInside += clickHandler;
+			IsEnabledChanged += enabledHandler;
+
+			void unregister()
+			{
+				uiControl.TouchUpInside -= clickHandler;
+				IsEnabledChanged -= enabledHandler;
+			}
+
+			_clickSubscription.Disposable = Disposable.Create(unregister);
 		}
 
 		private UIView GetContentElement()

@@ -2,12 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.System
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class LauncherOptions : global::Windows.System.ILauncherViewOptions
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool TreatAsUntrusted
 		{
@@ -21,7 +21,7 @@ namespace Windows.System
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  string PreferredApplicationPackageFamilyName
 		{
@@ -35,7 +35,7 @@ namespace Windows.System
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  string PreferredApplicationDisplayName
 		{
@@ -49,7 +49,7 @@ namespace Windows.System
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Uri FallbackUri
 		{
@@ -63,7 +63,7 @@ namespace Windows.System
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool DisplayApplicationPicker
 		{
@@ -77,7 +77,7 @@ namespace Windows.System
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  string ContentType
 		{
@@ -91,7 +91,7 @@ namespace Windows.System
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.System.LauncherUIOptions UI
 		{
@@ -101,7 +101,7 @@ namespace Windows.System
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  string TargetApplicationPackageFamilyName
 		{
@@ -115,7 +115,7 @@ namespace Windows.System
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.Storage.Search.StorageFileQueryResult NeighboringFilesQuery
 		{
@@ -129,7 +129,7 @@ namespace Windows.System
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool IgnoreAppUriHandlers
 		{
@@ -143,7 +143,7 @@ namespace Windows.System
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool LimitPickerToCurrentAppAndAppUriHandlers
 		{
@@ -157,7 +157,7 @@ namespace Windows.System
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.UI.ViewManagement.ViewSizePreference DesiredRemainingView
 		{
@@ -171,7 +171,7 @@ namespace Windows.System
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public LauncherOptions() 
 		{
@@ -179,6 +179,10 @@ namespace Windows.System
 		}
 		#endif
 		// Forced skipping of method Windows.System.LauncherOptions.LauncherOptions()
+		// Forced skipping of method Windows.System.LauncherOptions.TargetApplicationPackageFamilyName.get
+		// Forced skipping of method Windows.System.LauncherOptions.TargetApplicationPackageFamilyName.set
+		// Forced skipping of method Windows.System.LauncherOptions.NeighboringFilesQuery.get
+		// Forced skipping of method Windows.System.LauncherOptions.NeighboringFilesQuery.set
 		// Forced skipping of method Windows.System.LauncherOptions.TreatAsUntrusted.get
 		// Forced skipping of method Windows.System.LauncherOptions.TreatAsUntrusted.set
 		// Forced skipping of method Windows.System.LauncherOptions.DisplayApplicationPicker.get
@@ -192,16 +196,12 @@ namespace Windows.System
 		// Forced skipping of method Windows.System.LauncherOptions.FallbackUri.set
 		// Forced skipping of method Windows.System.LauncherOptions.ContentType.get
 		// Forced skipping of method Windows.System.LauncherOptions.ContentType.set
-		// Forced skipping of method Windows.System.LauncherOptions.DesiredRemainingView.get
-		// Forced skipping of method Windows.System.LauncherOptions.DesiredRemainingView.set
-		// Forced skipping of method Windows.System.LauncherOptions.TargetApplicationPackageFamilyName.get
-		// Forced skipping of method Windows.System.LauncherOptions.TargetApplicationPackageFamilyName.set
-		// Forced skipping of method Windows.System.LauncherOptions.NeighboringFilesQuery.get
-		// Forced skipping of method Windows.System.LauncherOptions.NeighboringFilesQuery.set
 		// Forced skipping of method Windows.System.LauncherOptions.IgnoreAppUriHandlers.get
 		// Forced skipping of method Windows.System.LauncherOptions.IgnoreAppUriHandlers.set
 		// Forced skipping of method Windows.System.LauncherOptions.LimitPickerToCurrentAppAndAppUriHandlers.get
 		// Forced skipping of method Windows.System.LauncherOptions.LimitPickerToCurrentAppAndAppUriHandlers.set
+		// Forced skipping of method Windows.System.LauncherOptions.DesiredRemainingView.get
+		// Forced skipping of method Windows.System.LauncherOptions.DesiredRemainingView.set
 		// Processing: Windows.System.ILauncherViewOptions
 	}
 }

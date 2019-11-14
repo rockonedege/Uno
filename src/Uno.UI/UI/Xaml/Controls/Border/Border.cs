@@ -23,6 +23,9 @@ using View = MonoTouch.UIKit.UIView;
 using Color = MonoTouch.UIKit.UIColor;
 using Font = MonoTouch.UIKit.UIFont;
 using MonoTouch.UIKit;
+#elif __MACOS__
+using View = AppKit.NSView;
+using Color = Windows.UI.Color;
 #else
 using Color = System.Drawing.Color;
 using View = Windows.UI.Xaml.UIElement;
@@ -82,8 +85,6 @@ namespace Windows.UI.Xaml.Controls
 
 		partial void OnChildChangedPartial(View previousValue, View newValue);
 
-        
-
 		#endregion
 
 		#region CornerRadius
@@ -93,10 +94,17 @@ namespace Windows.UI.Xaml.Controls
 			set => this.SetValue(CornerRadiusProperty, value);
 		}
 
-		// Using a DependencyProperty as the backing store for CornerRadius.  This enables animation, styling, binding, etc...
 		public static readonly DependencyProperty CornerRadiusProperty =
-			DependencyProperty.Register("CornerRadius", typeof(CornerRadius), typeof(Border), new PropertyMetadata(CornerRadius.None,
-				(s, e) => ((Border)s)?.OnCornerRadiusChanged((CornerRadius)e.OldValue, (CornerRadius)e.NewValue)));
+			DependencyProperty.Register(
+				nameof(CornerRadius),
+				typeof(CornerRadius),
+				typeof(Border),
+				new FrameworkPropertyMetadata(
+					CornerRadius.None,
+					FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsArrange,
+					(s, e) => ((Border)s)?.OnCornerRadiusChanged((CornerRadius)e.OldValue, (CornerRadius)e.NewValue)
+				)
+			);
 
 		private void OnCornerRadiusChanged(CornerRadius oldValue, CornerRadius newValue)
 		{
@@ -160,15 +168,14 @@ namespace Windows.UI.Xaml.Controls
 			set => this.SetValue(PaddingProperty, value);
 		}
 
-		// Using a DependencyProperty as the backing store for Padding.  This enables animation, styling, binding, etc...
 		public static readonly DependencyProperty PaddingProperty =
 			DependencyProperty.Register(
-				"Padding",
+				nameof(Padding),
 				typeof(Thickness),
 				typeof(Border),
 				new FrameworkPropertyMetadata(
 					Thickness.Empty,
-					FrameworkPropertyMetadataOptions.None,
+					FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsArrange,
 					(s, e) => ((Border)s)?.OnPaddingChanged((Thickness)e.OldValue, (Thickness)e.NewValue)
 				)
 			);
@@ -194,12 +201,12 @@ namespace Windows.UI.Xaml.Controls
 		// Using a DependencyProperty as the backing store for BorderThickness.  This enables animation, styling, binding, etc...
 		public static readonly DependencyProperty BorderThicknessProperty =
 			DependencyProperty.Register(
-				"BorderThickness",
+				nameof(BorderThickness),
 				typeof(Thickness),
 				typeof(Border),
 				new FrameworkPropertyMetadata(
 					Thickness.Empty,
-					FrameworkPropertyMetadataOptions.None,
+					FrameworkPropertyMetadataOptions.AffectsMeasure | FrameworkPropertyMetadataOptions.AffectsArrange,
 					(s, e) => ((Border)s)?.OnBorderThicknessChanged((Thickness)e.OldValue, (Thickness)e.NewValue)
 				)
 			);

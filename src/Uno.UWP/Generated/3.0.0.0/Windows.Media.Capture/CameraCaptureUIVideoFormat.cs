@@ -2,18 +2,14 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Media.Capture
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum CameraCaptureUIVideoFormat 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Mp4,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Wmv,
-		#endif
+		// Skipping already declared field Windows.Media.Capture.CameraCaptureUIVideoFormat.Mp4
+		// Skipping already declared field Windows.Media.Capture.CameraCaptureUIVideoFormat.Wmv
 	}
 	#endif
 }

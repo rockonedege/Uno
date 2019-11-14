@@ -95,10 +95,14 @@ namespace Uno.UI.SourceGenerators.BindableTypeProviders
 		{
 			var isAndroidApp = projectInstance.GetPropertyValue("AndroidApplication")?.Equals("true", StringComparison.OrdinalIgnoreCase) ?? false;
 			var isiOSApp = projectInstance.GetPropertyValue("ProjectTypeGuids")?.Equals("{FEACFBD2-3405-455C-9665-78FE426C6842};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}", StringComparison.OrdinalIgnoreCase) ?? false;
+			var ismacOSApp = projectInstance.GetPropertyValue("ProjectTypeGuids")?.Equals("{A3F8F2AB-B479-4A4A-A458-A89E7DC349F1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}", StringComparison.OrdinalIgnoreCase) ?? false;
 			var isExe = projectInstance.GetPropertyValue("OutputType")?.Equals("Exe", StringComparison.OrdinalIgnoreCase) ?? false;
 			var isWasm = projectInstance.GetPropertyValue("WasmHead")?.Equals("true", StringComparison.OrdinalIgnoreCase) ?? false;
 
-			return isAndroidApp || (isiOSApp && isExe) || isWasm;
+			return isAndroidApp
+				|| (isiOSApp && isExe)
+				|| (ismacOSApp && isExe)
+				|| isWasm;
 		}
 
 		private string GenerateTypeProviders(IEnumerable<IModuleSymbol> modules)
@@ -123,7 +127,8 @@ namespace Uno.UI.SourceGenerators.BindableTypeProviders
 			writer.AppendLineInvariant("// *****************************************************************************");
 			writer.AppendLineInvariant("// </auto-generated>");
 			writer.AppendLine();
-			writer.AppendLineInvariant("#pragma warning disable 618 // Ignore obsolete members warnings");
+			writer.AppendLineInvariant("#pragma warning disable 618  // Ignore obsolete members warnings");
+			writer.AppendLineInvariant("#pragma warning disable 1591 // Ignore missing XML comment warnings");
 			writer.AppendLineInvariant("using System;");
 			writer.AppendLineInvariant("using System.Linq;");
 			writer.AppendLineInvariant("using System.Diagnostics;");
@@ -215,10 +220,10 @@ namespace Uno.UI.SourceGenerators.BindableTypeProviders
 					{
 						using (writer.BlockInvariant(@"lock(_knownMissingTypes)"))
 						{
-							using (writer.BlockInvariant(@"if(!_knownMissingTypes.Contains(type))"))
+							using (writer.BlockInvariant(@"if(!_knownMissingTypes.Contains(type) || !type.IsGenericType)"))
 							{
 								writer.AppendLineInvariant(@"_knownMissingTypes.Add(type);");
-								writer.AppendLineInvariant(@"Debug.WriteLine($""The type [{{type.FullName}}] is not known by the MetadataProvider, either add the Bindable attribute or add it to the TypeMetadataConfig.xml"");");
+								writer.AppendLineInvariant(@"Debug.WriteLine($""The Bindable attribute is missing and the type [{{type.FullName}}] is not known by the MetadataProvider. Reflection was used instead of the binding engine and generated static metadata. Add the Bindable attribute to prevent this message and performance issues."");");
 							}
 						}
 					}
@@ -354,7 +359,7 @@ namespace Uno.UI.SourceGenerators.BindableTypeProviders
 				using (writer.BlockInvariant("internal static global::Uno.UI.DataBinding.IBindableType Build(global::Uno.UI.DataBinding.BindableType parent)"))
 				{
 					writer.AppendLineInvariant(
-						@"var bindableType = parent ?? new global::Uno.UI.DataBinding.BindableType({0}, typeof(global::{1}));",
+						@"var bindableType = parent ?? new global::Uno.UI.DataBinding.BindableType({0}, typeof({1}));",
 						flattenedProperties
 							.Where(p => !IsStringIndexer(p) && HasPublicGetter(p))
 							.Count()
@@ -366,7 +371,7 @@ namespace Uno.UI.SourceGenerators.BindableTypeProviders
 					{
 						var baseTypeMapped = _typeMap.UnoGetValueOrDefault(baseType);
 
-						writer.AppendLineInvariant(@"MetadataBuilder_{0:000}.Build(bindableType); // {1}", baseTypeMapped.Index, baseType.GetFullName());
+						writer.AppendLineInvariant(@"MetadataBuilder_{0:000}.Build(bindableType); // {1}", baseTypeMapped.Index, ExpandType(baseType));
 					}
 
 					var ctor = ownerType.GetMethods().FirstOrDefault(m => m.MethodKind == MethodKind.Constructor && !m.Parameters.Any() && m.IsLocallyPublic(_currentModule));
@@ -465,7 +470,7 @@ namespace Uno.UI.SourceGenerators.BindableTypeProviders
 							var getter = $"{XamlConstants.Types.DependencyObjectExtensions}.GetValue(instance, {ownerTypeName}.{propertyName}Property, precedence)";
 							var setter = $"{XamlConstants.Types.DependencyObjectExtensions}.SetValue(instance, {ownerTypeName}.{propertyName}Property, value, precedence)";
 
-							var propertyType = SanitizeTypeName(getMethod.ReturnType.ToString());
+							var propertyType = GetGlobalQualifier(getMethod.ReturnType) + SanitizeTypeName(getMethod.ReturnType.ToString());
 
 							writer.AppendLineInvariant($@"bindableType.AddProperty(""{propertyName}"", typeof({propertyType}),  Get{propertyName}, Set{propertyName});");
 
@@ -491,7 +496,7 @@ namespace Uno.UI.SourceGenerators.BindableTypeProviders
 			}
 			else
 			{
-				return ownerType.GetFullName();
+				return GetGlobalQualifier(ownerType) + ownerType.GetFullName();
 			}
 		}
 

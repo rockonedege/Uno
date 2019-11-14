@@ -15,6 +15,13 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Android.Support.V4.Graphics.Drawable;
+using Android.Support.V7.App;
+using Android.App;
+using Uno.Extensions;
+using Uno.Logging;
+using Microsoft.Extensions.Logging;
+using Android.Views.InputMethods;
+using Android.Content;
 
 namespace Uno.UI.Controls
 {
@@ -25,6 +32,30 @@ namespace Uno.UI.Controls
 		private static DependencyProperty BackButtonVisibilityProperty = ToolkitHelper.GetProperty("Uno.UI.Toolkit.CommandBarExtensions", "BackButtonVisibility");
 		private static DependencyProperty BackButtonForegroundProperty = ToolkitHelper.GetProperty("Uno.UI.Toolkit.CommandBarExtensions", "BackButtonForeground");
 		private static DependencyProperty BackButtonIconProperty = ToolkitHelper.GetProperty("Uno.UI.Toolkit.CommandBarExtensions", "BackButtonIcon");
+
+		private static string _actionBarUpDescription;
+		private static string ActionBarUpDescription
+		{
+			get
+			{
+				if (_actionBarUpDescription == null)
+				{
+					if (ContextHelper.Current is Activity activity && activity.Resources.GetIdentifier("action_bar_up_description", "string", "android") is int resourceId)
+					{
+						_actionBarUpDescription = activity.Resources.GetString(resourceId);
+					}
+					else
+					{
+						if (typeof(CommandBarRenderer).Log().IsEnabled(LogLevel.Error))
+						{
+							typeof(CommandBarRenderer).Log().Error("Couldn't resolve resource 'action_bar_up_description'.");
+						}
+					}
+				}
+
+				return _actionBarUpDescription;
+			}
+		}
 
 		private Android.Graphics.Color? _originalTitleTextColor;
 		private Android.Graphics.Drawables.Drawable _originalBackground;
@@ -52,6 +83,7 @@ namespace Uno.UI.Controls
 			_contentContainer.SetParent(Element);
 			Native.AddView(_contentContainer);
 			yield return Disposable.Create(() => Native.RemoveView(_contentContainer));
+			yield return _contentContainer.RegisterParentChangedCallback(this, OnContentContainerParentChanged);
 
 			// Commands.Click
 			Native.MenuItemClick += Native_MenuItemClick;
@@ -89,6 +121,19 @@ namespace Uno.UI.Controls
 				new[] { BackButtonForegroundProperty },
 				new[] { BackButtonIconProperty }
 			);
+		}
+
+		private void OnContentContainerParentChanged(object instance, object key, DependencyObjectParentChangedEventArgs args)
+		{
+			// Even though we set the CommandBar as the parent of the _contentContainer,
+			// it will change to the native control when the view is added.
+			// This control is the visual parent but is not a DependencyObject and will not propagate the DataContext.
+			// In order to ensure the DataContext is propagated properly, we restore the CommandBar
+			// parent that can propagate the DataContext.
+			if (args.NewParent != Element)
+			{
+				_contentContainer.SetParent(Element);
+			}
 		}
 
 		protected override void Render()
@@ -189,6 +234,8 @@ namespace Uno.UI.Controls
 							break;
 					}
 				}
+
+				Native.NavigationContentDescription = ActionBarUpDescription;
 			}
 			else
 			{
@@ -219,6 +266,8 @@ namespace Uno.UI.Controls
 
 		private void Native_MenuItemClick(object sender, Toolbar.MenuItemClickEventArgs e)
 		{
+			CloseKeyboard();
+
 			var hashCode = e.Item.ItemId;
 			var appBarButton = Element.PrimaryCommands
 				.Concat(Element.SecondaryCommands)
@@ -230,6 +279,8 @@ namespace Uno.UI.Controls
 
 		private void Native_NavigationClick(object sender, Toolbar.NavigationClickEventArgs e)
 		{
+			CloseKeyboard();
+
 			var navigationCommand = Element.GetValue(NavigationCommandProperty) as AppBarButton;
 			if (navigationCommand != null)
 			{
@@ -238,6 +289,15 @@ namespace Uno.UI.Controls
 			else
 			{
 				SystemNavigationManager.GetForCurrentView().RequestBack();
+			}
+		}
+
+		private void CloseKeyboard()
+		{
+			if ((ContextHelper.Current as Activity)?.CurrentFocus is View focused)
+			{
+				var imm = (InputMethodManager)ContextHelper.Current.GetSystemService(Context.InputMethodService);
+				imm.HideSoftInputFromWindow(focused.WindowToken, HideSoftInputFlags.None);
 			}
 		}
 	}

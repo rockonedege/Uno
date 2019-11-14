@@ -2,24 +2,16 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.ApplicationModel.Chat
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum ChatMessageChangeType 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		MessageCreated,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		MessageModified,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		MessageDeleted,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		ChangeTrackingLost,
-		#endif
+		// Skipping already declared field Windows.ApplicationModel.Chat.ChatMessageChangeType.MessageCreated
+		// Skipping already declared field Windows.ApplicationModel.Chat.ChatMessageChangeType.MessageModified
+		// Skipping already declared field Windows.ApplicationModel.Chat.ChatMessageChangeType.MessageDeleted
+		// Skipping already declared field Windows.ApplicationModel.Chat.ChatMessageChangeType.ChangeTrackingLost
 	}
 	#endif
 }

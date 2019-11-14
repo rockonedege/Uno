@@ -11,13 +11,16 @@ using Windows.UI.Xaml;
 using System.IO;
 using Windows.UI.ViewManagement;
 using Uno.Disposables;
+using Windows.Graphics.Display;
+using UIKit;
 
 namespace Uno.UI.Controls
 {
 	public partial class NativeCommandBarPresenter : ContentPresenter
 	{
 		private readonly SerialDisposable _statusBarSubscription = new SerialDisposable();
-
+		private readonly SerialDisposable _orientationSubscription = new SerialDisposable();
+		
 		protected override void OnLoaded()
 		{
 			base.OnLoaded();
@@ -54,6 +57,7 @@ namespace Uno.UI.Controls
 			base.OnUnloaded();
 
 			_statusBarSubscription.Disposable = null;
+			_orientationSubscription.Disposable = null;
 		}
 	}
 }

@@ -1,4 +1,4 @@
-#if NET46
+#if NET461
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -16,11 +16,7 @@ namespace Windows.UI.Xaml
 
 		public Window()
 		{
-		}
-
-		private void InternalActivate()
-		{
-
+			InitializeCommon();
 		}
 
 		private void InternalSetContent(UIElement value)

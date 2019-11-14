@@ -13,7 +13,7 @@ using Windows.Foundation;
 using Uno.UI;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Text;
-
+using Microsoft.Extensions.Logging;
 #if XAMARIN_ANDROID
 using View = Android.Views.View;
 using ViewGroup = Android.Views.ViewGroup;
@@ -25,7 +25,13 @@ using View = UIKit.UIView;
 using ViewGroup = UIKit.UIView;
 using Color = UIKit.UIColor;
 using Font = UIKit.UIFont;
-#elif __WASM__ || NET46
+#elif __MACOS__
+using AppKit;
+using View = AppKit.NSView;
+using ViewGroup = AppKit.NSView;
+using Color = AppKit.NSColor;
+using Font = AppKit.NSFont;
+#elif __WASM__ || NET461
 using View = Windows.UI.Xaml.UIElement;
 using ViewGroup = Windows.UI.Xaml.UIElement;
 #endif
@@ -445,8 +451,10 @@ namespace Windows.UI.Xaml.Controls
 
 		private void OnPaddingChanged(Thickness oldValue, Thickness newValue)
 		{
-			UpdateBorder();
+			OnPaddingChangedPartial(oldValue, newValue);
 		}
+
+		partial void OnPaddingChangedPartial(Thickness oldValue, Thickness newValue);
 
 		#endregion
 
@@ -593,7 +601,7 @@ namespace Windows.UI.Xaml.Controls
 			{
 				if (!(value is View))
 				{
-					// If the content is not a view, we apply the content as the 
+					// If the content is not a view, we apply the content as the
 					// DataContext of the materialized content.
 					DataContext = value;
 				}
@@ -603,6 +611,13 @@ namespace Windows.UI.Xaml.Controls
 					this.ClearValue(DataContextProperty, DependencyPropertyValuePrecedences.Local);
 				}
 			}
+		}
+
+		protected internal override void OnTemplatedParentChanged(DependencyPropertyChangedEventArgs e)
+		{
+			base.OnTemplatedParentChanged(e);
+
+			SetImplicitContent();
 		}
 
 		protected virtual void OnContentTemplateChanged(DataTemplate oldTemplate, DataTemplate newTemplate)
@@ -658,8 +673,7 @@ namespace Windows.UI.Xaml.Controls
 
 		private void SynchronizeContentTemplatedParent()
 		{
-			var binder = _contentTemplateRoot as IFrameworkElement;
-			if (binder != null)
+			if (_contentTemplateRoot is IFrameworkElement binder)
 			{
 				var templatedParent = _contentTemplateRoot is ImplicitTextBlock
 					? this // ImplicitTextBlock is a special case that requires its TemplatedParent to be the ContentPresenter
@@ -788,12 +802,13 @@ namespace Windows.UI.Xaml.Controls
 				this.Log().DebugFormat("No ContentTemplate was specified for {0} and content is not a UIView, defaulting to TextBlock.", GetType().Name);
 			}
 
-			var textBlock = new ImplicitTextBlock();
+			var textBlock = new ImplicitTextBlock(this);
 
-			void setBinding(DependencyProperty property, string path) 
+			void setBinding(DependencyProperty property, string path)
 				=> textBlock.SetBinding(
-					property, 
-					new Binding {
+					property,
+					new Binding
+					{
 						Path = new PropertyPath(path),
 						Source = this,
 						Mode = BindingMode.OneWay
@@ -808,6 +823,55 @@ namespace Windows.UI.Xaml.Controls
 			setBinding(TextBlock.TextAlignmentProperty, nameof(TextAlignment));
 
 			ContentTemplateRoot = textBlock;
+		}
+
+		private bool _isBoundImplicitelyToContent;
+
+		private void SetImplicitContent()
+		{
+			if(!FeatureConfiguration.ContentPresenter.UseImplicitContentFromTemplatedParent)
+			{
+				return;
+			}
+
+			if (!(TemplatedParent is ContentControl))
+			{
+				ClearImplicitBindinds();
+				return; // Not applicable: no TemplatedParent or it's not a ContentControl
+			}
+
+			// Check if the Content is set to something
+			var v = this.GetValueUnderPrecedence(ContentProperty, DependencyPropertyValuePrecedences.DefaultValue);
+			if (v.precedence != DependencyPropertyValuePrecedences.DefaultValue)
+			{
+				ClearImplicitBindinds();
+				return; // Nope, there's a value somewhere
+			}
+
+			// Check if the Content property is bound to something
+			var b = GetBindingExpression(ContentProperty);
+			if (b != null)
+			{
+				ClearImplicitBindinds();
+				return; // Yep, there's a binding: a value "will" come eventually
+			}
+
+			// Create an implicit binding of Content to Content property of the TemplatedParent (which is a ContentControl)
+			var binding =
+				new Binding(new PropertyPath("Content"), null)
+				{
+					RelativeSource = RelativeSource.TemplatedParent,
+				};
+			SetBinding(ContentProperty, binding);
+			_isBoundImplicitelyToContent = true;
+
+			void ClearImplicitBindinds()
+			{
+				if (_isBoundImplicitelyToContent)
+				{
+					SetBinding(ContentProperty, new Binding());
+				}
+			}
 		}
 
 		partial void RegisterContentTemplateRoot();

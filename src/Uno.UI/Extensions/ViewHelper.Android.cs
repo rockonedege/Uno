@@ -10,6 +10,9 @@ using System.Runtime.CompilerServices;
 using Android.Views;
 using System.Threading;
 using System.Numerics;
+using Android.Graphics;
+using Point = Windows.Foundation.Point;
+using Rect = Windows.Foundation.Rect;
 
 namespace Uno.UI
 {
@@ -59,6 +62,16 @@ namespace Uno.UI
 			}
 		}
 
+		/// <summary>
+		/// The maximum logical pixel value which can be converted to physical pixels without overflow.
+		/// </summary>
+		private static double MaxLogicalValue { get; }
+
+		/// <summary>
+		/// The minimum logical pixel value which can be converted to physical pixels without underflow.
+		/// </summary>
+		private static double MinLogicalValue { get; }
+
 		public static string Architecture { get; }
 
 		static ViewHelper()
@@ -68,8 +81,18 @@ namespace Uno.UI
 				// WARNING: The Density value is not completely based on the DPI of the device.
 				// On two 8" devices, the Density may not be consistent.
 				_cachedDensity = displayMetrics.Density;
+				if (FeatureConfiguration.Font.IgnoreTextScaleFactor)
+				{
+					// To disable text scaling, we put the Density value in ScaledDensity so that the ratio between them is 1.
+					// This ensures it's disabled for everything using ScaledDensity (e.g. TextBlock, TextBox, AppBarButton, etc.)
+					// https://developer.xamarin.com/api/property/Android.Util.DisplayMetrics.ScaledDensity/
+					displayMetrics.ScaledDensity = displayMetrics.Density;
+				}
 				_cachedScaledDensity = displayMetrics.ScaledDensity;
 				_cachedScaledXDpi = displayMetrics.Xdpi;
+
+				MaxLogicalValue = (int.MaxValue - 1) / _cachedDensity;
+				MinLogicalValue = (int.MinValue + 1) / _cachedDensity;
 			}
 
 			if (typeof(ViewHelper).Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
@@ -168,6 +191,34 @@ namespace Uno.UI
 			return (int)((value * FontScale) + .5f);
 		}
 
+		/// <summary>
+		/// Gets the physical representation of the provided logical pixels, 
+		/// for the <see cref="View.PivotX"/> and <see cref="View.PivotY"/> of a View (cf. Remarks)
+		/// </summary>
+		/// <remarks>Compared to <see cref="LogicalToPhysicalPixels"/>, this won't apply any rounding and returns a float.</remarks>
+		/// <param name="value">The logical value</param>
+		/// <returns>The pixels value</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static float LogicalToPhysicalPivotPixels(double value)
+		{
+			if (double.IsNaN(value))
+			{
+				return 0;
+			}
+
+			if (double.IsPositiveInfinity(value))
+			{
+				return int.MaxValue;
+			}
+
+			if (double.IsNegativeInfinity(value))
+			{
+				return int.MinValue;
+			}
+
+			return (float)(value * Scale);
+		}
+
 
 		/// <summary>
 		/// Gets the physical representation of the provided logical pixels.
@@ -182,12 +233,12 @@ namespace Uno.UI
 				return 0;
 			}
 
-			if (double.IsPositiveInfinity(value))
+			if (double.IsPositiveInfinity(value) || value > MaxLogicalValue)
 			{
 				return int.MaxValue;
 			}
 
-			if (double.IsNegativeInfinity(value))
+			if (double.IsNegativeInfinity(value) || value < MinLogicalValue)
 			{
 				return int.MinValue;
 			}
@@ -240,6 +291,19 @@ namespace Uno.UI
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static RectF PhysicalToLogicalPixels(this RectF size)
+		{
+			var fScale = (float)Scale;
+
+			return new RectF(
+				size.Left / fScale,
+				size.Top / fScale,
+				size.Right / fScale,
+				size.Bottom / fScale
+			);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static Rect LogicalToPhysicalPixels(this Rect size)
 		{
 			return new Rect(
@@ -247,6 +311,17 @@ namespace Uno.UI
 				LogicalToPhysicalPixels(size.Y),
 				LogicalToPhysicalPixels(size.Width),
 				LogicalToPhysicalPixels(size.Height)
+			);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static RectF LogicalToPhysicalPixels(this RectF size)
+		{
+			return new RectF(
+				LogicalToPhysicalPixels(size.Left),
+				LogicalToPhysicalPixels(size.Top),
+				LogicalToPhysicalPixels(size.Right),
+				LogicalToPhysicalPixels(size.Bottom)
 			);
 		}
 

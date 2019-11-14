@@ -68,7 +68,14 @@ namespace Windows.UI.Xaml.Controls
 		/// collection (InsertItems, etc) shouldn't be called because they will result in a NSInternalInconsistencyException
 		/// </summary>
 		private bool _needsLayoutAfterReloadData = false;
+		/// <summary>
+		/// List was empty last time ReloadData() was called. If inserting items into an empty collection we should do a refresh instead, 
+		/// to work around a UICollectionView bug https://stackoverflow.com/questions/12611292/uicollectionview-assertion-failure
+		/// </summary>
+		private bool _listEmptyLastRefresh = false;
 		private bool _isReloadDataDispatched = false;
+
+		private readonly SerialDisposable _scrollIntoViewSubscription = new SerialDisposable();
 		#endregion
 
 		#region Properties
@@ -82,10 +89,6 @@ namespace Windows.UI.Xaml.Controls
 		}
 
 		public Style ItemContainerStyle => XamlParent?.ItemContainerStyle;
-
-		public StyleSelector ItemContainerStyleSelector => XamlParent?.ItemContainerStyleSelector;
-
-		public virtual DataTemplate ItemTemplate => XamlParent?.ItemTemplate;
 
 		public DataTemplate HeaderTemplate
 		{
@@ -104,6 +107,8 @@ namespace Windows.UI.Xaml.Controls
 		internal bool NeedsReloadData => _needsReloadData;
 
 		internal CGPoint UpperScrollLimit { get { return (CGPoint)(ContentSize - Frame.Size); } }
+
+		internal UIElement.TouchesManager TouchesManager { get; /* readonly in int */ private set; }
 		#endregion
 
 		public GroupStyle GroupStyle => XamlParent?.GroupStyle.FirstOrDefault();
@@ -145,6 +150,10 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
+		internal IEnumerable<SelectorItem> CachedItemViews => Enumerable.Empty<SelectorItem>();
+
+		private bool UseCollectionAnimations => XamlParent?.UseCollectionAnimations ?? true;
+
 		public NativeListViewBase() :
 			this(new RectangleF(),
 				//Supply a layout, otherwise UICollectionView constructor throws ArgumentNullException. This will later be set to ListViewLayout or GridViewLayout as desired.
@@ -170,10 +179,11 @@ namespace Windows.UI.Xaml.Controls
 			RegisterClassForSupplementaryView(internalContainerType, ListViewSectionHeaderElementKindNS, ListViewSectionHeaderReuseIdentifier);
 
 			DelaysContentTouches = true;
-
+			TouchesManager = UIElement.TouchesManager.GetOrCreate(this);
+			
 			ShowsHorizontalScrollIndicator = true;
 			ShowsVerticalScrollIndicator = true;
-			
+
 			if (ScrollViewer.UseContentInsetAdjustmentBehavior)
 			{
 				ContentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentBehavior.Never;
@@ -207,19 +217,22 @@ namespace Windows.UI.Xaml.Controls
 		{
 			if (TryApplyCollectionChange())
 			{
-				NativeLayout?.NotifyCollectionChange(new CollectionChangedOperation(
-						indexPaths.First().ToIndexPath(),
-						indexPaths.Length,
-						NotifyCollectionChangedAction.Add,
-						CollectionChangedOperation.Element.Item
-					));
-				try
+				using (EnableOrDisableAnimations())
 				{
-					base.InsertItems(indexPaths);
-				}
-				catch (MonoTouchException e)
-				{
-					this.Log().Error("Error when updating collection", e);
+					NativeLayout?.NotifyCollectionChange(new CollectionChangedOperation(
+									indexPaths.First().ToIndexPath(),
+									indexPaths.Length,
+									NotifyCollectionChangedAction.Add,
+									CollectionChangedOperation.Element.Item
+								));
+					try
+					{
+						base.InsertItems(indexPaths);
+					}
+					catch (MonoTouchException e)
+					{
+						this.Log().Error("Error when updating collection", e);
+					}
 				}
 			}
 		}
@@ -228,19 +241,22 @@ namespace Windows.UI.Xaml.Controls
 		{
 			if (TryApplyCollectionChange())
 			{
-				NativeLayout?.NotifyCollectionChange(new CollectionChangedOperation(
-						IndexPath.FromRowSection(0, (int)sections.FirstIndex),
-						(int)sections.Count,
-						NotifyCollectionChangedAction.Add,
-						CollectionChangedOperation.Element.Group
-					));
-				try
+				using (EnableOrDisableAnimations())
 				{
-					base.InsertSections(sections);
-				}
-				catch (MonoTouchException e)
-				{
-					this.Log().Error("Error when updating collection", e);
+					NativeLayout?.NotifyCollectionChange(new CollectionChangedOperation(
+									IndexPath.FromRowSection(0, (int)sections.FirstIndex),
+									(int)sections.Count,
+									NotifyCollectionChangedAction.Add,
+									CollectionChangedOperation.Element.Group
+								));
+					try
+					{
+						base.InsertSections(sections);
+					}
+					catch (MonoTouchException e)
+					{
+						this.Log().Error("Error when updating collection", e);
+					}
 				}
 			}
 		}
@@ -249,19 +265,22 @@ namespace Windows.UI.Xaml.Controls
 		{
 			if (TryApplyCollectionChange())
 			{
-				NativeLayout?.NotifyCollectionChange(new CollectionChangedOperation(
-						indexPaths.First().ToIndexPath(),
-						indexPaths.Length,
-						NotifyCollectionChangedAction.Remove,
-						CollectionChangedOperation.Element.Item
-					));
-				try
+				using (EnableOrDisableAnimations())
 				{
-					base.DeleteItems(indexPaths);
-				}
-				catch (MonoTouchException e)
-				{
-					this.Log().Error("Error when updating collection", e);
+					NativeLayout?.NotifyCollectionChange(new CollectionChangedOperation(
+									indexPaths.First().ToIndexPath(),
+									indexPaths.Length,
+									NotifyCollectionChangedAction.Remove,
+									CollectionChangedOperation.Element.Item
+								));
+					try
+					{
+						base.DeleteItems(indexPaths);
+					}
+					catch (MonoTouchException e)
+					{
+						this.Log().Error("Error when updating collection", e);
+					}
 				}
 			}
 		}
@@ -270,19 +289,22 @@ namespace Windows.UI.Xaml.Controls
 		{
 			if (TryApplyCollectionChange())
 			{
-				NativeLayout?.NotifyCollectionChange(new CollectionChangedOperation(
-						IndexPath.FromRowSection(0, (int)sections.FirstIndex),
-						(int)sections.Count,
-						NotifyCollectionChangedAction.Remove,
-						CollectionChangedOperation.Element.Group
-					));
-				try
+				using (EnableOrDisableAnimations())
 				{
-					base.DeleteSections(sections);
-				}
-				catch (MonoTouchException e)
-				{
-					this.Log().Error("Error when updating collection", e);
+					NativeLayout?.NotifyCollectionChange(new CollectionChangedOperation(
+									IndexPath.FromRowSection(0, (int)sections.FirstIndex),
+									(int)sections.Count,
+									NotifyCollectionChangedAction.Remove,
+									CollectionChangedOperation.Element.Group
+								));
+					try
+					{
+						base.DeleteSections(sections);
+					}
+					catch (MonoTouchException e)
+					{
+						this.Log().Error("Error when updating collection", e);
+					}
 				}
 			}
 		}
@@ -291,25 +313,34 @@ namespace Windows.UI.Xaml.Controls
 		{
 			if (TryApplyCollectionChange())
 			{
-				NativeLayout?.NotifyCollectionChange(new CollectionChangedOperation(
-						indexPaths.First().ToIndexPath(),
-						indexPaths.Length,
-						NotifyCollectionChangedAction.Replace,
-						CollectionChangedOperation.Element.Item
-					));
-				base.ReloadItems(indexPaths);
+				using (EnableOrDisableAnimations())
+				{
+					NativeLayout?.NotifyCollectionChange(new CollectionChangedOperation(
+									indexPaths.First().ToIndexPath(),
+									indexPaths.Length,
+									NotifyCollectionChangedAction.Replace,
+									CollectionChangedOperation.Element.Item
+								));
+					base.ReloadItems(indexPaths);
+				}
 			}
 		}
 
 		public override void ReloadSections(NSIndexSet sections)
 		{
-			NativeLayout?.NotifyCollectionChange(new CollectionChangedOperation(
-				IndexPath.FromRowSection(0, (int)sections.FirstIndex),
-				(int)sections.Count,
-				NotifyCollectionChangedAction.Replace,
-				CollectionChangedOperation.Element.Group
-			));
-			base.ReloadSections(sections);
+			if (TryApplyCollectionChange())
+			{
+				using (EnableOrDisableAnimations())
+				{
+					NativeLayout?.NotifyCollectionChange(new CollectionChangedOperation(
+						IndexPath.FromRowSection(0, (int)sections.FirstIndex),
+						(int)sections.Count,
+						NotifyCollectionChangedAction.Replace,
+						CollectionChangedOperation.Element.Group
+					));
+					base.ReloadSections(sections);
+				}
+			}
 		}
 
 		/// <summary>
@@ -317,7 +348,7 @@ namespace Windows.UI.Xaml.Controls
 		/// </summary>
 		private bool TryApplyCollectionChange()
 		{
-			if (_needsLayoutAfterReloadData)
+			if (_needsLayoutAfterReloadData || _listEmptyLastRefresh)
 			{
 				SetNeedsReloadData();
 				if (XamlParent.AreEmptyGroupsHidden)
@@ -329,6 +360,18 @@ namespace Windows.UI.Xaml.Controls
 			}
 
 			return true;
+		}
+
+		private IDisposable EnableOrDisableAnimations()
+		{
+			if (UseCollectionAnimations)
+			{
+				return null;
+			}
+
+			AnimationsEnabled = false;
+
+			return Disposable.Create(() => AnimationsEnabled = true);
 		}
 
 		internal SelectorItem ContainerFromIndex(NSIndexPath indexPath)
@@ -390,7 +433,7 @@ namespace Windows.UI.Xaml.Controls
 		{
 			base.SetNeedsLayout();
 
-			// This method is present to ensure that it is not overriden by the mixins.
+			// This method is present to ensure that it is not overridden by the mixins.
 			// SetNeedsLayout is called very often during scrolling, and it must not
 			// call SetParentNeeds layout, otherwise the whole visual tree above the listviewbase
 			// will be refreshed.
@@ -410,7 +453,7 @@ namespace Windows.UI.Xaml.Controls
 					continue;
 				}
 
-				var isAnimating = unoCell.Layer.AnimationKeys?.Any() ?? false;
+				var isAnimating = unoCell./* cache */Layer.AnimationKeys?.Any() ?? false;
 				if (isAnimating)
 				{
 					// Don't bother checking for consistency while items are animating
@@ -424,22 +467,25 @@ namespace Windows.UI.Xaml.Controls
 				);
 				var actualItem = unoCell.Content?.DataContext;
 
-				var areMatching = Object.Equals(expectedItem, actualItem);
-				if (
-					// This check is present for the support of explicit ListViewItem 
-					// through the Items property. The DataContext may be set to some
-					// user defined object.
-					XamlParent.ItemsSource != null
-
-					&& !areMatching
-				)
+				if (!XamlParent.IsItemItsOwnContainer(expectedItem))
 				{
-					// This is a failsafe for in-place collection changes which leave the list in an inconsistent state, for exact reasons known only to UICollectionView.
-					if (this.Log().IsEnabled(LogLevel.Error))
+					var areMatching = Object.Equals(expectedItem, actualItem);
+					if (
+						// This check is present for the support of explicit ListViewItem 
+						// through the Items property. The DataContext may be set to some
+						// user defined object.
+						XamlParent.ItemsSource != null
+
+						&& !areMatching
+					)
 					{
-						(this).Log().Error($"Cell had context {actualItem} instead of {expectedItem}, scheduling a refresh to ensure correct display of list. (IndexPath={tuple.Path}");
+						// This is a failsafe for in-place collection changes which leave the list in an inconsistent state, for exact reasons known only to UICollectionView.
+						if (this.Log().IsEnabled(LogLevel.Warning))
+						{
+							(this).Log().Warn($"Cell had context {actualItem} instead of {expectedItem}, scheduling a refresh to ensure correct display of list. (IndexPath={tuple.Path}");
+						}
+						DispatchReloadData();
 					}
-					DispatchReloadData();
 				}
 			}
 		}
@@ -527,19 +573,41 @@ namespace Windows.UI.Xaml.Controls
 			{
 				if (IndexPathsForVisibleItems.Length == 0)
 				{
+					var cd = new CancellationDisposable();
+					_scrollIntoViewSubscription.Disposable = cd;
 					//Item is present but no items are visible, probably being called on first load. Dispatch so that it actually does something.
-					Dispatcher.RunAsync(CoreDispatcherPriority.Normal, ScrollInner);
+					Dispatcher.RunAsync(CoreDispatcherPriority.Normal, DispatchedScrollInner).AsTask(cd.Token);
 				}
 				else
 				{
+					_scrollIntoViewSubscription.Disposable = null; //Cancel any pending dispatched ScrollIntoView
 					ScrollInner();
+				}
+
+				void DispatchedScrollInner()
+				{
+					index = IndexPathForItem(item);
+					// Recheck item because it may no longer be there
+					if (index != null)
+					{
+						ScrollInner();
+					}
 				}
 
 				void ScrollInner()
 				{
 					//Scroll to individual item, We set the UICollectionViewScrollPosition to None to have the same behavior as windows.
 					//We can potentially customize this By using ConvertScrollAlignment and use different alignments.
-					ScrollToItem(index, ConvertSnapPointsAlignmentToScrollPosition(), AnimateScrollIntoView);
+					var needsMaterialize = Source.UpdateLastMaterializedItem(index);
+					if (needsMaterialize)
+					{
+						NativeLayout.InvalidateLayout();
+						NativeLayout.PrepareLayout();
+					}
+
+					var offset = NativeLayout.GetTargetScrollOffset(index, alignment);
+					SetContentOffset(offset, AnimateScrollIntoView);
+					NativeLayout.UpdateStickyHeaderPositions();
 				}
 			}
 		}
@@ -665,7 +733,10 @@ namespace Windows.UI.Xaml.Controls
 				_needsLayoutAfterReloadData = true;
 				ReloadData();
 
+				Source?.ReloadData();
 				NativeLayout?.ReloadData();
+
+				_listEmptyLastRefresh = XamlParent?.NumberOfItems == 0;
 			}
 		}
 
@@ -692,11 +763,6 @@ namespace Windows.UI.Xaml.Controls
 				_isReloadDataDispatched = false;
 				SetNeedsReloadData();
 			}
-		}
-
-		internal DataTemplate ResolveItemTemplate(object item)
-		{
-			return DataTemplateHelper.ResolveTemplate(ItemTemplate, ItemTemplateSelector, item);
 		}
 
 		public Thickness Padding

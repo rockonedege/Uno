@@ -2,24 +2,16 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Devices.Geolocation
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum GeoshapeType 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Geopoint,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Geocircle,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Geopath,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		GeoboundingBox,
-		#endif
+		// Skipping already declared field Windows.Devices.Geolocation.GeoshapeType.Geopoint
+		// Skipping already declared field Windows.Devices.Geolocation.GeoshapeType.Geocircle
+		// Skipping already declared field Windows.Devices.Geolocation.GeoshapeType.Geopath
+		// Skipping already declared field Windows.Devices.Geolocation.GeoshapeType.GeoboundingBox
 	}
 	#endif
 }

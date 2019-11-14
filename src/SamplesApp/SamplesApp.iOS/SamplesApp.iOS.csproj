@@ -1,0 +1,182 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">iPhoneSimulator</Platform>
+    <ProjectGuid>{B71AE380-558C-4D6C-81D8-9C043B50262C}</ProjectGuid>
+    <ProjectTypeGuids>{FEACFBD2-3405-455C-9665-78FE426C6842};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>SamplesApp</RootNamespace>
+    <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
+    <AssemblyName>SamplesApp</AssemblyName>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <IsUiAutomationMappingEnabled>true</IsUiAutomationMappingEnabled>
+    <ResourcesDirectory>..\SamplesApp.Shared\Strings</ResourcesDirectory>
+    <!-- https://github.com/unoplatform/uno/issues/61 -->
+    <UnoSkipUserControlsInVisualTree>false</UnoSkipUserControlsInVisualTree>
+  </PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\iPhoneSimulator\Debug</OutputPath>
+    <DefineConstants>DEBUG;XAMARIN;HAS_UNO</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <MtouchArch>x86_64</MtouchArch>
+    <MtouchLink>None</MtouchLink>
+    <MtouchDebug>true</MtouchDebug>
+    <MtouchExtraArgs>--xml=./LinkerExclusions.xml --linkskip=$(AssemblyName) --setenv=MONO_GC_PARAMS=soft-heap-limit=512m,nursery-size=64m,evacuation-threshold=66,major=marksweep,concurrent-sweep</MtouchExtraArgs>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+  </PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
+		<DebugType>none</DebugType>
+		<Optimize>true</Optimize>
+		<OutputPath>bin\iPhoneSimulator\Release</OutputPath>
+    <DefineConstants>XAMARIN;HAS_UNO</DefineConstants>
+		<ErrorReport>prompt</ErrorReport>
+		<WarningLevel>4</WarningLevel>
+		<MtouchLink>None</MtouchLink>
+		<MtouchArch>x86_64</MtouchArch>
+		<ConsolePause>false</ConsolePause>
+		<MtouchExtraArgs>--xml=./LinkerExclusions.xml --linkskip=$(AssemblyName) --setenv=MONO_GC_PARAMS=soft-heap-limit=512m,nursery-size=64m,evacuation-threshold=66,major=marksweep,concurrent-sweep</MtouchExtraArgs>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\iPhone\Debug</OutputPath>
+    <DefineConstants>DEBUG;XAMARIN;HAS_UNO</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <MtouchArch>ARM64</MtouchArch>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <CodesignKey>iPhone Developer</CodesignKey>
+    <MtouchDebug>true</MtouchDebug>
+    <MtouchExtraArgs>--xml=./LinkerExclusions.xml --linkskip=$(AssemblyName) --setenv=MONO_GC_PARAMS=soft-heap-limit=512m,nursery-size=64m,evacuation-threshold=66,major=marksweep,concurrent-sweep</MtouchExtraArgs>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
+    <DefineConstants>XAMARIN;HAS_UNO</DefineConstants>
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhone\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <MtouchArch>ARM64</MtouchArch>
+    <ConsolePause>false</ConsolePause>
+    <CodesignKey>iPhone Developer</CodesignKey>
+    <MtouchExtraArgs>--xml=./LinkerExclusions.xml --linkskip=$(AssemblyName) --setenv=MONO_GC_PARAMS=soft-heap-limit=512m,nursery-size=64m,evacuation-threshold=66,major=marksweep,concurrent-sweep</MtouchExtraArgs>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Ad-Hoc|iPhone' ">
+    <DefineConstants>XAMARIN;HAS_UNO</DefineConstants>
+    <DebugType>none</DebugType>
+    <Optimize>True</Optimize>
+    <OutputPath>bin\iPhone\Ad-Hoc</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>False</ConsolePause>
+    <MtouchArch>ARM64</MtouchArch>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <BuildIpa>True</BuildIpa>
+    <CodesignProvision>Automatic:AdHoc</CodesignProvision>
+    <CodesignKey>iPhone Distribution</CodesignKey>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'AppStore|iPhone' ">
+    <DefineConstants>XAMARIN;HAS_UNO</DefineConstants>
+    <DebugType>none</DebugType>
+    <Optimize>True</Optimize>
+    <OutputPath>bin\iPhone\AppStore</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>False</ConsolePause>
+    <MtouchArch>ARM64</MtouchArch>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <CodesignProvision>Automatic:AppStore</CodesignProvision>
+    <CodesignKey>iPhone Distribution</CodesignKey>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'Default' ">
+    <AppExtensionDebugBundleId />
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Main.cs" />
+    <Content Include="LinkerExclusions.xml" />
+    <None Include="Resources\Default-568h%402x.png" />
+    <None Include="Info.plist" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Content Include="Entitlements.plist" />
+    <BundleResource Include="Resources\Fonts\winjs-symbols.ttf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </BundleResource>
+    <None Include="Resources\LaunchScreen.xib" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
+    <Reference Include="Xamarin.iOS" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>12.0.2</Version>
+    </PackageReference>
+    <PackageReference Include="Uno.CodeGen">
+      <Version>1.32.0</Version>
+    </PackageReference>
+    <PackageReference Include="Uno.Core">
+      <Version>1.29.0-dev.93</Version>
+    </PackageReference>
+    <PackageReference Include="Uno.SourceGenerationTasks" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="1.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Filter" Version="1.1.1" />
+    <PackageReference Include="MSTest.TestFramework" Version="2.0.0" />
+    <PackageReference Include="Xamarin.TestCloud.Agent">
+      <Version>0.21.8</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\AddIns\Uno.UI.Lottie\Uno.UI.Lottie.csproj">
+      <Project>{f9277925-fc11-4a97-8ca1-b4a33e726f55}</Project>
+      <Name>Uno.UI.Lottie</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Uno.HotReload\Uno.UI.HotReload.csproj">
+      <Project>{80798130-cb7e-4968-b4f6-554cc0fc8feb}</Project>
+      <Name>Uno.UI.HotReload</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Uno.UI.Maps\Uno.UI.Maps.csproj">
+      <Project>{f25ccf70-5a21-4245-ae4e-342bc55f9e86}</Project>
+      <Name>Uno.UI.Maps</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Uno.UI.RuntimeTests\Uno.UI.RuntimeTests.csproj">
+      <Project>{028F3EE0-D51B-469A-A72C-C272585DCD40}</Project>
+      <Name>Uno.UI.RuntimeTests</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Uno.Foundation\Uno.Foundation.csproj">
+      <Project>{528AE586-5DF3-4DAD-AA5C-F12F4D5E0605}</Project>
+      <Name>Uno.Foundation</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Uno.UI.Toolkit\Uno.UI.Toolkit.csproj">
+      <Project>{2eaf39e3-2ac9-457a-a5b2-47d6548799b3}</Project>
+      <Name>Uno.UI.Toolkit</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Uno.UI\Uno.UI.csproj">
+      <Project>{C6884723-81DB-43BD-924F-3FA367633E64}</Project>
+      <Name>Uno.UI</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Uno.UWP\Uno.csproj">
+      <Project>{58C0CBAB-2619-4F58-BC41-5C74DBE31261}</Project>
+      <Name>Uno</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="..\..\SourceGenerators\sourcegenerators.local.props" />
+  <Import Project="..\SamplesApp.Shared\SamplesApp.Shared.projitems" Label="Shared" Condition="Exists('..\SamplesApp.Shared\SamplesApp.Shared.projitems')" />
+  <Import Project="..\SamplesApp.UnitTests.Shared\SamplesApp.UnitTests.Shared.projitems" Label="Shared" />
+  <Import Project="..\UITests.Shared\UITests.Shared.projitems" Label="Shared" />
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
+</Project>

@@ -20,6 +20,11 @@ namespace Windows.UI.Xaml
 
 		internal Size ActualSize => _actualSize;
 
+		/// <summary>
+		/// The parent of the <see cref="FrameworkElement"/> in the visual tree, which may differ from its <see cref="Parent"/> (ie if it's a child of a native view).
+		/// </summary>
+		internal IViewParent VisualParent => (this as View).Parent;
+
 		public FrameworkElement()
 		{
 			Initialize();
@@ -27,12 +32,135 @@ namespace Windows.UI.Xaml
 
 		partial void Initialize();
 
+		protected override void OnNativeLoaded()
+		{
+			try
+			{
+				PerformOnLoaded();
+
+				base.OnNativeLoaded();
+			}
+			catch (Exception ex)
+			{
+				this.Log().Error("OnNativeLoaded failed in FrameworkElementMixins", ex);
+				Application.Current.RaiseRecoverableUnhandledException(ex);
+			}
+		}
+
+		private void PerformOnLoaded()
+		{
+			((IDependencyObjectStoreProvider)this).Store.Parent = base.Parent;
+			OnLoading();
+			OnLoaded();
+
+			if (FeatureConfiguration.FrameworkElement.AndroidUseManagedLoadedUnloaded)
+			{
+				foreach (var child in (this as IShadowChildrenProvider).ChildrenShadow)
+				{
+					if (child is FrameworkElement e)
+					{
+						// Mark this instance as managed loaded through managed children
+						// traversal, to avoid paying the cost of overridden method interop
+						e.IsManagedLoaded = true;
+
+						// Calling this method is acceptable as it is an abstract method that
+						// will never do interop with the java class. It is required to invoke
+						// Loaded/Unloaded actions.
+						e.OnNativeLoaded();
+					}
+				}
+			}
+		}
+
+		protected override void OnNativeUnloaded()
+		{
+			try
+			{
+				PerformOnUnloaded();
+
+				base.OnNativeUnloaded();
+			}
+			catch (Exception ex)
+			{
+				this.Log().Error("OnNativeUnloaded failed in FrameworkElementMixins", ex);
+				Application.Current.RaiseRecoverableUnhandledException(ex);
+			}
+		}
+
+		internal void PerformOnUnloaded()
+		{
+			if (FeatureConfiguration.FrameworkElement.AndroidUseManagedLoadedUnloaded)
+			{
+				if (IsNativeLoaded)
+				{
+					OnUnloaded();
+
+					void ProcessView(View view)
+					{
+						if (view is FrameworkElement e)
+						{
+							// Mark this instance as managed loaded through managed children
+							// traversal, to avoid paying the cost of overridden method interop
+							e.IsManagedLoaded = false;
+
+							// Calling this method is acceptable as it is an abstract method that
+							// will never do interop with the java class. It is required to invoke
+							// Loaded/Unloaded actions.
+							e.OnNativeUnloaded();
+						}
+						else if (view is ViewGroup childViewGroup)
+						{
+							// If the child is a non-UnoView group,
+							// search its children for uno viewgroups.
+							TraverseChildren(childViewGroup);
+						}
+					}
+
+					void TraverseChildren(ViewGroup viewGroup)
+					{
+						if (viewGroup is IShadowChildrenProvider shadowList)
+						{
+							// Allocation-less enumeration
+							foreach (var child in shadowList.ChildrenShadow)
+							{
+								ProcessView(child);
+							}
+						}
+						else
+						{
+							foreach (var child in viewGroup.GetChildren())
+							{
+								ProcessView(child);
+							}
+						}
+					}
+
+					TraverseChildren(this);
+				}
+			}
+			else
+			{
+				OnUnloaded();
+			}
+		}
+
+		/// <summary>
+		/// Notifies that this view has been removed from its parent. This method is only 
+		/// called when the parent is an UnoViewGroup.
+		/// </summary>
+		protected override void OnRemovedFromParent()
+		{
+			base.OnRemovedFromParent();
+
+			((IDependencyObjectStoreProvider)this).Store.Parent = null;
+		}
+
 		partial void OnLoadedPartial()
 		{
 			// see StretchAffectsMeasure for details.
 			this.SetValue(
 				StretchAffectsMeasureProperty,
-				!(Parent is DependencyObject),
+				!(VisualParent is DependencyObject),
 				DependencyPropertyValuePrecedences.DefaultValue
 			);
 		}
@@ -46,7 +174,7 @@ namespace Windows.UI.Xaml
 		/// </summary>
 		/// <remarks>
 		/// The <see cref="DependencyPropertyValuePrecedences.DefaultValue"/> is updated at each <see cref="OnLoadedPartial"/> call, but may
-		/// be overriden by an external called as <see cref="DependencyPropertyValuePrecedences.Local"/>.
+		/// be overridden by an external called as <see cref="DependencyPropertyValuePrecedences.Local"/>.
 		/// </remarks>
 		public bool StretchAffectsMeasure
 		{
@@ -64,15 +192,7 @@ namespace Windows.UI.Xaml
 		{
 			var availableSize = ViewHelper.LogicalSizeFromSpec(widthMeasureSpec, heightMeasureSpec);
 
-			if (!double.IsNaN(Width) || !double.IsNaN(Height))
-			{
-				availableSize = new Size(
-					double.IsNaN(Width) ? availableSize.Width : Width,
-					double.IsNaN(Height) ? availableSize.Height : Height
-				);
-			}
-
-			var measuredSize = _layouter.Measure(availableSize);
+			var measuredSizelogical = _layouter.Measure(availableSize);
 
 			if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
 			{
@@ -80,14 +200,14 @@ namespace Windows.UI.Xaml
 					"[{0}/{1}] OnMeasure1({2}, {3}) (parent: {4}/{5})",
 					GetType(),
 					Name,
-					measuredSize.Width,
-					measuredSize.Height,
+					measuredSizelogical.Width,
+					measuredSizelogical.Height,
 					ViewHelper.MeasureSpecGetSize(widthMeasureSpec),
 					ViewHelper.MeasureSpecGetSize(heightMeasureSpec)
 				);
 			}
 
-			measuredSize = measuredSize.LogicalToPhysicalPixels();
+			var measuredSize = measuredSizelogical.LogicalToPhysicalPixels();
 
 			if (StretchAffectsMeasure)
 			{
@@ -114,9 +234,22 @@ namespace Windows.UI.Xaml
 
 		protected override void OnLayoutCore(bool changed, int left, int top, int right, int bottom)
 		{
-			var newSize = new Size(right - left, bottom - top).PhysicalToLogicalPixels();
-
 			base.OnLayoutCore(changed, left, top, right, bottom);
+
+			Size newSize;
+			if (ArrangeLogicalSize is Rect als)
+			{
+				// If the parent element is from managed code,
+				// we can recover the "Arrange" with double accuracy.
+				// We use that because the conversion to android's "int" is loosing too much precision.
+				newSize = new Size(als.Width, als.Height);
+			}
+			else
+			{
+				// Here the "arrange" is coming from a native element,
+				// so we convert those measurements to logical ones.
+				newSize = new Size(right - left, bottom - top).PhysicalToLogicalPixels();
+			}
 
 			if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
 			{
@@ -130,6 +263,9 @@ namespace Windows.UI.Xaml
 				);
 			}
 
+			var previousSize = _actualSize;
+			_actualSize = newSize;
+
 			if (
 				// If the layout has changed, but the final size has not, this is just a translation.
 				// So unless there was a layout requested, we can skip arranging the children.
@@ -141,21 +277,19 @@ namespace Windows.UI.Xaml
 			{
 				_lastLayoutSize = newSize;
 
+				var finalRect = new Rect(0, 0, newSize.Width, newSize.Height);
+
 				OnBeforeArrange();
 
-				_layouter.Arrange(new Rect(0, 0, newSize.Width, newSize.Height));
+				_layouter.Arrange(finalRect);
 
 				OnAfterArrange();
 			}
 
-			var previousSize = _actualSize;
-			_actualSize = newSize;
-			RenderSize = _actualSize;
-
 			if (previousSize != newSize)
 			{
-				SizeChanged?.Invoke(this, new SizeChangedEventArgs(previousSize, newSize));
-				RenderTransform?.OnViewSizeChanged(previousSize, newSize);
+				SizeChanged?.Invoke(this, new SizeChangedEventArgs(this, previousSize, newSize));
+				_renderTransform?.UpdateSize(newSize);
 			}
 		}
 

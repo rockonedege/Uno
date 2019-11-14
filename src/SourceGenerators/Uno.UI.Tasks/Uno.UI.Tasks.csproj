@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -9,14 +9,14 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Uno.UI.Tasks</RootNamespace>
-    <AssemblyName>Uno.UI.Tasks</AssemblyName>
+    <AssemblyName>Uno.UI.Tasks.v0</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>SAK</SccProjectName>
     <SccLocalPath>SAK</SccLocalPath>
     <SccAuxPath>SAK</SccAuxPath>
     <SccProvider>SAK</SccProvider>
-  </PropertyGroup>
+	</PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -53,13 +53,11 @@
     <Reference Include="Microsoft.Build.Utilities.v4.0" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0-preview.2" PrivateAssets="All" />
+	</ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Uno.Core">
-      <Version>1.22.0-dev.23</Version>
-    </PackageReference>
-    <PackageReference Include="Uno.SourceGenerationTasks">
-      <Version>1.22.0-dev.32</Version>
-    </PackageReference>
+    <PackageReference Include="Uno.Core"/>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\Uno.UWP\ApplicationModel\Resources\Core\AndroidResourceConverter.cs">
@@ -74,6 +72,9 @@
     <Compile Include="..\..\Uno.UWP\ApplicationModel\Resources\Core\ResourceQualifier.cs">
       <Link>Resources\ResourceQualifier.cs</Link>
     </Compile>
+    <Compile Include="..\..\Uno.UI\Services\AndroidResourceNameEncoder.cs">
+      <Link>Resources\AndroidResourceNameEncoder.cs</Link>
+    </Compile>
     <Compile Include="Assets\RetargetAssets.cs" />
     <Compile Include="Helpers\AnalyzerSuppressions.cs" />
     <Compile Include="Helpers\PathHelper.cs" />
@@ -83,6 +84,7 @@
     <Compile Include="ResourcesGenerator\AndroidResourcesWriter.cs" />
     <Compile Include="ResourcesGenerator\iOSResourcesWriter.cs" />
     <Compile Include="ResourcesGenerator\ResourcesGenerationTask.cs" />
+    <Compile Include="ResourcesGenerator\UnoPRIResourcesWriter.cs" />
     <Compile Include="ResourcesGenerator\WindowsResourcesReader.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -92,18 +94,30 @@
     </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>rem copy /Y "$(TargetDir)\*.*" "C:\s\git\HealthClinic.biz\packages\uno.ui.tasks.2.8.8826\build"
-rem copy /Y "$(TargetDir)\*.*" "C:\s\Uno.UI\Src\packages\Uno.UI.Tasks.2.8.8555-uno\build"
-rem copy /Y "$(TargetDir)\*.*" "C:\s\temp\Universal Windows app samples\XAML user and custom controls sample\C#\packages\Uno.UI.Tasks.2.8.8123-uno\build"
-</PostBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
+	<Target Name="_copyUnoTasksBuildTime" AfterTargets="Build">
+		<ItemGroup>
+			<_unoTasksFiles Include="$(OutputPath)\*.*" />
+		</ItemGroup>
+		<!--
+		Copy the files to an alternal location, using deterministic build.
+		Don't fail the build if the file is locked
+		-->
+		<Copy SkipUnchangedFiles="true" SourceFiles="@(_unoTasksFiles)" DestinationFolder="$(OutputPath)\..\$(Configuration)_Shadow" Retries="1" RetryDelayMilliseconds="500" ContinueOnError="true" />
+	</Target>
   <Import Project="..\..\Common.targets" />
+
+	<Target Name="_UnoToolkitOverrideNuget" AfterTargets="AfterBuild" DependsOnTargets="BuiltProjectOutputGroup" Condition="'$(UnoNugetOverrideVersion)'!=''">
+		<PropertyGroup>
+			<_OverrideTargetFramework>$(TargetFramework)</_OverrideTargetFramework>
+			<_TargetNugetFolder>$(USERPROFILE)\.nuget\packages\Uno.UI\$(UnoNugetOverrideVersion)\build\Uno.UI.Tasks</_TargetNugetFolder>
+		</PropertyGroup>
+		<ItemGroup>
+			<_OutputFiles Include="$(TargetDir)*.*" />
+		</ItemGroup>
+		<MakeDir Directories="$(_TargetNugetFolder)" />
+		<Message Importance="high" Text="OVERRIDING NUGET PACKAGE CACHE: $(_TargetNugetFolder)" />
+		<Copy SourceFiles="@(_OutputFiles)" DestinationFiles="@(_OutputFiles->'$(_TargetNugetFolder)\%(RecursiveDir)%(Filename)%(Extension)')" />
+		<Copy SourceFiles="@(_OutputFilesPDB)" DestinationFiles="@(_OutputFilesPDB->'$(_TargetNugetFolder)\%(RecursiveDir)%(Filename).pdb')" />
+	</Target>
 </Project>

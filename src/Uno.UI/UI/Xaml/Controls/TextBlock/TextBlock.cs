@@ -1,6 +1,6 @@
 ﻿#pragma warning disable CS0109
 
-#if !NET46
+#if !NET461
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -17,7 +17,9 @@ using Windows.UI.Xaml.Markup;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Text;
 using Windows.Foundation;
+using Windows.UI.Input;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Automation.Peers;
 
 #if XAMARIN_IOS
 using UIKit;
@@ -92,7 +94,7 @@ namespace Windows.UI.Xaml.Controls
 			UpdateHyperlinks();
 
 			OnInlinesChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnInlinesChangedPartial();
@@ -122,7 +124,7 @@ namespace Windows.UI.Xaml.Controls
 		private void OnFontStyleChanged()
 		{
 			OnFontStyleChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnFontStyleChangedPartial();
@@ -151,7 +153,7 @@ namespace Windows.UI.Xaml.Controls
 		private void OnTextWrappingChanged()
 		{
 			OnTextWrappingChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnTextWrappingChangedPartial();
@@ -181,7 +183,7 @@ namespace Windows.UI.Xaml.Controls
 		private void OnFontWeightChanged()
 		{
 			OnFontWeightChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnFontWeightChangedPartial();
@@ -224,7 +226,7 @@ namespace Windows.UI.Xaml.Controls
 			UpdateInlines(newValue);
 
 			OnTextChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnTextChangedPartial();
@@ -259,7 +261,7 @@ namespace Windows.UI.Xaml.Controls
 		private void OnFontFamilyChanged()
 		{
 			OnFontFamilyChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnFontFamilyChangedPartial();
@@ -289,7 +291,7 @@ namespace Windows.UI.Xaml.Controls
 		private void OnFontSizeChanged()
 		{
 			OnFontSizeChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnFontSizeChangedPartial();
@@ -318,7 +320,7 @@ namespace Windows.UI.Xaml.Controls
 		private void OnMaxLinesChanged()
 		{
 			OnMaxLinesChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnMaxLinesChangedPartial();
@@ -347,7 +349,7 @@ namespace Windows.UI.Xaml.Controls
 		private void OnTextTrimmingChanged()
 		{
 			OnTextTrimmingChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnTextTrimmingChangedPartial();
@@ -389,7 +391,7 @@ namespace Windows.UI.Xaml.Controls
 		private void OnForegroundChanged()
 		{
 			OnForegroundChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnForegroundChangedPartial();
@@ -418,7 +420,7 @@ namespace Windows.UI.Xaml.Controls
 		private void OnTextAlignmentChanged()
 		{
 			OnTextAlignmentChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnTextAlignmentChangedPartial();
@@ -441,7 +443,7 @@ namespace Windows.UI.Xaml.Controls
 		private void OnLineHeightChanged()
 		{
 			OnLineHeightChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnLineHeightChangedPartial();
@@ -464,7 +466,7 @@ namespace Windows.UI.Xaml.Controls
 		private void OnLineStackingStrategyChanged()
 		{
 			OnLineStackingStrategyChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnLineStackingStrategyChangedPartial();
@@ -490,7 +492,7 @@ namespace Windows.UI.Xaml.Controls
 		private void OnPaddingChanged()
 		{
 			OnPaddingChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnPaddingChangedPartial();
@@ -520,12 +522,42 @@ namespace Windows.UI.Xaml.Controls
 		private void OnCharacterSpacingChanged()
 		{
 			OnCharacterSpacingChangedPartial();
-			this.InvalidateMeasure();
+			InvalidateTextBlock();
 		}
 
 		partial void OnCharacterSpacingChangedPartial();
 
-#endregion
+		#endregion
+
+		#region TextDecorations
+
+		public TextDecorations TextDecorations
+		{
+			get { return (TextDecorations)this.GetValue(TextDecorationsProperty); }
+			set { this.SetValue(TextDecorationsProperty, value); }
+		}
+
+		public static DependencyProperty TextDecorationsProperty =
+			DependencyProperty.Register(
+				"TextDecorations",
+				typeof(int),
+				typeof(TextBlock),
+				new FrameworkPropertyMetadata(
+					defaultValue: TextDecorations.None,
+					options: FrameworkPropertyMetadataOptions.Inherits,
+					propertyChangedCallback: (s, e) => ((TextBlock)s).OnTextDecorationsChanged()
+				)
+			);
+
+		private void OnTextDecorationsChanged()
+		{
+			OnTextDecorationsChangedPartial();
+			InvalidateTextBlock();
+		}
+
+		partial void OnTextDecorationsChangedPartial();
+
+		#endregion
 
 		/// <summary>
 		/// Gets whether the TextBlock is using the fast path in which Inlines
@@ -565,7 +597,7 @@ namespace Windows.UI.Xaml.Controls
 				return;
 			}
 
-			if (this.ReadLocalValue(TextProperty) == DependencyProperty.UnsetValue)
+			if (this.ReadLocalValue(TextProperty) is UnsetValue)
 			{
 				Inlines.Clear();
 				ClearTextPartial();
@@ -581,18 +613,144 @@ namespace Windows.UI.Xaml.Controls
 
 		partial void ClearTextPartial();
 
-#region Hyperlinks
+		#region Hyperlinks
+#if __WASM__
+		// As on wasm the TextElements are UIElement, when the hosting TextBlock will capture the pointer on Pressed,
+		// the original source of the Release event will be this TextBlock (and we won't receive 'pointerup' nor 'click'
+		// events on the Hyperlink itself - On FF we will still get the 'click').
+		// To workaround that, we subscribe to the events directly on the Hyperlink, and make the Capture on this hyperlink.
 
-		private readonly List<(int start, int end, Hyperlink hyperlink)> _hyperlinks = new List<(int start, int end, Hyperlink hyperlink)>();
-		private Hyperlink _pressedHyperlink;
+		private void UpdateHyperlinks() { } // Events are subscribed in Hyperlink's ctor.
 
-		private void UpdateHyperlinks()
+		internal static readonly PointerEventHandler OnPointerPressed = (object sender, PointerRoutedEventArgs e) =>
 		{
-			if (UseInlinesFastPath)
+			if (sender is Hyperlink hyperlink
+				&& e.GetCurrentPoint(hyperlink).Properties.IsLeftButtonPressed
+				&& hyperlink.CapturePointer(e.Pointer))
+			{
+				hyperlink.SetPointerPressed(e.Pointer);
+				e.Handled = true;
+				// hyperlink.CompleteGesture(); No needs to complete the gesture as the TextBlock won't even receive the Pressed.
+			}
+		};
+
+		internal static readonly PointerEventHandler OnPointerReleased = (object sender, PointerRoutedEventArgs e) =>
+		{
+			if (sender is Hyperlink hyperlink
+				&& hyperlink.IsCaptured(e.Pointer))
+			{
+				hyperlink.ReleasePointerPressed(e.Pointer);
+			}
+
+			// e.Handled = true; ==> On UWP the pointer released is **NOT** handled
+		};
+
+		internal static readonly PointerEventHandler OnPointerCaptureLost = (object sender, PointerRoutedEventArgs e) =>
+		{
+			if (sender is Hyperlink hyperlink)
+			{
+				var handled = hyperlink.AbortPointerPressed(e.Pointer);
+
+				e.Handled = handled;
+			}
+		};
+#else
+		private static readonly PointerEventHandler OnPointerPressed = (object sender, PointerRoutedEventArgs e) =>
+		{
+			if (!(sender is TextBlock that) || !that.HasHyperlink)
 			{
 				return;
 			}
 
+			var point = e.GetCurrentPoint(that);
+			if (!point.Properties.IsLeftButtonPressed)
+			{
+				return;
+			}
+
+			var hyperlink = that.FindHyperlinkAt(point.Position);
+			if (hyperlink is null)
+			{
+				return;
+			}
+
+			if (!that.CapturePointer(e.Pointer))
+			{
+				return;
+			}
+
+			hyperlink.SetPointerPressed(e.Pointer);
+			e.Handled = true;
+			that.CompleteGesture(); // Make sure to mute Tapped
+		};
+
+		private static readonly PointerEventHandler OnPointerReleased = (object sender, PointerRoutedEventArgs e) =>
+		{
+			if (sender is TextBlock that
+				&& that.IsCaptured(e.Pointer))
+			{
+				// On UWP we don't get any CaptureLost, so make sure to manually release the capture silently
+				that.ReleasePointerCapture(e.Pointer, muteEvent: true);
+
+				// KNOWN ISSUE:
+				// On UWP the 'click' event is raised **after** the PointerReleased ... but deferring the event on the Dispatcher
+				// would move it after the PointerExited. So prefer to raise it before (actually like a Button).
+				if (!(that.FindHyperlinkAt(e.GetCurrentPoint(that).Position)?.ReleasePointerPressed(e.Pointer) ?? false))
+				{
+					// We failed to find the hyperlink that made this capture but we ** silently ** removed the capture,
+					// so we won't receive the CaptureLost. So make sure to AbortPointerPressed on the Hyperlink which made the capture.
+					that.AbortHyperlinkCaptures(e.Pointer);
+				}
+			}
+
+			// e.Handled = true; ==> On UWP the pointer released is **NOT** handled
+		};
+
+		private static readonly PointerEventHandler OnPointerCaptureLost = (object sender, PointerRoutedEventArgs e) =>
+		{
+			if (sender is TextBlock that)
+			{
+				e.Handled = that.AbortHyperlinkCaptures(e.Pointer);
+			}
+		};
+
+		private bool AbortHyperlinkCaptures(Pointer pointer)
+		{
+			var aborted = false;
+			foreach (var hyperlink in _hyperlinks.ToList()) // .ToList() : for a strange reason on WASM the collection gets modified
+			{
+				aborted |= hyperlink.hyperlink.AbortPointerPressed(pointer);
+			}
+
+			return aborted;
+		}
+
+		private readonly List<(int start, int end, Hyperlink hyperlink)> _hyperlinks = new List<(int start, int end, Hyperlink hyperlink)>();
+
+		private void UpdateHyperlinks()
+		{
+			if (UseInlinesFastPath) // i.e. no Inlines
+			{
+				if (HasHyperlink)
+				{
+					RemoveHandler(PointerPressedEvent, OnPointerPressed);
+					RemoveHandler(PointerReleasedEvent, OnPointerReleased);
+					RemoveHandler(PointerCaptureLostEvent, OnPointerCaptureLost);
+
+					// Make sure to clear the pressed state of removed hyperlinks
+					foreach (var hyperlink in _hyperlinks)
+					{
+						hyperlink.hyperlink.AbortAllPointerPressed();
+					}
+
+					_hyperlinks.Clear();
+				}
+
+				return;
+			}
+
+			var previousHasHyperlinks = HasHyperlink;
+			var previousHyperLinks = _hyperlinks.Select(h => h.hyperlink).ToList();
 			_hyperlinks.Clear();
 
 			var start = 0;
@@ -601,6 +759,7 @@ namespace Windows.UI.Xaml.Controls
 				switch (inline)
 				{
 					case Hyperlink hyperlink:
+						previousHyperLinks.Remove(hyperlink);
 						_hyperlinks.Add((start, start + hyperlink.GetText().Length, hyperlink));
 						break;
 					case Span span:
@@ -610,60 +769,60 @@ namespace Windows.UI.Xaml.Controls
 						break;
 				}
 			}
+
+			// Make sure to clear the pressed state of removed hyperlinks
+			foreach (var removed in previousHyperLinks)
+			{
+				removed.AbortAllPointerPressed();
+			}
+
+			// Update events subscriptions if needed
+			// Note: we subscribe to those events only if needed as they increase marshaling on Android and WASM
+			if (HasHyperlink && !previousHasHyperlinks)
+			{
+				InsertHandler(PointerPressedEvent, OnPointerPressed);
+				InsertHandler(PointerReleasedEvent, OnPointerReleased);
+				InsertHandler(PointerCaptureLostEvent, OnPointerCaptureLost);
+			}
+			else if (!HasHyperlink && previousHasHyperlinks)
+			{
+				RemoveHandler(PointerPressedEvent, OnPointerPressed);
+				RemoveHandler(PointerReleasedEvent, OnPointerReleased);
+				RemoveHandler(PointerCaptureLostEvent, OnPointerCaptureLost);
+			}
 		}
 
 		private bool HasHyperlink => _hyperlinks.Any();
 
-		private Hyperlink GetHyperlinkAtPoint(Point point)
+		private Hyperlink FindHyperlinkAt(Point point)
 		{
-			if (!HasHyperlink)
-			{
-				return null;
-			}
-
 			var characterIndex = GetCharacterIndexAtPoint(point);
-			return GetHyperlinkAtCharacterIndex(characterIndex);
+			var hyperlink = _hyperlinks
+				.FirstOrDefault(h => h.start <= characterIndex && h.end > characterIndex)
+				.hyperlink;
+
+			return hyperlink;
 		}
-		
-		private Hyperlink GetHyperlinkAtCharacterIndex(int characterIndex)
+#endif
+		#endregion
+
+		private void InvalidateTextBlock()
 		{
-			return _hyperlinks.FirstOrDefault(h => h.start <= characterIndex && h.end > characterIndex).hyperlink;
+			InvalidateTextBlockPartial();
+			this.InvalidateMeasure();
 		}
 
-		protected virtual void OnPointerPressed(PointerRoutedEventArgs e)
+		partial void InvalidateTextBlockPartial();
+
+		protected override AutomationPeer OnCreateAutomationPeer()
 		{
-			_pressedHyperlink = GetHyperlinkAtPoint(e.GetCurrentPoint());
-			_pressedHyperlink?.OnPointerPressed(e);
+			return new TextBlockAutomationPeer(this);
 		}
 
-		protected virtual void OnPointerReleased(PointerRoutedEventArgs e)
+		public override string GetAccessibilityInnerText()
 		{
-			if (_pressedHyperlink != null)
-			{
-				var releasedHyperlink = GetHyperlinkAtPoint(e.GetCurrentPoint());
-				if (releasedHyperlink == _pressedHyperlink)
-				{
-					_pressedHyperlink.OnPointerReleased(e);
-				}
-				else
-				{
-					_pressedHyperlink.OnPointerCanceled(e);
-				}
-
-				_pressedHyperlink = null;
-			}
+			return Text;
 		}
-
-		protected virtual void OnPointerCanceled(PointerRoutedEventArgs e)
-		{
-			if (_pressedHyperlink != null)
-			{
-				_pressedHyperlink.OnPointerCanceled(e);
-				_pressedHyperlink = null;
-			}
-		}
-
-#endregion
 	}
 }
 #endif

@@ -2,45 +2,23 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Media.SpeechRecognition
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum SpeechRecognitionResultStatus 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Success,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		TopicLanguageNotSupported,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		GrammarLanguageMismatch,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		GrammarCompilationFailure,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		AudioQualityFailure,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		UserCanceled,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Unknown,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		TimeoutExceeded,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		PauseLimitExceeded,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		NetworkFailure,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		MicrophoneUnavailable,
-		#endif
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus.Success
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus.TopicLanguageNotSupported
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus.GrammarLanguageMismatch
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus.GrammarCompilationFailure
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus.AudioQualityFailure
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus.UserCanceled
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus.Unknown
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus.TimeoutExceeded
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus.PauseLimitExceeded
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus.NetworkFailure
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionResultStatus.MicrophoneUnavailable
 	}
 	#endif
 }

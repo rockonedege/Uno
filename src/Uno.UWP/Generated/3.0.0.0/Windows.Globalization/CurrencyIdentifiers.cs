@@ -2,562 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Globalization
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class CurrencyIdentifiers 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string IDR
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.IDR is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string AED
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.AED is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string AFN
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.AFN is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string ALL
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.ALL is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string AMD
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.AMD is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string ANG
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.ANG is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string AOA
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.AOA is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string ARS
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.ARS is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string AUD
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.AUD is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string AWG
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.AWG is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string AZN
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.AZN is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BAM
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BAM is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BBD
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BBD is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BDT
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BDT is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BGN
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BGN is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BHD
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BHD is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BIF
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BIF is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BMD
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BMD is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BND
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BND is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BOB
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BOB is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BRL
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BRL is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BSD
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BSD is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BTN
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BTN is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BWP
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BWP is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BYR
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BYR is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string BZD
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BZD is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string CAD
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CAD is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string CDF
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CDF is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string CHF
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CHF is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string CLP
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CLP is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string CNY
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CNY is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string COP
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.COP is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string CRC
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CRC is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string CUP
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CUP is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string CVE
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CVE is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string CZK
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CZK is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string DJF
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.DJF is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string DKK
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.DKK is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string DOP
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.DOP is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string DZD
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.DZD is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string EGP
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.EGP is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string ERN
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.ERN is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string ETB
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.ETB is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string EUR
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.EUR is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string FJD
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.FJD is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string FKP
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.FKP is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string GBP
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GBP is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string GEL
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GEL is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string GHS
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GHS is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string GIP
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GIP is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string GMD
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GMD is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string GNF
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GNF is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string GTQ
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GTQ is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string GYD
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GYD is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string HKD
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.HKD is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string HNL
 		{
@@ -567,587 +17,547 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string HRK
+		public static string AED
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.HRK is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.AED is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string HTG
+		public static string AFN
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.HTG is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.AFN is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string HUF
+		public static string ALL
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.HUF is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.ALL is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string SAR
+		public static string AMD
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.SAR is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.AMD is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string ILS
+		public static string ANG
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.ILS is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.ANG is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string INR
+		public static string AOA
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.INR is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.AOA is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string IQD
+		public static string ARS
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.IQD is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.ARS is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string IRR
+		public static string AUD
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.IRR is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.AUD is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string ISK
+		public static string AWG
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.ISK is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.AWG is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string JMD
+		public static string AZN
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.JMD is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.AZN is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string JOD
+		public static string BAM
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.JOD is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BAM is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string JPY
+		public static string BBD
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.JPY is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BBD is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string KES
+		public static string BDT
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KES is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BDT is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string KGS
+		public static string BGN
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KGS is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BGN is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string KHR
+		public static string BHD
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KHR is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BHD is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string KMF
+		public static string BIF
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KMF is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BIF is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string KPW
+		public static string BMD
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KPW is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BMD is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string KRW
+		public static string BND
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KRW is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BND is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string KWD
+		public static string BOB
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KWD is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BOB is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string KYD
+		public static string BRL
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KYD is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BRL is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string KZT
+		public static string BSD
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KZT is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BSD is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string LAK
+		public static string BTN
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LAK is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BTN is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string LBP
+		public static string BWP
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LBP is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BWP is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string LKR
+		public static string BYR
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LKR is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BYR is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string LRD
+		public static string BZD
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LRD is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.BZD is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string LSL
+		public static string CAD
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LSL is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CAD is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string LTL
+		public static string CDF
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LTL is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CDF is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string LVL
+		public static string CHF
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LVL is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CHF is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string LYD
+		public static string CLP
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LYD is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CLP is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string MAD
+		public static string CNY
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MAD is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CNY is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string MDL
+		public static string COP
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MDL is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.COP is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string MGA
+		public static string CRC
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MGA is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CRC is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string MKD
+		public static string CUP
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MKD is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CUP is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string MMK
+		public static string CVE
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MMK is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CVE is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string MNT
+		public static string CZK
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MNT is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.CZK is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string MOP
+		public static string DJF
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MOP is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.DJF is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string MRO
+		public static string DKK
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MRO is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.DKK is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string MUR
+		public static string DOP
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MUR is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.DOP is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string MVR
+		public static string DZD
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MVR is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.DZD is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string MWK
+		public static string EGP
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MWK is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.EGP is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string MXN
+		public static string ERN
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MXN is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.ERN is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string MYR
+		public static string ETB
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MYR is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.ETB is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string MZN
+		public static string EUR
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MZN is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.EUR is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string NAD
+		public static string FJD
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.NAD is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.FJD is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string NGN
+		public static string FKP
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.NGN is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.FKP is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string NIO
+		public static string GBP
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.NIO is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GBP is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string NOK
+		public static string GEL
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.NOK is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GEL is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string NPR
+		public static string GHS
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.NPR is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GHS is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string NZD
+		public static string GIP
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.NZD is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GIP is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string OMR
+		public static string GMD
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.OMR is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GMD is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string PAB
+		public static string GNF
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.PAB is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GNF is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string PEN
+		public static string GTQ
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.PEN is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GTQ is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string PGK
+		public static string GYD
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.PGK is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.GYD is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static string PHP
+		public static string HKD
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.PHP is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.HKD is not implemented in Uno.");
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string PKR
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.PKR is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string PLN
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.PLN is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string PYG
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.PYG is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static string QAR
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.QAR is not implemented in Uno.");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string RON
 		{
@@ -1157,7 +567,587 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string HRK
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.HRK is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string HTG
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.HTG is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string HUF
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.HUF is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string IDR
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.IDR is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string ILS
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.ILS is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string INR
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.INR is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string IQD
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.IQD is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string IRR
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.IRR is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string ISK
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.ISK is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string JMD
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.JMD is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string JOD
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.JOD is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string JPY
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.JPY is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string KES
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KES is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string KGS
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KGS is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string KHR
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KHR is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string KMF
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KMF is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string KPW
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KPW is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string KRW
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KRW is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string KWD
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KWD is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string KYD
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KYD is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string KZT
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.KZT is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string LAK
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LAK is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string LBP
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LBP is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string LKR
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LKR is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string LRD
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LRD is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string LSL
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LSL is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string LTL
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LTL is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string LVL
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LVL is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string LYD
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.LYD is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MAD
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MAD is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MDL
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MDL is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MGA
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MGA is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MKD
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MKD is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MMK
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MMK is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MNT
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MNT is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MOP
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MOP is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MRO
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MRO is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MUR
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MUR is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MVR
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MVR is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MWK
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MWK is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MXN
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MXN is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MYR
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MYR is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MZN
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MZN is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string NAD
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.NAD is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string NGN
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.NGN is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string NIO
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.NIO is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string NOK
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.NOK is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string NPR
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.NPR is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string NZD
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.NZD is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string OMR
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.OMR is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string PAB
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.PAB is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string PEN
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.PEN is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string PGK
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.PGK is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string PHP
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.PHP is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string PKR
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.PKR is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string PLN
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.PLN is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string PYG
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.PYG is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string QAR
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.QAR is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string RSD
 		{
@@ -1167,7 +1157,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string RUB
 		{
@@ -1177,7 +1167,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string RWF
 		{
@@ -1187,7 +1177,17 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string SAR
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.SAR is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string SBD
 		{
@@ -1197,7 +1197,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string SCR
 		{
@@ -1207,7 +1207,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string SDG
 		{
@@ -1217,7 +1217,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string SEK
 		{
@@ -1227,7 +1227,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string SGD
 		{
@@ -1237,7 +1237,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string SHP
 		{
@@ -1247,7 +1247,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string SLL
 		{
@@ -1257,7 +1257,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string SOS
 		{
@@ -1267,7 +1267,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string SRD
 		{
@@ -1277,7 +1277,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string STD
 		{
@@ -1287,7 +1287,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string SYP
 		{
@@ -1297,7 +1297,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string SZL
 		{
@@ -1307,7 +1307,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string THB
 		{
@@ -1317,7 +1317,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string TJS
 		{
@@ -1327,7 +1327,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string TMT
 		{
@@ -1337,7 +1337,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string TND
 		{
@@ -1347,7 +1347,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string TOP
 		{
@@ -1357,7 +1357,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string TRY
 		{
@@ -1367,7 +1367,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string TTD
 		{
@@ -1377,7 +1377,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string TWD
 		{
@@ -1387,7 +1387,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string TZS
 		{
@@ -1397,7 +1397,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string UAH
 		{
@@ -1407,7 +1407,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string UGX
 		{
@@ -1417,7 +1417,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string USD
 		{
@@ -1427,7 +1427,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string UYU
 		{
@@ -1437,7 +1437,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string UZS
 		{
@@ -1447,7 +1447,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string VEF
 		{
@@ -1457,7 +1457,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string VND
 		{
@@ -1467,7 +1467,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string VUV
 		{
@@ -1477,7 +1477,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string WST
 		{
@@ -1487,7 +1487,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string XAF
 		{
@@ -1497,7 +1497,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string XCD
 		{
@@ -1507,7 +1507,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string XOF
 		{
@@ -1517,7 +1517,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string XPF
 		{
@@ -1527,7 +1527,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string XXX
 		{
@@ -1537,7 +1537,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string YER
 		{
@@ -1547,7 +1547,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string ZAR
 		{
@@ -1557,7 +1557,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string ZMW
 		{
@@ -1567,7 +1567,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string ZWL
 		{
@@ -1577,7 +1577,7 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static string BYN
 		{
@@ -1587,6 +1587,50 @@ namespace Windows.Globalization
 			}
 		}
 		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string SSP
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.SSP is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string STN
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.STN is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string VES
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.VES is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static string MRU
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member string CurrencyIdentifiers.MRU is not implemented in Uno.");
+			}
+		}
+		#endif
+		// Forced skipping of method Windows.Globalization.CurrencyIdentifiers.MRU.get
+		// Forced skipping of method Windows.Globalization.CurrencyIdentifiers.SSP.get
+		// Forced skipping of method Windows.Globalization.CurrencyIdentifiers.STN.get
+		// Forced skipping of method Windows.Globalization.CurrencyIdentifiers.VES.get
 		// Forced skipping of method Windows.Globalization.CurrencyIdentifiers.BYN.get
 		// Forced skipping of method Windows.Globalization.CurrencyIdentifiers.AED.get
 		// Forced skipping of method Windows.Globalization.CurrencyIdentifiers.AFN.get

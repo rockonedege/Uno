@@ -22,6 +22,8 @@ using Android.Runtime;
 using System.Threading;
 using Uno.UI;
 using Windows.UI.Core;
+using Windows.UI.Xaml.Media.Imaging;
+using Windows.Storage.Streams;
 
 namespace Windows.UI.Xaml.Controls
 {
@@ -57,6 +59,12 @@ namespace Windows.UI.Xaml.Controls
 				: 1; // the size of the image source (usually a drawable/resource) is already physical pixels, no need to scale it
 
 			UpdateMatrix(_lastLayoutSize);
+
+			if (Source is BitmapSource bitmapSource)
+			{
+				bitmapSource.PixelWidth = (int)_sourceImageSize.Width;
+				bitmapSource.PixelHeight = (int)_sourceImageSize.Height;
+			}
 		}
 
 		private Windows.Foundation.Size _lastLayoutSize;
@@ -96,6 +104,14 @@ namespace Windows.UI.Xaml.Controls
 			}
 
 			var measuredSize = _layouter.Measure(availableSize);
+
+			if (
+				!double.IsInfinity(availableSize.Width)
+				&& !double.IsInfinity(availableSize.Height)
+				)
+			{
+				measuredSize = this.AdjustSize(availableSize, measuredSize);
+			}
 
 			measuredSize = measuredSize.LogicalToPhysicalPixels();
 
@@ -289,8 +305,12 @@ namespace Windows.UI.Xaml.Controls
 			{
 				try
 				{
+					if (_openedImage is WriteableBitmap wb)
+					{
+						SetFromWriteableBitmap(wb);
+					}
 					// We want to reset the image when there is no source provided.
-					if (!_openedImage?.HasSource() ?? true)
+					else if (!_openedImage?.HasSource() ?? true)
 					{
 						ResetSource();
 					}
@@ -444,6 +464,33 @@ namespace Windows.UI.Xaml.Controls
 				var unused = SetSourceBitmapAsync(CancellationToken.None, newImageSource);
 			}
 		}
+
+		private void SetFromWriteableBitmap(WriteableBitmap bitmap)
+		{
+			var drawableBuffer = new int[bitmap.PixelWidth * bitmap.PixelHeight];
+			var sourceBuffer = (bitmap.PixelBuffer as InMemoryBuffer).Data;
+
+			// WriteableBitmap PixelBuffer is using BGRA format, Android's bitmap input buffer
+			// requires Argb8888, so we swap bytes to conform to this format.
+
+			for (int i = 0; i < drawableBuffer.Length; i++)
+			{
+				var a = sourceBuffer[i * 4 + 3];
+				var r = sourceBuffer[i * 4 + 2];
+				var g = sourceBuffer[i * 4 + 1];
+				var b = sourceBuffer[i * 4 + 0];
+
+				drawableBuffer[i] = (a << 24) | (r << 16) | (g << 8) | b;
+			}
+
+			var bm = Bitmap.CreateBitmap(drawableBuffer, bitmap.PixelWidth, bitmap.PixelHeight, Bitmap.Config.Argb8888);
+			var drawable = new BitmapDrawable(Context.Resources, bm);
+
+			SetImageDrawable(drawable);
+			UpdateSourceImageSize(new Windows.Foundation.Size(bm.Width, bm.Height), isLogicalPixels: true);
+			OnImageOpened(bitmap);
+		}
+
 		private async Task SetSourceBitmapAsync(CancellationToken ct, ImageSource newImageSource)
 		{
 			SetImageBitmap(newImageSource.ImageData);
@@ -497,8 +544,8 @@ namespace Windows.UI.Xaml.Controls
 			var sourceRect = new Windows.Foundation.Rect(Windows.Foundation.Point.Zero, SourceImageSize);
 			var imageRect = new Windows.Foundation.Rect(Windows.Foundation.Point.Zero, frameSize);
 
-			MeasureSource(imageRect, ref sourceRect);
-			ArrangeSource(imageRect, ref sourceRect);
+			this.MeasureSource(imageRect, ref sourceRect);
+			this.ArrangeSource(imageRect, ref sourceRect);
 
 			var scaleX = (sourceRect.Width / SourceImageSize.Width) * _sourceImageScale;
 			var scaleY = (sourceRect.Height / SourceImageSize.Height) * _sourceImageScale;
@@ -509,67 +556,6 @@ namespace Windows.UI.Xaml.Controls
 			matrix.PostScale((float)scaleX, (float)scaleY);
 			matrix.PostTranslate(translateX, translateY);
 			ImageMatrix = matrix;
-		}
-
-		private void MeasureSource(Windows.Foundation.Rect parent, ref Windows.Foundation.Rect child)
-		{
-			switch (Stretch)
-			{
-				case Stretch.UniformToFill:
-					var uniformToFillScale = (child.Width * parent.Height > child.Height * parent.Width)
-						? parent.Height / child.Height // child is flatter than parent
-						: parent.Width / child.Width; // child is taller than parent
-					child.Width *= uniformToFillScale;
-					child.Height *= uniformToFillScale;
-					break;
-
-				case Stretch.Uniform:
-					var uniformScale = (child.Width * parent.Height > child.Height * parent.Width)
-						? parent.Width / child.Width // child is taller than parent
-						: parent.Height / child.Height; // child is flatter than parent
-					child.Width *= uniformScale;
-					child.Height *= uniformScale;
-					break;
-
-				case Stretch.Fill:
-					child.Width = parent.Width;
-					child.Height = parent.Height;
-					break;
-
-				case Stretch.None:
-					break;
-			}
-		}
-
-		private void ArrangeSource(Windows.Foundation.Rect parent, ref Windows.Foundation.Rect child)
-		{
-			switch (HorizontalAlignment)
-			{
-				case HorizontalAlignment.Left:
-					child.X = 0;
-					break;
-				case HorizontalAlignment.Right:
-					child.X = parent.Width - child.Width;
-					break;
-				case HorizontalAlignment.Center:
-				case HorizontalAlignment.Stretch:
-					child.X = (parent.Width * 0.5f) - (child.Width * 0.5f);
-					break;
-			}
-
-			switch (VerticalAlignment)
-			{
-				case VerticalAlignment.Top:
-					child.Y = 0;
-					break;
-				case VerticalAlignment.Bottom:
-					child.Y = parent.Height - child.Height;
-					break;
-				case VerticalAlignment.Center:
-				case VerticalAlignment.Stretch:
-					child.Y = (parent.Height * 0.5f) - (child.Height * 0.5f);
-					break;
-			}
 		}
 
 		partial void HitCheckOverridePartial(ref bool hitCheck)

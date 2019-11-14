@@ -18,39 +18,23 @@ using System.ComponentModel;
 using Uno.UI;
 using Windows.UI.Xaml;
 using System.Threading;
+using Windows.UI.Xaml.Controls;
+using FluentAssertions;
+using Microsoft.Extensions.Logging;
 
 namespace Uno.UI.Tests.BinderTests
 {
 	[TestClass]
 	public partial class Given_DependencyProperty
 	{
-#if !IS_UNO
-		private Uno.Patterns.IoC.Container _container;
-
-		[TestInitialize]
-		public void Init()
+		[AssemblyInitialize]
+		public static void Init(TestContext ctx)
 		{
-			_container = new Uno.Patterns.IoC.Container();
-			_container.Register<IResourceRegistry>(new Mock<IResourceRegistry>().Object);
-
-			ServiceLocator.SetLocatorProvider(() => _container);
-
-			LogManager
-				.Repository
-				.Loggers
-				.OfType<DebuggerLogger>()
-				.FirstOrDefault()
-				.SelectOrDefault(l =>
-				{
-					l.LogLevel = LogLevel.Debug;
-					l.RequiresAttachedDebugger = false;
-
-					return l;
-				});
-
-			LogManager.RefreshLogLevel();
+			Uno.Extensions.LogExtensionPoint
+				.AmbientLoggerFactory
+				.AddConsole(LogLevel.Debug)
+				.AddDebug(LogLevel.Debug);
 		}
-#endif
 
 		[TestMethod]
 		public void When_SetValue_and_NoMetadata()
@@ -962,7 +946,7 @@ namespace Uno.UI.Tests.BinderTests
 		}
 
 		#endregion
-		
+
 		[TestMethod]
 		[ExpectedException(typeof(ArgumentException))]
 		public void When_OverrideMetadata_With_Metadata_Is_Not_Derived_From_BaseMetadata_Then_Fail()
@@ -1028,7 +1012,7 @@ namespace Uno.UI.Tests.BinderTests
 				typeof(MockDependencyObject),
 				null
 			);
-			
+
 			SUT.SetValue(testProperty, "test", DependencyPropertyValuePrecedences.Coercion);
 		}
 
@@ -1078,6 +1062,17 @@ namespace Uno.UI.Tests.BinderTests
 			Assert.AreEqual(4, SUT1.CoerceValueCallbackCount);
 			Assert.AreEqual(4, SUT2.CoerceValueCallbackCount);
 			Assert.AreEqual(4, SUT3.CoerceValueCallbackCount);
+		}
+
+		[TestMethod]
+		public void When_SetValue_Inheritance_And_CoerceValue_Then_GetValue_Local_Is_UnsetValue()
+		{
+			var SUT = new MyDependencyObject1();
+
+			SUT.SetValue(MyDependencyObject1.MyPropertyProperty, "value", DependencyPropertyValuePrecedences.Inheritance);
+			SUT.CoerceValue(MyDependencyObject1.MyPropertyProperty);
+
+			Assert.AreEqual(DependencyProperty.UnsetValue, SUT.GetValue(MyDependencyObject1.MyPropertyProperty, DependencyPropertyValuePrecedences.Local));
 		}
 
 		[TestMethod]
@@ -1313,6 +1308,105 @@ namespace Uno.UI.Tests.BinderTests
 
 			Assert.IsNotNull(dp1p);
 		}
+
+		[TestMethod]
+		public void When_SetValue_With_Nested_Callbacks()
+		{
+			var SUT = new MockDependencyObject();
+
+			DependencyProperty property1 = null;
+			DependencyProperty property2 = null;
+			DependencyProperty property3 = null;
+
+			PropertyChangedCallback OnProperty1Changed = (s, e) =>
+			{
+				SUT.SetValue(property3, 0); // we expect value 0 to be overwritten by property2's callback
+				SUT.SetValue(property2, 2);
+			};
+
+			PropertyChangedCallback OnProperty2Changed = (s, e) =>
+			{
+				SUT.SetValue(property3, 3);
+			};
+
+			PropertyChangedCallback OnProperty3Changed = (s, e) =>
+			{
+			};
+
+			property1 = DependencyProperty.Register("Property1", typeof(int), typeof(MockDependencyObject), new PropertyMetadata(0, OnProperty1Changed));
+			property2 = DependencyProperty.Register("Property2", typeof(int), typeof(MockDependencyObject), new PropertyMetadata(0, OnProperty2Changed));
+			property3 = DependencyProperty.Register("Property3", typeof(int), typeof(MockDependencyObject), new PropertyMetadata(0, OnProperty3Changed));
+
+			SUT.SetValue(property1, 1);
+
+			Assert.AreEqual(1, SUT.GetValue(property1));
+			Assert.AreEqual(2, SUT.GetValue(property2));
+			Assert.AreEqual(3, SUT.GetValue(property3));
+		}
+
+		[TestMethod]
+		public void When_NullablePropertyBinding()
+		{
+			var SUT = new Windows.UI.Xaml.Controls.Border();
+			SUT.Tag = new NullablePropertyOwner() { MyNullable = 42 };
+
+			var o2 = new Windows.UI.Xaml.Controls.Border();
+			o2.SetBinding(
+				Windows.UI.Xaml.Controls.Border.TagProperty,
+				new Binding() {
+					Path = "Tag.MyNullable.Value",
+					CompiledSource = SUT
+				}
+			);
+
+			o2.ApplyCompiledBindings();
+
+			Assert.AreEqual(42, o2.Tag);
+		}
+
+		[TestMethod]
+		public void When_DataContext_Changing()
+		{
+			var SUT = new NullablePropertyOwner();
+			var datacontext1 = new NullablePropertyOwner {MyNullable = 42};
+			var datacontext2 = new NullablePropertyOwner {MyNullable = 42};
+			var datacontext3 = new NullablePropertyOwner {MyNullable = 84};
+
+			var changes = new List<DependencyPropertyChangedEventArgs>();
+
+			SUT.MyNullableChanged += (snd, evt) => changes.Add(evt);
+
+			SUT.SetBinding(
+				NullablePropertyOwner.MyNullableProperty,
+				new Binding() {
+					Path = "MyNullable"
+				}
+			);
+
+			SUT.DataContext = datacontext1;
+			changes.Count.Should().Be(1);
+			changes.Last().NewValue.Should().Be(42);
+
+			SUT.DataContext = datacontext2;
+			changes.Count.Should().Be(1); // Here we ensure we're not receiving a default value, still no changes
+
+			SUT.DataContext = datacontext3;
+			changes.Count.Should().Be(2);
+			changes.Last().NewValue.Should().Be(84);
+
+			SUT.DataContext = null;
+			changes.Count.Should().Be(3);
+			changes.Last().NewValue.Should().Be(null);
+
+			var parent = new Border {Child = SUT};
+
+			parent.DataContext = datacontext1;
+			changes.Count.Should().Be(3);
+
+			SUT.DataContext = DependencyProperty.UnsetValue; // Propagate the datacontext from parent
+			changes.Count.Should().Be(4);
+			changes.Last().NewValue.Should().Be(42);
+		}
 	}
 
     #region DependencyObjects
@@ -1321,7 +1415,7 @@ namespace Uno.UI.Tests.BinderTests
 	{
 
 	}
-	
+
 	partial class MockDependencyObject2 : MockDependencyObject
 	{
 
@@ -1396,6 +1490,41 @@ namespace Uno.UI.Tests.BinderTests
 		}
 
 		public MyDependencyObject3() { }
+	}
+
+	partial class NullablePropertyOwner : FrameworkElement
+	{
+
+		#region MyNullable DependencyProperty
+
+		public int? MyNullable
+		{
+			get { return (int?)GetValue(MyNullableProperty); }
+			set { SetValue(MyNullableProperty, value); }
+		}
+
+		// Using a DependencyProperty as the backing store for MyNullable.  This enables animation, styling, binding, etc...
+		public static readonly DependencyProperty MyNullableProperty =
+			DependencyProperty.Register(
+				"MyNullable",
+				typeof(int?),
+				typeof(NullablePropertyOwner),
+				new PropertyMetadata(
+					null,
+					(s, e) => ((NullablePropertyOwner)s)?.OnMyNullableChanged(e)
+				)
+			);
+
+
+		private void OnMyNullableChanged(DependencyPropertyChangedEventArgs e)
+		{
+			MyNullableChanged?.Invoke(this, e);
+		}
+
+		internal event EventHandler<DependencyPropertyChangedEventArgs> MyNullableChanged;
+
+		#endregion
+
 	}
 
 	#endregion

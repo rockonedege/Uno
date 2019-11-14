@@ -6,31 +6,36 @@ using Uno.Extensions;
 using UIKit;
 using System.Linq;
 using System.Drawing;
+using Windows.UI.Xaml.Input;
 using Uno.Disposables;
 using Windows.UI.Xaml.Media;
+using Uno.UI;
 
 namespace Windows.UI.Xaml.Controls
 {
 	public partial class Popup
 	{
-		public UIView MainWindow { get; private set; }
+		private UIView _mainWindow;
 
 		public Popup()
 		{
-			MainWindow = UIApplication.SharedApplication.KeyWindow ?? UIApplication.SharedApplication.Windows[0];
-
-			PopupPanel = new PopupPanel(this);
-
-			MainWindow.AddSubview(PopupPanel);
-
-			UpdateDismissTriggers();
 		}
 
-		partial void OnPopupPanelChanged(DependencyPropertyChangedEventArgs e)
+		public UIView MainWindow
 		{
-			var previousPanel = e.OldValue as PopupPanel;
-			var newPanel = e.NewValue as PopupPanel;
+			get
+			{
+				if (_mainWindow == null)
+				{
+					_mainWindow = UIApplication.SharedApplication.KeyWindow ?? UIApplication.SharedApplication.Windows[0];
+				}
 
+				return _mainWindow;
+			}
+		}
+
+		partial void OnPopupPanelChangedPartial(PopupPanel previousPanel, PopupPanel newPanel)
+		{
 			if (previousPanel?.Superview != null)
 			{
 				// Remove the current child, if any.
@@ -39,12 +44,22 @@ namespace Windows.UI.Xaml.Controls
 				previousPanel.RemoveFromSuperview();
 			}
 
-			if (PopupPanel != null)
+			if (newPanel != null)
 			{
 				if (Child != null)
 				{
-					PopupPanel.AddSubview(Child);
+					// Make sure that the child does not find itself without a TemplatedParent
+					if (newPanel.TemplatedParent == null)
+					{
+						newPanel.TemplatedParent = TemplatedParent;
+					}
+
+					newPanel.AddSubview(Child);
 				}
+
+				newPanel.Background = IsLightDismissEnabled
+					? new SolidColorBrush(Colors.Transparent)
+					: null;
 
 				RegisterPopupPanel();
 			}
@@ -59,7 +74,12 @@ namespace Windows.UI.Xaml.Controls
 
 		private void RegisterPopupPanel()
 		{
-			if (PopupPanel?.Superview == null)
+			if (PopupPanel == null)
+			{
+				PopupPanel = new PopupPanel(this);
+			}
+
+			if (PopupPanel.Superview == null)
 			{
 				MainWindow.AddSubview(PopupPanel);
 			}
@@ -90,23 +110,28 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
-		protected override void OnIsLightDismissEnabledChanged(bool oldIsLightDismissEnabled, bool newIsLightDismissEnabled)
-		{
-			base.OnIsLightDismissEnabledChanged(oldIsLightDismissEnabled, newIsLightDismissEnabled);
-
-			UpdateDismissTriggers();
-		}
-
 		protected override void OnIsOpenChanged(bool oldIsOpen, bool newIsOpen)
 		{
 			base.OnIsOpenChanged(oldIsOpen, newIsOpen);
 
-			UpdateListDismissLayer(newIsOpen);
+			UpdateLightDismissLayer(newIsOpen);
 
-			UpdateDismissTriggers();
+			EnsureForward();
 		}
 
-		private void UpdateListDismissLayer(bool newIsOpen)
+		protected override void OnIsLightDismissEnabledChanged(bool oldIsLightDismissEnabled, bool newIsLightDismissEnabled)
+		{
+			base.OnIsLightDismissEnabledChanged(oldIsLightDismissEnabled, newIsLightDismissEnabled);
+
+			if (PopupPanel != null)
+			{
+				PopupPanel.Background = newIsLightDismissEnabled
+					? new SolidColorBrush(Colors.Transparent)
+					: null;
+			}
+		}
+
+		private void UpdateLightDismissLayer(bool newIsOpen)
 		{
 			if (PopupPanel != null)
 			{
@@ -129,27 +154,13 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
-		private void UpdateDismissTriggers()
+		/// <summary>
+		/// Ensure that Popup panel is forward-most in the window. This ensures it isn't hidden behind the main content, which can happen when
+		/// the Popup is created during initial launch.
+		/// </summary>
+		private void EnsureForward()
 		{
-			if (PopupPanel != null)
-			{
-				if (this.IsOpen)
-				{
-					if (this.IsLightDismissEnabled)
-					{
-						PopupPanel.PointerPressed += OnPointerPressed;
-					}
-				}
-				else
-				{
-					PopupPanel.PointerPressed -= OnPointerPressed;
-				}
-			}
-		}
-
-		private void OnPointerPressed(object sender, EventArgs args)
-		{
-			IsOpen = false;
+			PopupPanel.Superview?.BringSubviewToFront(PopupPanel);
 		}
 	}
 }

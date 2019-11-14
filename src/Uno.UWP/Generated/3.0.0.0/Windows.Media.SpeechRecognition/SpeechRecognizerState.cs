@@ -2,33 +2,19 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Media.SpeechRecognition
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum SpeechRecognizerState 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Idle,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Capturing,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Processing,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		SoundStarted,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		SoundEnded,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		SpeechDetected,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Paused,
-		#endif
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognizerState.Idle
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognizerState.Capturing
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognizerState.Processing
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognizerState.SoundStarted
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognizerState.SoundEnded
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognizerState.SpeechDetected
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognizerState.Paused
 	}
 	#endif
 }

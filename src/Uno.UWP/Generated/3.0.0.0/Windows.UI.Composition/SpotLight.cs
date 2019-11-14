@@ -2,124 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Composition
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class SpotLight : global::Windows.UI.Composition.CompositionLight
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::System.Numerics.Vector3 Offset
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member Vector3 SpotLight.Offset is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "Vector3 SpotLight.Offset");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  float LinearAttenuation
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member float SpotLight.LinearAttenuation is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "float SpotLight.LinearAttenuation");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Color InnerConeColor
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member Color SpotLight.InnerConeColor is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "Color SpotLight.InnerConeColor");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  float InnerConeAngleInDegrees
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member float SpotLight.InnerConeAngleInDegrees is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "float SpotLight.InnerConeAngleInDegrees");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  float InnerConeAngle
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member float SpotLight.InnerConeAngle is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "float SpotLight.InnerConeAngle");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::System.Numerics.Vector3 Direction
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member Vector3 SpotLight.Direction is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "Vector3 SpotLight.Direction");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Composition.Visual CoordinateSpace
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member Visual SpotLight.CoordinateSpace is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "Visual SpotLight.CoordinateSpace");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  float ConstantAttenuation
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member float SpotLight.ConstantAttenuation is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "float SpotLight.ConstantAttenuation");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float QuadraticAttenuation
 		{
@@ -133,7 +21,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.UI.Color OuterConeColor
 		{
@@ -147,7 +35,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float OuterConeAngleInDegrees
 		{
@@ -161,7 +49,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float OuterConeAngle
 		{
@@ -175,7 +63,119 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::System.Numerics.Vector3 Offset
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member Vector3 SpotLight.Offset is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "Vector3 SpotLight.Offset");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  float LinearAttenuation
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member float SpotLight.LinearAttenuation is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "float SpotLight.LinearAttenuation");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::Windows.UI.Color InnerConeColor
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member Color SpotLight.InnerConeColor is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "Color SpotLight.InnerConeColor");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  float InnerConeAngleInDegrees
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member float SpotLight.InnerConeAngleInDegrees is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "float SpotLight.InnerConeAngleInDegrees");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  float InnerConeAngle
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member float SpotLight.InnerConeAngle is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "float SpotLight.InnerConeAngle");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::System.Numerics.Vector3 Direction
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member Vector3 SpotLight.Direction is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "Vector3 SpotLight.Direction");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::Windows.UI.Composition.Visual CoordinateSpace
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member Visual SpotLight.CoordinateSpace is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "Visual SpotLight.CoordinateSpace");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  float ConstantAttenuation
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member float SpotLight.ConstantAttenuation is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.SpotLight", "float SpotLight.ConstantAttenuation");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float OuterConeIntensity
 		{
@@ -189,7 +189,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float InnerConeIntensity
 		{
@@ -203,7 +203,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float MinAttenuationCutoff
 		{
@@ -217,7 +217,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float MaxAttenuationCutoff
 		{

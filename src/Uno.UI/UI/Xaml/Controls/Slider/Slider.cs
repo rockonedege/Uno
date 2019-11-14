@@ -50,9 +50,22 @@ namespace Windows.UI.Xaml.Controls
 		{
 			base.OnApplyTemplate();
 
+			// Dispose previously registered handlers if any
+			_eventSubscriptions.Disposable = null;
+
 			_headerContentPresenter = GetTemplateChild("HeaderContentPresenter") as ContentPresenter;
 			_horizontalThumb = GetTemplateChild("HorizontalThumb") as Thumb;
 			_verticalThumb = GetTemplateChild("VerticalThumb") as Thumb;
+
+			if (_horizontalThumb != null)
+			{
+				_horizontalThumb.ShouldCapturePointer = false;
+			}
+
+			if (_verticalThumb != null)
+			{
+				_verticalThumb.ShouldCapturePointer = false;
+			}
 
 			_verticalTemplate = GetTemplateChild("VerticalTemplate") as FrameworkElement;
 			_verticalTrackRect = GetTemplateChild("VerticalTrackRect") as Rectangle;
@@ -63,12 +76,15 @@ namespace Windows.UI.Xaml.Controls
 			_horizontalDecreaseRect = GetTemplateChild("HorizontalDecreaseRect") as Rectangle;
 			_sliderContainer = GetTemplateChild("SliderContainer") as FrameworkElement;
 
-			_eventSubscriptions.Disposable = RegisterHandlers();
+			if (!IsLoaded)
+			{
+				_eventSubscriptions.Disposable = RegisterHandlers();
+			}
 
 			if (HasXamlTemplate)
 			{
-				SizeChanged += (s, e) => ApplyValueToSlide(Value);
-				ApplyValueToSlide(Value);
+				SizeChanged += (s, e) => ApplyValueToSlide();
+				ApplyValueToSlide();
 			}
 
 			UpdateCommonState(useTransitions: false);
@@ -78,7 +94,10 @@ namespace Windows.UI.Xaml.Controls
 		{
 			base.OnLoaded();
 
-			_eventSubscriptions.Disposable = RegisterHandlers();
+			if (_eventSubscriptions.Disposable == null)
+			{
+				_eventSubscriptions.Disposable = RegisterHandlers();
+			}
 
 			if (_sliderContainer != null)
 			{
@@ -119,9 +138,6 @@ namespace Windows.UI.Xaml.Controls
 				_verticalThumb.DragCompleted += OnDragCompleted;
 			}
 
-			// Add the gesture recognizer necessary for touch event captures on iOS
-			RegisterNativeHandlers();
-
 			return Disposable.Create(() =>
 			{
 				// Dispose of the thumbs event listeners
@@ -138,19 +154,12 @@ namespace Windows.UI.Xaml.Controls
 					_verticalThumb.DragDelta -= OnDragDelta;
 					_verticalThumb.DragCompleted -= OnDragCompleted;
 				}
-
-				// Get rid of the iOS gesture recognizer
-				UnregisterNativeHandlers();
 			});
 		}
 
-		partial void RegisterNativeHandlers();
-
-		partial void UnregisterNativeHandlers();
-
 		private void OnDragCompleted(object sender, DragCompletedEventArgs args)
 		{
-			ApplyValueToSlide(Value);
+			ApplyValueToSlide();
 
 			IsPointerPressed = false;
 			UpdateCommonState();
@@ -193,9 +202,14 @@ namespace Windows.UI.Xaml.Controls
 #if XAMARIN_ANDROID
 				this.RequestDisallowInterceptTouchEvent(true);
 #endif
-
-				_horizontalInitial = GetSanitizedDimension(_horizontalDecreaseRect.Width);
-				_verticalInitial = GetSanitizedDimension(_verticalDecreaseRect.Height);
+				if (Orientation == Orientation.Horizontal)
+				{
+					_horizontalInitial = GetSanitizedDimension(_horizontalDecreaseRect.Width);
+				}
+				else
+				{
+					_verticalInitial = GetSanitizedDimension(_verticalDecreaseRect.Height);
+				}
 
 				IsPointerPressed = true;
 				UpdateCommonState();
@@ -265,19 +279,24 @@ namespace Windows.UI.Xaml.Controls
 		/// <summary>
 		/// Take the given value and move the slider accordingly.
 		/// </summary>
-		/// <param name="value">New value of the property Value</param>
-		private void ApplyValueToSlide(double value)
+		private void ApplyValueToSlide()
 		{
 			// The _decreaseRect's height/width is updated, which in turn pushes or pulls the Thumb to its correct position
 			if (Orientation == Orientation.Horizontal)
 			{
-				var maxWidth = ActualWidth - _horizontalThumb.ActualWidth;
-				_horizontalDecreaseRect.Width = (float)((Value - Minimum) / (Maximum - Minimum)) * maxWidth;
+                if (_horizontalThumb != null && _horizontalDecreaseRect != null)
+                {
+                    var maxWidth = ActualWidth - _horizontalThumb.ActualWidth;
+                    _horizontalDecreaseRect.Width = (float)((Value - Minimum) / (Maximum - Minimum)) * maxWidth;
+                }
 			}
 			else
 			{
-				var maxHeight = ActualHeight - _horizontalThumb.ActualHeight;
-				_verticalDecreaseRect.Height = (float)((Value - Minimum) / (Maximum - Minimum)) * maxHeight;
+                if (_verticalThumb != null && _verticalDecreaseRect != null)
+                {
+                    var maxHeight = ActualHeight - _verticalThumb.ActualHeight;
+                    _verticalDecreaseRect.Height = (float)((Value - Minimum) / (Maximum - Minimum)) * maxHeight;
+                }
 			}
 		}
 
@@ -301,7 +320,7 @@ namespace Windows.UI.Xaml.Controls
 
 			if (!_duringDrag && HasXamlTemplate)
 			{
-				ApplyValueToSlide(newValue);
+				ApplyValueToSlide();
 			}
 		}
 
@@ -309,10 +328,13 @@ namespace Windows.UI.Xaml.Controls
 		{
 			if (_sliderContainer != null && IsTrackerEnabled)
 			{
+				_sliderContainerSubscription.Disposable = null;
+
 				_sliderContainer.PointerPressed += OnSliderContainerPressed;
 				_sliderContainer.PointerMoved += OnSliderContainerMoved;
 				_sliderContainer.PointerReleased += OnSliderContainerReleased;
 				_sliderContainer.PointerCanceled += OnSliderContainerCanceled;
+
 				_sliderContainerSubscription.Disposable = Disposable.Create(() =>
 				{
 					_sliderContainer.PointerPressed -= OnSliderContainerPressed;
@@ -330,7 +352,7 @@ namespace Windows.UI.Xaml.Controls
 
 			var newOffset = Orientation == Orientation.Horizontal ?
 				point.X / container.ActualWidth :
-				point.Y / container.ActualHeight;
+				1 - (point.Y / container.ActualHeight);
 
 			ApplySlideToValue(newOffset);
 
@@ -356,7 +378,7 @@ namespace Windows.UI.Xaml.Controls
 			var container = sender as FrameworkElement;
 			var point = e.GetCurrentPoint(container).Position;
 
-			ApplyValueToSlide(Value);
+			ApplyValueToSlide();
 
 			Thumb?.CompleteDrag(point);
 
@@ -369,7 +391,7 @@ namespace Windows.UI.Xaml.Controls
 		{
 			var container = sender as FrameworkElement;
 #if __WASM__
-			if (!container.IsPointerCaptured)
+			if (!container.IsCaptured(e.Pointer))
 			{
 				return;
 			}
@@ -656,3 +678,4 @@ namespace Windows.UI.Xaml.Controls
 		#endregion
 	}
 }
+

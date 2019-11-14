@@ -6,6 +6,8 @@ using Uno.Extensions;
 using View = Android.Views.View;
 #elif XAMARIN_IOS_UNIFIED
 using View = UIKit.UIView;
+#elif __MACOS__
+using View = AppKit.NSView;
 #elif XAMARIN_IOS
 using View = MonoTouch.UIKit.UIView;
 #else
@@ -16,14 +18,13 @@ namespace Windows.UI.Xaml
 {
 	public partial class FrameworkTemplate : DependencyObject
 	{
-		private static FrameworkTemplatePool _pool = new FrameworkTemplatePool();
 
 		private readonly Func<View> _viewFactory;
 		private readonly int _hashCode;
 
 		protected FrameworkTemplate() { }
 
-		public FrameworkTemplate (Func<View> factory)
+		public FrameworkTemplate(Func<View> factory)
 		{
 			InitializeBinder();
 
@@ -50,11 +51,11 @@ namespace Windows.UI.Xaml
 		/// </remarks>
 		internal View LoadContentCached()
 		{
-			return _pool.DequeueTemplate(this);
+			return FrameworkTemplatePool.Instance.DequeueTemplate(this);
 		}
 
 		/// <summary>
-		/// Creates a new instace of the current template.
+		/// Creates a new instance of the current template.
 		/// </summary>
 		/// <returns>A new instance of the template</returns>
 		public View LoadContent()
@@ -78,6 +79,10 @@ namespace Windows.UI.Xaml
 		}
 
 		public override int GetHashCode() => _hashCode;
+
+#if DEBUG
+		public string TemplateSource => $"{_viewFactory?.Method.DeclaringType}.{_viewFactory?.Method.Name}";
+#endif
 
 		internal class FrameworkTemplateEqualityComparer : IEqualityComparer<FrameworkTemplate>
 		{

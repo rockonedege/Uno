@@ -2,12 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Composition
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class CompositionGradientBrush : global::Windows.UI.Composition.CompositionBrush
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Numerics.Matrix3x2 TransformMatrix
 		{
@@ -21,7 +21,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Numerics.Vector2 Scale
 		{
@@ -35,7 +35,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float RotationAngleInDegrees
 		{
@@ -49,7 +49,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float RotationAngle
 		{
@@ -63,7 +63,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Numerics.Vector2 Offset
 		{
@@ -77,7 +77,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.UI.Composition.CompositionColorSpace InterpolationSpace
 		{
@@ -91,7 +91,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.UI.Composition.CompositionGradientExtendMode ExtendMode
 		{
@@ -105,7 +105,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Numerics.Vector2 CenterPoint
 		{
@@ -119,7 +119,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::System.Numerics.Vector2 AnchorPoint
 		{
@@ -133,13 +133,27 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.UI.Composition.CompositionColorGradientStopCollection ColorStops
 		{
 			get
 			{
 				throw new global::System.NotImplementedException("The member CompositionColorGradientStopCollection CompositionGradientBrush.ColorStops is not implemented in Uno.");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::Windows.UI.Composition.CompositionMappingMode MappingMode
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member CompositionMappingMode CompositionGradientBrush.MappingMode is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.CompositionGradientBrush", "CompositionMappingMode CompositionGradientBrush.MappingMode");
 			}
 		}
 		#endif
@@ -162,5 +176,7 @@ namespace Windows.UI.Composition
 		// Forced skipping of method Windows.UI.Composition.CompositionGradientBrush.Scale.set
 		// Forced skipping of method Windows.UI.Composition.CompositionGradientBrush.TransformMatrix.get
 		// Forced skipping of method Windows.UI.Composition.CompositionGradientBrush.TransformMatrix.set
+		// Forced skipping of method Windows.UI.Composition.CompositionGradientBrush.MappingMode.get
+		// Forced skipping of method Windows.UI.Composition.CompositionGradientBrush.MappingMode.set
 	}
 }

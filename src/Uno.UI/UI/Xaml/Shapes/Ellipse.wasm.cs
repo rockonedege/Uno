@@ -20,18 +20,22 @@ namespace Windows.UI.Xaml.Shapes
 			return _ellipse;
 		}
 
-		protected override Size ArrangeOverride(Size finalSize)
+		protected override Size MeasureOverride(Size availableSize)
 		{
-			var cx = finalSize.Width / 2;
-			var cy = finalSize.Height / 2;
+			var bounds = GetBounds();
+
+			var cx = bounds.Width / 2;
+			var cy = bounds.Height / 2;
+
+			var strokeThickness = ActualStrokeThickness;
 
 			_ellipse.SetAttribute(
 				("cx", cx.ToStringInvariant()),
 				("cy", cy.ToStringInvariant()),
-				("rx", (cx - ActualStrokeThickness).ToStringInvariant()),
-				("ry", (cy - ActualStrokeThickness).ToStringInvariant()));
+				("rx", (cx - strokeThickness).ToStringInvariant()),
+				("ry", (cy - strokeThickness).ToStringInvariant()));
 
-			return base.ArrangeOverride(finalSize);
+			return base.MeasureOverride(availableSize);
 		}
 	}
 }

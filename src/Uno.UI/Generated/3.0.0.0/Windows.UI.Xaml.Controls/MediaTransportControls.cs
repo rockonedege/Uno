@@ -2,208 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Xaml.Controls
 {
-	#if false || false || NET46 || __WASM__
+	#if false || false || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class MediaTransportControls : global::Windows.UI.Xaml.Controls.Control
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsFullWindowButtonVisible
-		{
-			get
-			{
-				return (bool)this.GetValue(IsFullWindowButtonVisibleProperty);
-			}
-			set
-			{
-				this.SetValue(IsFullWindowButtonVisibleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsPlaybackRateEnabled
-		{
-			get
-			{
-				return (bool)this.GetValue(IsPlaybackRateEnabledProperty);
-			}
-			set
-			{
-				this.SetValue(IsPlaybackRateEnabledProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsFastRewindEnabled
-		{
-			get
-			{
-				return (bool)this.GetValue(IsFastRewindEnabledProperty);
-			}
-			set
-			{
-				this.SetValue(IsFastRewindEnabledProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsFastRewindButtonVisible
-		{
-			get
-			{
-				return (bool)this.GetValue(IsFastRewindButtonVisibleProperty);
-			}
-			set
-			{
-				this.SetValue(IsFastRewindButtonVisibleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsFullWindowEnabled
-		{
-			get
-			{
-				return (bool)this.GetValue(IsFullWindowEnabledProperty);
-			}
-			set
-			{
-				this.SetValue(IsFullWindowEnabledProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsFastForwardEnabled
-		{
-			get
-			{
-				return (bool)this.GetValue(IsFastForwardEnabledProperty);
-			}
-			set
-			{
-				this.SetValue(IsFastForwardEnabledProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsCompact
-		{
-			get
-			{
-				return (bool)this.GetValue(IsCompactProperty);
-			}
-			set
-			{
-				this.SetValue(IsCompactProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsSeekEnabled
-		{
-			get
-			{
-				return (bool)this.GetValue(IsSeekEnabledProperty);
-			}
-			set
-			{
-				this.SetValue(IsSeekEnabledProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsStopEnabled
-		{
-			get
-			{
-				return (bool)this.GetValue(IsStopEnabledProperty);
-			}
-			set
-			{
-				this.SetValue(IsStopEnabledProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsFastForwardButtonVisible
-		{
-			get
-			{
-				return (bool)this.GetValue(IsFastForwardButtonVisibleProperty);
-			}
-			set
-			{
-				this.SetValue(IsFastForwardButtonVisibleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsStopButtonVisible
-		{
-			get
-			{
-				return (bool)this.GetValue(IsStopButtonVisibleProperty);
-			}
-			set
-			{
-				this.SetValue(IsStopButtonVisibleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsVolumeButtonVisible
-		{
-			get
-			{
-				return (bool)this.GetValue(IsVolumeButtonVisibleProperty);
-			}
-			set
-			{
-				this.SetValue(IsVolumeButtonVisibleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsSeekBarVisible
-		{
-			get
-			{
-				return (bool)this.GetValue(IsSeekBarVisibleProperty);
-			}
-			set
-			{
-				this.SetValue(IsSeekBarVisibleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsPlaybackRateButtonVisible
-		{
-			get
-			{
-				return (bool)this.GetValue(IsPlaybackRateButtonVisibleProperty);
-			}
-			set
-			{
-				this.SetValue(IsPlaybackRateButtonVisibleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool IsZoomEnabled
 		{
@@ -217,7 +21,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool IsZoomButtonVisible
 		{
@@ -231,7 +35,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool IsVolumeEnabled
 		{
@@ -245,49 +49,203 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public  bool IsSkipBackwardButtonVisible
+		public  bool IsVolumeButtonVisible
 		{
 			get
 			{
-				return (bool)this.GetValue(IsSkipBackwardButtonVisibleProperty);
+				return (bool)this.GetValue(IsVolumeButtonVisibleProperty);
 			}
 			set
 			{
-				this.SetValue(IsSkipBackwardButtonVisibleProperty, value);
+				this.SetValue(IsVolumeButtonVisibleProperty, value);
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public  bool IsNextTrackButtonVisible
+		public  bool IsStopEnabled
 		{
 			get
 			{
-				return (bool)this.GetValue(IsNextTrackButtonVisibleProperty);
+				return (bool)this.GetValue(IsStopEnabledProperty);
 			}
 			set
 			{
-				this.SetValue(IsNextTrackButtonVisibleProperty, value);
+				this.SetValue(IsStopEnabledProperty, value);
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.Media.FastPlayFallbackBehaviour FastPlayFallbackBehaviour
+		public  bool IsStopButtonVisible
 		{
 			get
 			{
-				return (global::Windows.UI.Xaml.Media.FastPlayFallbackBehaviour)this.GetValue(FastPlayFallbackBehaviourProperty);
+				return (bool)this.GetValue(IsStopButtonVisibleProperty);
 			}
 			set
 			{
-				this.SetValue(FastPlayFallbackBehaviourProperty, value);
+				this.SetValue(IsStopButtonVisibleProperty, value);
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsSeekEnabled
+		{
+			get
+			{
+				return (bool)this.GetValue(IsSeekEnabledProperty);
+			}
+			set
+			{
+				this.SetValue(IsSeekEnabledProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsSeekBarVisible
+		{
+			get
+			{
+				return (bool)this.GetValue(IsSeekBarVisibleProperty);
+			}
+			set
+			{
+				this.SetValue(IsSeekBarVisibleProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsPlaybackRateEnabled
+		{
+			get
+			{
+				return (bool)this.GetValue(IsPlaybackRateEnabledProperty);
+			}
+			set
+			{
+				this.SetValue(IsPlaybackRateEnabledProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsPlaybackRateButtonVisible
+		{
+			get
+			{
+				return (bool)this.GetValue(IsPlaybackRateButtonVisibleProperty);
+			}
+			set
+			{
+				this.SetValue(IsPlaybackRateButtonVisibleProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsFullWindowEnabled
+		{
+			get
+			{
+				return (bool)this.GetValue(IsFullWindowEnabledProperty);
+			}
+			set
+			{
+				this.SetValue(IsFullWindowEnabledProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsFullWindowButtonVisible
+		{
+			get
+			{
+				return (bool)this.GetValue(IsFullWindowButtonVisibleProperty);
+			}
+			set
+			{
+				this.SetValue(IsFullWindowButtonVisibleProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsFastRewindEnabled
+		{
+			get
+			{
+				return (bool)this.GetValue(IsFastRewindEnabledProperty);
+			}
+			set
+			{
+				this.SetValue(IsFastRewindEnabledProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsFastRewindButtonVisible
+		{
+			get
+			{
+				return (bool)this.GetValue(IsFastRewindButtonVisibleProperty);
+			}
+			set
+			{
+				this.SetValue(IsFastRewindButtonVisibleProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsFastForwardEnabled
+		{
+			get
+			{
+				return (bool)this.GetValue(IsFastForwardEnabledProperty);
+			}
+			set
+			{
+				this.SetValue(IsFastForwardEnabledProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsFastForwardButtonVisible
+		{
+			get
+			{
+				return (bool)this.GetValue(IsFastForwardButtonVisibleProperty);
+			}
+			set
+			{
+				this.SetValue(IsFastForwardButtonVisibleProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsCompact
+		{
+			get
+			{
+				return (bool)this.GetValue(IsCompactProperty);
+			}
+			set
+			{
+				this.SetValue(IsCompactProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool IsSkipForwardEnabled
 		{
@@ -301,21 +259,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsPreviousTrackButtonVisible
-		{
-			get
-			{
-				return (bool)this.GetValue(IsPreviousTrackButtonVisibleProperty);
-			}
-			set
-			{
-				this.SetValue(IsPreviousTrackButtonVisibleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool IsSkipForwardButtonVisible
 		{
@@ -329,7 +273,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool IsSkipBackwardEnabled
 		{
@@ -343,7 +287,63 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsSkipBackwardButtonVisible
+		{
+			get
+			{
+				return (bool)this.GetValue(IsSkipBackwardButtonVisibleProperty);
+			}
+			set
+			{
+				this.SetValue(IsSkipBackwardButtonVisibleProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsPreviousTrackButtonVisible
+		{
+			get
+			{
+				return (bool)this.GetValue(IsPreviousTrackButtonVisibleProperty);
+			}
+			set
+			{
+				this.SetValue(IsPreviousTrackButtonVisibleProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsNextTrackButtonVisible
+		{
+			get
+			{
+				return (bool)this.GetValue(IsNextTrackButtonVisibleProperty);
+			}
+			set
+			{
+				this.SetValue(IsNextTrackButtonVisibleProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::Windows.UI.Xaml.Media.FastPlayFallbackBehaviour FastPlayFallbackBehaviour
+		{
+			get
+			{
+				return (global::Windows.UI.Xaml.Media.FastPlayFallbackBehaviour)this.GetValue(FastPlayFallbackBehaviourProperty);
+			}
+			set
+			{
+				this.SetValue(FastPlayFallbackBehaviourProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool ShowAndHideAutomatically
 		{
@@ -357,21 +357,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsRepeatButtonVisible
-		{
-			get
-			{
-				return (bool)this.GetValue(IsRepeatButtonVisibleProperty);
-			}
-			set
-			{
-				this.SetValue(IsRepeatButtonVisibleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool IsRepeatEnabled
 		{
@@ -385,7 +371,21 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsRepeatButtonVisible
+		{
+			get
+			{
+				return (bool)this.GetValue(IsRepeatButtonVisibleProperty);
+			}
+			set
+			{
+				this.SetValue(IsRepeatButtonVisibleProperty, value);
+			}
+		}
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool IsCompactOverlayEnabled
 		{
@@ -399,7 +399,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  bool IsCompactOverlayButtonVisible
 		{
@@ -413,7 +413,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsCompactProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -421,7 +421,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsFastForwardButtonVisibleProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -429,7 +429,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsFastForwardEnabledProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -437,7 +437,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsFastRewindButtonVisibleProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -445,7 +445,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsFastRewindEnabledProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -453,7 +453,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsFullWindowButtonVisibleProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -461,87 +461,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsPlaybackRateButtonVisibleProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsPlaybackRateButtonVisible", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsPlaybackRateEnabledProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsPlaybackRateEnabled", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsSeekBarVisibleProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsSeekBarVisible", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsSeekEnabledProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsSeekEnabled", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsStopButtonVisibleProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsStopButtonVisible", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsStopEnabledProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsStopEnabled", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsVolumeButtonVisibleProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsVolumeButtonVisible", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsVolumeEnabledProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsVolumeEnabled", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsZoomButtonVisibleProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsZoomButtonVisible", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsZoomEnabledProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsZoomEnabled", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsFullWindowEnabledProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -549,7 +469,87 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static global::Windows.UI.Xaml.DependencyProperty IsPlaybackRateButtonVisibleProperty { get; } = 
+		Windows.UI.Xaml.DependencyProperty.Register(
+			"IsPlaybackRateButtonVisible", typeof(bool), 
+			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
+			new FrameworkPropertyMetadata(default(bool)));
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static global::Windows.UI.Xaml.DependencyProperty IsPlaybackRateEnabledProperty { get; } = 
+		Windows.UI.Xaml.DependencyProperty.Register(
+			"IsPlaybackRateEnabled", typeof(bool), 
+			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
+			new FrameworkPropertyMetadata(default(bool)));
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static global::Windows.UI.Xaml.DependencyProperty IsSeekBarVisibleProperty { get; } = 
+		Windows.UI.Xaml.DependencyProperty.Register(
+			"IsSeekBarVisible", typeof(bool), 
+			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
+			new FrameworkPropertyMetadata(default(bool)));
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static global::Windows.UI.Xaml.DependencyProperty IsSeekEnabledProperty { get; } = 
+		Windows.UI.Xaml.DependencyProperty.Register(
+			"IsSeekEnabled", typeof(bool), 
+			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
+			new FrameworkPropertyMetadata(default(bool)));
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static global::Windows.UI.Xaml.DependencyProperty IsStopButtonVisibleProperty { get; } = 
+		Windows.UI.Xaml.DependencyProperty.Register(
+			"IsStopButtonVisible", typeof(bool), 
+			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
+			new FrameworkPropertyMetadata(default(bool)));
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static global::Windows.UI.Xaml.DependencyProperty IsStopEnabledProperty { get; } = 
+		Windows.UI.Xaml.DependencyProperty.Register(
+			"IsStopEnabled", typeof(bool), 
+			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
+			new FrameworkPropertyMetadata(default(bool)));
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static global::Windows.UI.Xaml.DependencyProperty IsVolumeButtonVisibleProperty { get; } = 
+		Windows.UI.Xaml.DependencyProperty.Register(
+			"IsVolumeButtonVisible", typeof(bool), 
+			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
+			new FrameworkPropertyMetadata(default(bool)));
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static global::Windows.UI.Xaml.DependencyProperty IsVolumeEnabledProperty { get; } = 
+		Windows.UI.Xaml.DependencyProperty.Register(
+			"IsVolumeEnabled", typeof(bool), 
+			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
+			new FrameworkPropertyMetadata(default(bool)));
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static global::Windows.UI.Xaml.DependencyProperty IsZoomButtonVisibleProperty { get; } = 
+		Windows.UI.Xaml.DependencyProperty.Register(
+			"IsZoomButtonVisible", typeof(bool), 
+			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
+			new FrameworkPropertyMetadata(default(bool)));
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static global::Windows.UI.Xaml.DependencyProperty IsZoomEnabledProperty { get; } = 
+		Windows.UI.Xaml.DependencyProperty.Register(
+			"IsZoomEnabled", typeof(bool), 
+			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
+			new FrameworkPropertyMetadata(default(bool)));
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty FastPlayFallbackBehaviourProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -557,7 +557,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.Media.FastPlayFallbackBehaviour)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsNextTrackButtonVisibleProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -565,7 +565,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsPreviousTrackButtonVisibleProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -573,7 +573,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsSkipBackwardButtonVisibleProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -581,7 +581,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsSkipBackwardEnabledProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -589,15 +589,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsSkipForwardEnabledProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsSkipForwardEnabled", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsSkipForwardButtonVisibleProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -605,23 +597,15 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsRepeatEnabledProperty { get; } = 
+		public static global::Windows.UI.Xaml.DependencyProperty IsSkipForwardEnabledProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsRepeatEnabled", typeof(bool), 
+			"IsSkipForwardEnabled", typeof(bool), 
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty ShowAndHideAutomaticallyProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"ShowAndHideAutomatically", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsRepeatButtonVisibleProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -629,7 +613,23 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static global::Windows.UI.Xaml.DependencyProperty IsRepeatEnabledProperty { get; } = 
+		Windows.UI.Xaml.DependencyProperty.Register(
+			"IsRepeatEnabled", typeof(bool), 
+			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
+			new FrameworkPropertyMetadata(default(bool)));
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public static global::Windows.UI.Xaml.DependencyProperty ShowAndHideAutomaticallyProperty { get; } = 
+		Windows.UI.Xaml.DependencyProperty.Register(
+			"ShowAndHideAutomatically", typeof(bool), 
+			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
+			new FrameworkPropertyMetadata(default(bool)));
+		#endif
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsCompactOverlayButtonVisibleProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -637,7 +637,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty IsCompactOverlayEnabledProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -645,7 +645,7 @@ namespace Windows.UI.Xaml.Controls
 			typeof(global::Windows.UI.Xaml.Controls.MediaTransportControls), 
 			new FrameworkPropertyMetadata(default(bool)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public MediaTransportControls() : base()
 		{
@@ -709,14 +709,14 @@ namespace Windows.UI.Xaml.Controls
 		// Forced skipping of method Windows.UI.Xaml.Controls.MediaTransportControls.IsRepeatEnabled.set
 		// Forced skipping of method Windows.UI.Xaml.Controls.MediaTransportControls.IsRepeatButtonVisible.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.MediaTransportControls.IsRepeatButtonVisible.set
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  void Show()
 		{
 			global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.MediaTransportControls", "void MediaTransportControls.Show()");
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if false || false || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  void Hide()
 		{
@@ -756,7 +756,7 @@ namespace Windows.UI.Xaml.Controls
 		// Forced skipping of method Windows.UI.Xaml.Controls.MediaTransportControls.IsSeekBarVisibleProperty.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.MediaTransportControls.IsSeekEnabledProperty.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.MediaTransportControls.IsCompactProperty.get
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  event global::Windows.Foundation.TypedEventHandler<global::Windows.UI.Xaml.Controls.MediaTransportControls, global::Windows.UI.Xaml.Media.MediaTransportControlsThumbnailRequestedEventArgs> ThumbnailRequested
 		{

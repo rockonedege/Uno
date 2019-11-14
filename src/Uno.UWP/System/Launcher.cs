@@ -1,17 +1,22 @@
 ﻿#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
 using System;
-using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using Uno.Extensions;
 using Uno.Logging;
-using Windows.ApplicationModel;
 using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Foundation.Metadata;
-using Windows.UI.Core;
 using Microsoft.Extensions.Logging;
+using System.Linq;
+using Windows.UI.Core;
+
+#if __ANDROID__
+using Android.Content;
+using Android.Content.PM;
+#endif
+#if __IOS__
+using UIKit;
+using AppleUrl = global::Foundation.NSUrl;
+#endif
 
 namespace Windows.System
 {
@@ -19,34 +24,83 @@ namespace Windows.System
 	{
 		public static async Task<bool> LaunchUriAsync(Uri uri)
 		{
-			try
+			return await CoreDispatcher.Main.RunWithResultAsync(
+				CoreDispatcherPriority.Normal,
+				async () =>
+				{
+					try
+					{
+#if __IOS__
+						return UIKit.UIApplication.SharedApplication.OpenUrl(
+							new AppleUrl(uri.OriginalString));
+#elif __ANDROID__
+						var androidUri = Android.Net.Uri.Parse(uri.OriginalString);
+						var intent = new Intent(Intent.ActionView, androidUri);
+
+						if (Uno.UI.ContextHelper.Current == null)
+						{
+							throw new InvalidOperationException(
+								"LaunchUriAsync was called too early in application lifetime. " +
+								"App context needs to be initialized");
+						}
+						((Android.App.Activity)Uno.UI.ContextHelper.Current).StartActivity(intent);
+
+						return true;
+#elif __WASM__
+						var command = $"Uno.UI.WindowManager.current.open(\"{uri.OriginalString}\");";
+						var result = Uno.Foundation.WebAssemblyRuntime.InvokeJS(command);
+						return result == "True";
+#else
+						throw new NotImplementedException();
+#endif
+					}
+					catch (Exception exception)
+					{
+						if (typeof(Launcher).Log().IsEnabled(LogLevel.Error))
+						{
+							typeof(Launcher).Log().Error($"Failed to {nameof(LaunchUriAsync)}.", exception);
+						}
+
+						return false;
+					}
+				});
+		}
+
+#if __ANDROID__ || __IOS__
+		public static IAsyncOperation<LaunchQuerySupportStatus> QueryUriSupportAsync(
+			Uri uri,
+			LaunchQuerySupportType launchQuerySupportType)
+		{
+
+			bool CanOpenUri()
 			{
 #if __IOS__
-				return UIKit.UIApplication.SharedApplication.OpenUrl(new global::Foundation.NSUrl(uri.OriginalString));
+				return UIApplication.SharedApplication.CanOpenUrl(
+					new AppleUrl(uri.OriginalString));
 #elif __ANDROID__
-				var androidUri = global::Android.Net.Uri.Parse(uri.OriginalString);
-				var intent = new global::Android.Content.Intent(global::Android.Content.Intent.ActionView, androidUri);
+				var androidUri = Android.Net.Uri.Parse(uri.OriginalString);
+				var intent = new Intent(Intent.ActionView, androidUri);
 
-				((Android.App.Activity)Uno.UI.ContextHelper.Current).StartActivity(intent);
-
-				return true;
-#elif __WASM__
-				var command = $"Uno.UI.WindowManager.current.open(\"{uri.OriginalString}\");";
-				var result = Uno.Foundation.WebAssemblyRuntime.InvokeJS(command);
-				return result == "True";
-#else
-				throw new NotImplementedException();
-#endif
-			}
-			catch (Exception exception)
-			{
-				if (typeof(Launcher).Log().IsEnabled(LogLevel.Error))
+				if (Uno.UI.ContextHelper.Current == null)
 				{
-					typeof(Launcher).Log().Error($"Failed to {nameof(LaunchUriAsync)}.", exception);
+					throw new InvalidOperationException(
+						"LaunchUriAsync was called too early in application lifetime. " +
+						"App context needs to be initialized");
 				}
 
-				return false;
+				var manager = Uno.UI.ContextHelper.Current.PackageManager;
+				var supportedResolvedInfos = manager.QueryIntentActivities(
+					intent,
+					PackageInfoFlags.MatchDefaultOnly);
+				return supportedResolvedInfos.Any();
+#endif
 			}
+
+			return CoreDispatcher.Main.RunWithResultAsync(
+				priority: CoreDispatcherPriority.Normal,
+				task: async () => CanOpenUri() ? LaunchQuerySupportStatus.Available : LaunchQuerySupportStatus.NotSupported
+			).AsAsyncOperation();	
 		}
+#endif
 	}
 }

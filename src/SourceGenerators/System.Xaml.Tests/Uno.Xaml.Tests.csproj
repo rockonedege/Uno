@@ -1,16 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>net462</TargetFramework>
     <DefineConstants>$(DefineConstants);NET_4_0;NET_4_5;NET_4_6;MONO;WIN_PLATFORM;MULTIPLEX_OS</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DebugType>full</DebugType>
+		<DebugType>full</DebugType>
     <DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
+	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="NUnit" Version="2.6.4" />
-		<PackageReference Include="NUnitTestAdapter" Version="2.1.1" />
+		<PackageReference Include="NUnit" Version="3.11.0" />
+		<PackageReference Include="NUnit3TestAdapter" Version="3.15.1" />
 	</ItemGroup>
 	
 	<ItemGroup>
@@ -23,16 +21,10 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-	  <None Remove="Test\XmlFiles\BindingMembers.xaml" />
-	  <None Remove="Test\XmlFiles\Binding_Escape.xaml" />
-	  <None Remove="Test\XmlFiles\CustomAttachedProperty.xaml" />
-	  <None Remove="Test\XmlFiles\RunSpace01.xaml" />
-	  <None Remove="Test\XmlFiles\RunSpace02.xaml" />
-	  <None Remove="Test\XmlFiles\TextLiteral.xaml" />
-	  <None Remove="Test\XmlFiles\WhiteSpacePreservation.xaml" />
-	  <None Remove="Test\XmlFiles\xBind.xaml" />
+	  <None Remove="Test\XmlFiles\AttachedPropertyWithNamespace.xaml" />
+	  <None Remove="Test\XmlFiles\EmptyAttachedPropertyNode.xaml" />
 	</ItemGroup>
-	
+		
 	<ItemGroup>
 	  <ProjectReference Include="..\System.Xaml\Uno.Xaml.csproj" />
 	</ItemGroup>
@@ -42,21 +34,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Content Update="Test\XmlFiles\CustomAttachedProperty.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </Content>
-	  <Content Update="Test\XmlFiles\RunSpace01.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </Content>
-	  <Content Update="Test\XmlFiles\RunSpace02.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </Content>
-	  <Content Update="Test\XmlFiles\xBind.xaml">
+	  <Content Update="Test\XmlFiles\EmptyAttachedPropertyNode.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </Content>
 	</ItemGroup>
 
-	<ItemGroup>
+  <ItemGroup>
 	  <Reference Update="System.Xml">
 	    <Aliases>msxaml,%(Aliases)</Aliases>
 	  </Reference>

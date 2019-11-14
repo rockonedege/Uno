@@ -2,24 +2,16 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Devices.Sensors
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum MagnetometerAccuracy 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Unknown,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Unreliable,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Approximate,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		High,
-		#endif
+		// Skipping already declared field Windows.Devices.Sensors.MagnetometerAccuracy.Unknown
+		// Skipping already declared field Windows.Devices.Sensors.MagnetometerAccuracy.Unreliable
+		// Skipping already declared field Windows.Devices.Sensors.MagnetometerAccuracy.Approximate
+		// Skipping already declared field Windows.Devices.Sensors.MagnetometerAccuracy.High
 	}
 	#endif
 }

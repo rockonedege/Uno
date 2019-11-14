@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Uno.UI.DataBinding;
 using Windows.UI.Xaml.Data;
 
 namespace Windows.UI.Xaml
@@ -11,6 +12,8 @@ namespace Windows.UI.Xaml
     partial class DependencyPropertyDetailsCollection
     {
 		private readonly Type _ownerType;
+		private readonly ManagedWeakReference _ownerReference;
+
 		public DependencyPropertyDetails DataContextPropertyDetails { get; }
 		public DependencyPropertyDetails TemplatedParentPropertyDetails { get; }
 
@@ -22,9 +25,10 @@ namespace Windows.UI.Xaml
 		/// Creates an instance using the specified DependencyObject <see cref="Type"/>
 		/// </summary>
 		/// <param name="ownerType">The owner type</param>
-		public DependencyPropertyDetailsCollection(Type ownerType, DependencyProperty dataContextProperty, DependencyProperty templatedParentProperty)
+		public DependencyPropertyDetailsCollection(Type ownerType, ManagedWeakReference ownerReference, DependencyProperty dataContextProperty, DependencyProperty templatedParentProperty)
 		{
 			_ownerType = ownerType;
+			_ownerReference = ownerReference;
 
 			var propertiesForType = DependencyProperty.GetPropertiesForType(ownerType);
 
@@ -38,7 +42,7 @@ namespace Windows.UI.Xaml
 			// Entries are pre-sorted by the DependencyProperty.GetPropertiesForType method
 			AssignEntries(entries, sort: false);
 
-			// Prefecth known properties for faster access
+			// Prefetch known properties for faster access
 			DataContextPropertyDetails = GetPropertyDetails(dataContextProperty);
 			TemplatedParentPropertyDetails = GetPropertyDetails(templatedParentProperty);
 		}
@@ -49,29 +53,47 @@ namespace Windows.UI.Xaml
 		/// <param name="property">A dependency property</param>
 		/// <returns>The details of the property</returns>
 		public DependencyPropertyDetails GetPropertyDetails(DependencyProperty property)
+			=> TryGetPropertyDetails(property, forceCreate: true);
+
+		/// <summary>
+		/// Finds the <see cref="DependencyPropertyDetails"/> for a specific <see cref="DependencyProperty"/> if it exists.
+		/// </summary>
+		/// <param name="property">A dependency property</param>
+		/// <returns>The details of the property if it exists, otherwise null.</returns>
+		public DependencyPropertyDetails FindPropertyDetails(DependencyProperty property)
+			=> TryGetPropertyDetails(property, forceCreate: false);
+
+		private DependencyPropertyDetails TryGetPropertyDetails(DependencyProperty property, bool forceCreate)
 		{
 			ref var propertyEntry = ref GetEntry(property.UniqueId);
 
 			if (propertyEntry.Id == -1)
 			{
-				// The property was not known at startup time, add it.
-				var newEntries = new PropertyEntry[_entries.Length + 1];
-
-				if (_entries.Length != 0)
+				if (forceCreate)
 				{
-					Array.Copy(_entries, 0, newEntries, 0, _entries.Length);
+					// The property was not known at startup time, add it.
+					var newEntries = new PropertyEntry[_entries.Length + 1];
+
+					if (_entries.Length != 0)
+					{
+						Array.Copy(_entries, 0, newEntries, 0, _entries.Length);
+					}
+
+					ref var newEntry = ref newEntries[_entries.Length];
+
+					var details = new DependencyPropertyDetails(property, _ownerType);
+
+					newEntry.Id = property.UniqueId;
+					newEntry.Details = details;
+
+					AssignEntries(newEntries, sort: true);
+
+					return details;
 				}
-
-				ref var newEntry = ref newEntries[_entries.Length];
-
-				var details = new DependencyPropertyDetails(property, _ownerType);
-
-				newEntry.Id = property.UniqueId;
-				newEntry.Details = details;
-
-				AssignEntries(newEntries, sort: true);
-
-				return details;
+				else
+				{
+					return null;
+				}
 			}
 			else
 			{

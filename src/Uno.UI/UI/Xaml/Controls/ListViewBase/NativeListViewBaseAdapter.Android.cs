@@ -16,19 +16,34 @@ using Java.Lang;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using Windows.UI.Core;
+using Uno.UI.DataBinding;
+using Windows.UI.Xaml.Data;
 
 namespace Windows.UI.Xaml.Controls
 {
 	public class NativeListViewBaseAdapter : RecyclerView.Adapter
 	{
 		private const int NoTemplateItemType = 0;
-		private const int GroupHeaderItemType = -1;
+		private const int NoTemplateGroupHeaderType = -1;
 		private const int HeaderItemType = -2;
 		private const int FooterItemType = -3;
+		private const int IsOwnContainerType = -4;
 
 		private const int MaxRecycledViewsPerViewType = 10;
-		
-		internal NativeListViewBase Owner { get; set; }
+
+		private readonly HashSet<int> _groupHeaderItemTypes = new HashSet<int>();
+
+		private ManagedWeakReference _ownerWeakReference;
+
+		internal NativeListViewBase Owner
+		{
+			get => _ownerWeakReference?.Target as NativeListViewBase;
+			set
+			{
+				WeakReferencePool.ReturnWeakReference(this, _ownerWeakReference);
+				_ownerWeakReference = WeakReferencePool.RentWeakReference(this, value);
+			}
+		}
 
 		private ListViewBase XamlParent { get { return Owner?.XamlParent; } }
 
@@ -54,7 +69,8 @@ namespace Windows.UI.Xaml.Controls
 				this.Log().Debug($"Binding view with view type {viewType} at position {position}.");
 			}
 
-			if (parent.GetIsGroupHeader(position) || parent.GetIsHeader(position) || parent.GetIsFooter(position))
+			var isGroupHeader = parent.GetIsGroupHeader(position);
+			if (isGroupHeader || parent.GetIsHeader(position) || parent.GetIsFooter(position))
 			{
 				var item = parent.GetElementFromDisplayPosition(position);
 
@@ -67,17 +83,32 @@ namespace Windows.UI.Xaml.Controls
 					container.Style = style;
 				}
 
-				var dataTemplate = GetDataTemplateFromItem(parent, item, viewType);
+				var dataTemplate = GetDataTemplateFromItem(parent, item, viewType, isGroupHeader);
 
 				container.DataContext = item;
 				container.ContentTemplate = dataTemplate;
-				container.Binding("Content", "");
+				if (container.GetBindingExpression(ContentControl.ContentProperty) == null)
+				{
+					container.SetBinding(ContentControl.ContentProperty, new Binding());
+				}
+			}
+			else if(viewType == IsOwnContainerType)
+			{
+				holder.ItemView = parent?.GetContainerForIndex(index) as View;
 			}
 			else
 			{
 				parent.PrepareContainerForIndex(container, index);
 			}
 
+			RegisterPhaseBinding(holder);
+		}
+
+		/// <summary>
+		/// Register provided list item for Phase binding.
+		/// </summary>
+		internal void RegisterPhaseBinding(RecyclerView.ViewHolder holder)
+		{
 			FrameworkElement.RegisterPhaseBinding(holder.ItemView as ContentControl, a => Owner.ViewCache.OnRecycled(holder as UnoViewHolder, a));
 		}
 
@@ -103,13 +134,13 @@ namespace Windows.UI.Xaml.Controls
 
 		private ContentControl GenerateContainer(int viewType)
 		{
-			if (viewType == GroupHeaderItemType)
-			{
-				return XamlParent?.GetGroupHeaderContainer(null);
-			}
-			if (viewType == HeaderItemType || viewType == FooterItemType)
+			if (viewType == HeaderItemType || viewType == FooterItemType || viewType == IsOwnContainerType)
 			{
 				return ContentControl.CreateItemContainer();
+			}
+			if (_groupHeaderItemTypes.Contains(viewType))
+			{
+				return XamlParent?.GetGroupHeaderContainer(null);
 			}
 
 			return XamlParent?.GetContainerForIndex(-1) as ContentControl;
@@ -117,10 +148,6 @@ namespace Windows.UI.Xaml.Controls
 
 		public override int GetItemViewType(int position)
 		{
-			if (XamlParent?.GetIsGroupHeader(position) ?? false)
-			{
-				return GroupHeaderItemType;
-			}
 			if (XamlParent?.GetIsHeader(position) ?? false)
 			{
 				return HeaderItemType;
@@ -131,16 +158,46 @@ namespace Windows.UI.Xaml.Controls
 			}
 
 			var item = XamlParent?.GetElementFromDisplayPosition(position);
-			var template = GetDataTemplateFromItem(XamlParent, item, null);
+			var isGroupHeader = XamlParent?.GetIsGroupHeader(position) ?? false;
+			var template = GetDataTemplateFromItem(XamlParent, item, null, isGroupHeader);
 
-			return template?.GetHashCode() ?? NoTemplateItemType;
+			int viewType;
+			if (template != null)
+			{
+				viewType = template.GetHashCode();
+			}
+			else
+			{
+				if (XamlParent?.IsItemItsOwnContainer(item) ?? false)
+				{
+					viewType = IsOwnContainerType;
+				}
+				else
+				{
+					viewType = isGroupHeader ? NoTemplateGroupHeaderType : NoTemplateItemType;
+				}
+			}
+
+			if (isGroupHeader)
+			{
+				_groupHeaderItemTypes.Add(viewType);
+			}
+
+			return viewType;
 		}
 
-		private static DataTemplate GetDataTemplateFromItem(ListViewBase parent, object item, int? itemViewType)
+		private static DataTemplate GetDataTemplateFromItem(ListViewBase parent, object item, int? itemViewType, bool isGroupHeader)
 		{
-			if (itemViewType == GroupHeaderItemType)
+			if (isGroupHeader)
 			{
-				return parent.GetGroupStyle()?.HeaderTemplate;
+				var groupStyle = parent.GetGroupStyle();
+
+				return DataTemplateHelper.ResolveTemplate(
+					groupStyle?.HeaderTemplate,
+					groupStyle?.HeaderTemplateSelector,
+					item,
+					parent
+				);
 			}
 			if (itemViewType == HeaderItemType)
 			{
@@ -153,8 +210,15 @@ namespace Windows.UI.Xaml.Controls
 			return DataTemplateHelper.ResolveTemplate(
 				 parent?.ItemTemplate,
 				 parent?.ItemTemplateSelector,
-				 item
+				 item,
+				 parent
 			 );
+		}
+
+		internal void Refresh()
+		{
+			_groupHeaderItemTypes.Clear();
+			NotifyDataSetChanged();
 		}
 	}
 }

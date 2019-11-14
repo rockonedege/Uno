@@ -1,15 +1,11 @@
-﻿#if NET46 || NETSTANDARD2_0
+﻿#if NET461 || __WASM__
 #pragma warning disable CS0067
 #endif
 
 using Windows.Foundation;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.Text;
 using Uno.Extensions;
 using Uno.Logging;
 using Uno.Disposables;
@@ -19,7 +15,9 @@ using Windows.System;
 using Windows.UI.Xaml.Controls;
 using Uno.UI;
 using Uno;
-using VirtualKeyModifiers = Windows.UI.Xaml.Input.VirtualKeyModifiers;
+using Uno.UI.Controls;
+using Uno.UI.Media;
+using System;
 
 #if __IOS__
 using UIKit;
@@ -27,261 +25,25 @@ using UIKit;
 
 namespace Windows.UI.Xaml
 {
-	public partial class UIElement : DependencyObject
+	public partial class UIElement : DependencyObject, IXUidProvider
 	{
-		private SerialDisposable _clipSubscription = new SerialDisposable();
-		private readonly List<Pointer> _pointCaptures = new List<Pointer>();
+		private readonly SerialDisposable _clipSubscription = new SerialDisposable();
+		private readonly List<KeyboardAccelerator> _keyboardAccelerators = new List<KeyboardAccelerator>();
+		private string _uid;
 
-		partial void InitializeCapture()
+		string IXUidProvider.Uid
 		{
-			this.SetValue(PointerCapturesProperty, _pointCaptures);
-		}
-
-
-		/// <summary>
-		/// Deteremines if an <see cref="UIElement"/> clips its children to its bounds.
-		/// </summary>
-		internal bool ClipChildrenToBounds { get; set; } = true;
-
-		public event RoutedEventHandler LostFocus;
-		internal void RaiseLostFocus(RoutedEventArgs args) => LostFocus?.Invoke(this, args);
-
-		public event RoutedEventHandler GotFocus;
-		internal void RaiseGotFocus(RoutedEventArgs args) => GotFocus?.Invoke(this, args);
-
-		public event DoubleTappedEventHandler DoubleTapped
-#if XAMARIN
-		{
-			add { RegisterDoubleTapped(value); }
-			remove { UnregisterDoubleTapped(value); }
-		}
-#else
-		;
-#endif
-
-		public event PointerEventHandler PointerCanceled
-#if XAMARIN_ANDROID
-		{
-			add { RegisterPointerCanceled(value); }
-			remove { UnregisterPointerCanceled(value); }
-		}
-#else
-		;
-#endif
-
-#pragma warning disable 67 // Unused member
-		[NotImplemented]
-		public event global::Windows.UI.Xaml.Input.PointerEventHandler PointerCaptureLost;
-#pragma warning restore 67 // Unused member
-
-#if __WASM__
-		private const string leftPointerEventFilter =
-			"evt ? (!evt.button || evt.button == 0) : false";
-
-		private const string pointerEventExtractor =
-			"evt ? \"\"+evt.pointerId+\";\"+evt.clientX+\";\"+evt.clientY+\";\"+(evt.ctrlKey?\"1\":\"0\")+\";\"+(evt.shiftKey?\"1\":\"0\")+\";\"+evt.button+\";\"+evt.pointerType : \"\"";
-
-		private EventArgs PayloadToPointerArgs(string payload)
-		{
-			var parts = payload?.Split(';');
-			if (parts?.Length != 7)
+			get => _uid;
+			set
 			{
-				return null;
+				_uid = value;
+				OnUidChangedPartial();
 			}
-
-			var pointerId = uint.Parse(parts[0], CultureInfo.InvariantCulture);
-			var x = double.Parse(parts[1], CultureInfo.InvariantCulture);
-			var y = double.Parse(parts[2], CultureInfo.InvariantCulture);
-			var ctrl = parts[3] == "1";
-			var shift = parts[4] == "1";
-			var buttons = int.Parse(parts[5], CultureInfo.InvariantCulture); // -1: none, 0:main, 1:middle, 2:other (commonly main=left, other=right)
-			var typeStr = parts[6];
-
-			var keys = ctrl ? VirtualKeyModifiers.Control : (shift ? VirtualKeyModifiers.Shift : VirtualKeyModifiers.None);
-			PointerDeviceType type;
-			switch (typeStr.ToUpper())
-			{
-				case "MOUSE":
-				default:
-					type = PointerDeviceType.Mouse;
-					break;
-				case "PEN":
-					type = PointerDeviceType.Pen;
-					break;
-				case "TOUCH":
-					type = PointerDeviceType.Touch;
-					break;
-			}
-
-			var args = new PointerRoutedEventArgs(new Point(x, y))
-			{
-				KeyModifiers = keys,
-				Pointer = new Pointer(pointerId, type)
-			};
-
-			return args;
 		}
 
-		private bool ValidateIsHitTest(EventArgs args)
-		{
-			// Note: IsHitVisible is inherited and directly propagated to the view (cf. UpdateHitTest),
-			//		 here we only validate the LOCAL override (like Panel.Background != null).
-			return IsViewHit();
-		}
-#endif
+		partial void OnUidChangedPartial();
 
-#pragma warning disable CS0067 // The event is never used
-		public event PointerEventHandler PointerEntered
-#pragma warning restore CS0067 // The event is never used
-
-#if XAMARIN_ANDROID
-		{
-			add { RegisterPointerEntered(value); }
-			remove { UnregisterPointerEntered(value); }
-		}
-#elif __WASM__
-		{
-			add => RegisterEventHandler(
-				"pointerenter", 
-				value, 
-				eventExtractorScript: pointerEventExtractor, 
-				payloadConverter: PayloadToPointerArgs, 
-				eventFilterManaged: ValidateIsHitTest);
-			remove => UnregisterEventHandler("pointerenter", value);
-		}
-#else
-		;
-#endif
-
-#pragma warning disable CS0067 // The event is never used
-		public event PointerEventHandler PointerExited
-#pragma warning restore CS0067 // The event is never used
-#if XAMARIN_ANDROID
-		{
-			add { RegisterPointerExited(value); }
-			remove { UnregisterPointerExited(value); }
-		}
-#elif __WASM__
-		{
-			add => RegisterEventHandler(
-				"pointerleave", 
-				value, 
-				eventExtractorScript: pointerEventExtractor, 
-				payloadConverter: PayloadToPointerArgs, 
-				eventFilterManaged: ValidateIsHitTest);
-			remove => UnregisterEventHandler("pointerleave", value);
-		}
-#else
-		;
-#endif
-
-#pragma warning disable CS0067 // The event is never used
-		public event PointerEventHandler PointerMoved
-#pragma warning restore CS0067 // The event is never used
-#if XAMARIN_ANDROID
-		{
-			add { RegisterPointerMoved(value); }
-			remove { UnregisterPointerMoved(value); }
-		}
-#elif __WASM__
-		{
-			add => RegisterEventHandler(
-				"pointermove", 
-				value, 
-				eventExtractorScript: pointerEventExtractor, 
-				payloadConverter: PayloadToPointerArgs, 
-				eventFilterManaged: ValidateIsHitTest);
-			remove => UnregisterEventHandler("pointermove", value);
-		}
-#else
-		;
-#endif
-
-#pragma warning disable CS0067 // The event is never used
-		public event PointerEventHandler PointerPressed
-#pragma warning restore CS0067 // The event is never used
-#if XAMARIN_ANDROID
-		{
-			add { RegisterPointerPressed(value); }
-			remove { UnregisterPointerPressed(value); }
-		}
-#elif __WASM__
-		{
-			add => RegisterEventHandler(
-				"pointerdown", 
-				value, 
-				eventFilterScript: leftPointerEventFilter, 
-				eventExtractorScript: pointerEventExtractor, 
-				payloadConverter: PayloadToPointerArgs, 
-				eventFilterManaged: ValidateIsHitTest);
-			remove => UnregisterEventHandler("pointerdown", value);
-		}
-#else
-		;
-#endif
-
-#pragma warning disable CS0067 // The event is never used
-		public event PointerEventHandler PointerReleased
-#pragma warning restore CS0067 // The event is never used
-#if XAMARIN_ANDROID
-		{
-			add { RegisterPointerReleased(value); }
-			remove { UnregisterPointerReleased(value); }
-		}
-#elif __WASM__
-		{
-			add => RegisterEventHandler(
-				"pointerup", 
-				value, 
-				eventFilterScript: leftPointerEventFilter, 
-				eventExtractorScript: pointerEventExtractor, 
-				payloadConverter: PayloadToPointerArgs, 
-				eventFilterManaged: ValidateIsHitTest);
-			remove => UnregisterEventHandler("pointerup", value);
-		}
-#else
-		;
-#endif
-
-		//public event PointerEventHandler PointerWheelChanged;
-
-		public event TappedEventHandler Tapped
-#if XAMARIN
-		{
-			add { RegisterTapped(value); }
-			remove { UnregisterTapped(value); }
-		}
-#else
-		;
-#endif
-
-#if __WASM__
-		public event KeyEventHandler KeyDown
-		{
-			add => RegisterEventHandler(
-				"keydown",
-				value,
-				eventExtractorScript: "(evt instanceof KeyboardEvent) ? evt.key : \"0\"",
-				payloadConverter: keyStr => new KeyRoutedEventArgs { Key = VirtualKeyHelper.FromKey(keyStr), OriginalSource = this },
-				eventFilterManaged: ValidateIsHitTest);
-			remove => UnregisterEventHandler("keydown", value);
-		}
-
-		public event KeyEventHandler KeyUp
-		{
-			add => RegisterEventHandler(
-				"keyup",
-				value,
-				eventExtractorScript: "(evt instanceof KeyboardEvent) ? evt.key : \"0\"",
-				payloadConverter: keyStr => new KeyRoutedEventArgs {Key = VirtualKeyHelper.FromKey(keyStr), OriginalSource = this},
-				eventFilterManaged: ValidateIsHitTest);
-			remove => UnregisterEventHandler("keyup", value);
-		}
-#endif
-
-		protected internal bool IsPointerPressed { get; set; }
-
-		protected internal bool IsPointerOver { get; set; }
+		private protected bool RequiresClipping { get; set; } = true;
 
 		#region Clip DependencyProperty
 
@@ -325,16 +87,37 @@ namespace Windows.UI.Xaml
 		/// </summary>
 		public Transform RenderTransform
 		{
-			get { return (Transform)this.GetValue(RenderTransformProperty); }
-			set { this.SetValue(RenderTransformProperty, value); }
+			get => (Transform)this.GetValue(RenderTransformProperty);
+			set => this.SetValue(RenderTransformProperty, value);
 		}
 
-		// Using a DependencyProperty as the backing store for RenderTransform.  This enables animation, styling, binding, etc...
+		/// <summary>
+		/// Backing dependency property for <see cref="RenderTransform"/>
+		/// </summary>
 		public static readonly DependencyProperty RenderTransformProperty =
 			DependencyProperty.Register("RenderTransform", typeof(Transform), typeof(UIElement), new PropertyMetadata(null, (s, e) => OnRenderTransformChanged(s, e)));
 
-		static partial void OnRenderTransformChanged(object dependencyObject, DependencyPropertyChangedEventArgs args);
+		private static void OnRenderTransformChanged(object dependencyObject, DependencyPropertyChangedEventArgs args)
+		{
+			var view = (UIElement)dependencyObject;
 
+			view._renderTransform?.Dispose();
+
+			if (args.NewValue is Transform transform)
+			{
+				view._renderTransform = new NativeRenderTransformAdapter(view, transform, view.RenderTransformOrigin);
+				view.OnRenderTransformSet();
+			}
+			else
+			{
+				// Sanity
+				view._renderTransform = null;
+			}
+		}
+
+		internal NativeRenderTransformAdapter _renderTransform;
+
+		partial void OnRenderTransformSet();
 		#endregion
 
 		#region RenderTransformOrigin Dependency Property
@@ -344,17 +127,21 @@ namespace Windows.UI.Xaml
 		/// </summary>
 		public Point RenderTransformOrigin
 		{
-			get { return (Point)this.GetValue(RenderTransformOriginProperty); }
-			set { this.SetValue(RenderTransformOriginProperty, value); }
+			get => (Point)this.GetValue(RenderTransformOriginProperty);
+			set => this.SetValue(RenderTransformOriginProperty, value);
 		}
 
 		// Using a DependencyProperty as the backing store for RenderTransformOrigin.  This enables animation, styling, binding, etc...
 		public static readonly DependencyProperty RenderTransformOriginProperty =
 			DependencyProperty.Register("RenderTransformOrigin", typeof(Point), typeof(UIElement), new PropertyMetadata(default(Point), (s, e) => OnRenderTransformOriginChanged(s, e)));
 
+		private static void OnRenderTransformOriginChanged(object dependencyObject, DependencyPropertyChangedEventArgs args)
+		{
+			var view = (UIElement)dependencyObject;
+			var point = (Point)args.NewValue;
 
-		static partial void OnRenderTransformOriginChanged(object dependencyObject, DependencyPropertyChangedEventArgs args);
-
+			view._renderTransform?.UpdateOrigin(point);
+		}
 		#endregion
 
 		#region IsHitTestVisible Dependency Property
@@ -428,20 +215,42 @@ namespace Windows.UI.Xaml
 
 		internal bool IsRenderingSuspended { get; set; }
 
-		private void ApplyClip()
+		internal void ApplyClip()
 		{
-			var rect = Clip?.Rect ?? Rect.Empty;
+			Rect rect;
 
-			if (Clip?.Transform is TranslateTransform translateTransform)
+			if (Clip == null)
 			{
-				rect.X += translateTransform.X;
-				rect.Y += translateTransform.Y;
+				rect = Rect.Empty;
+			}
+			else
+			{
+				rect = Clip?.Rect ?? Rect.Empty;
+
+				if (Clip?.Transform is TranslateTransform translateTransform)
+				{
+					rect.X += translateTransform.X;
+					rect.Y += translateTransform.Y;
+				}
 			}
 
-			EnsureClip(rect);
+			if (NeedsClipToSlot)
+			{
+				var boundsClipping = new Rect(0, 0, RenderSize.Width, RenderSize.Height);
+				if (rect.IsEmpty)
+				{
+					rect = boundsClipping;
+				}
+				else
+				{
+					rect.Intersect(boundsClipping);
+				}
+			}
+
+			ApplyNativeClip(rect);
 		}
 
-		partial void EnsureClip(Rect rect);
+		partial void ApplyNativeClip(Rect rect);
 
 		internal static object GetDependencyPropertyValueInternal(DependencyObject owner, string dependencyPropertyName)
 		{
@@ -449,17 +258,29 @@ namespace Windows.UI.Xaml
 			return dp == null ? null : owner.GetValue(dp);
 		}
 
+		internal Rect LayoutSlot { get; set; } = default;
+
+		internal bool NeedsClipToSlot { get; set; }
+
 #if !__WASM__
+		/// <summary>
+		/// Backing property for <see cref="Windows.UI.Xaml.Controls.Primitives.LayoutInformation.GetAvailableSize(UIElement)"/>
+		/// </summary>
+		internal Size LastAvailableSize { get; set; }
+
 		/// <summary>
 		/// Provides the size reported during the last call to Measure.
 		/// </summary>
-		public Size DesiredSize { get; internal set; }
-
-		public Size RenderSize
+		public Size DesiredSize
 		{
-			get; internal set;
+			get;
+			internal set;
 		}
 
+		/// <summary>
+		/// Provides the size reported during the last call to Arrange (i.e. the ActualSize)
+		/// </summary>
+		public Size RenderSize { get; internal set; }
 
 		public virtual void Measure(Size availableSize)
 		{
@@ -496,48 +317,6 @@ namespace Windows.UI.Xaml
 		}
 #endif
 
-		public bool CapturePointer(Pointer value)
-		{
-			IsPointerCaptured = true;
-			_pointCaptures.Add(value);
-#if __WASM__
-			CapturePointerNative(value);
-#endif
-			return true;
-		}
-
-		public void ReleasePointerCapture(Pointer value)
-		{
-			IsPointerCaptured = false;
-			_pointCaptures.Remove(value);
-
-#if __WASM__
-			ReleasePointerCaptureNative(value);
-#endif
-		}
-
-		public void ReleasePointerCaptures()
-		{
-			IsPointerCaptured = false;
-#if __WASM__
-			foreach (var pointer in _pointCaptures)
-			{
-				ReleasePointerCaptureNative(pointer);
-			}
-#endif
-			_pointCaptures.Clear();
-		}
-
-		public global::System.Collections.Generic.IReadOnlyList<global::Windows.UI.Xaml.Input.Pointer> PointerCaptures
-			=> (IReadOnlyList<global::Windows.UI.Xaml.Input.Pointer>)this.GetValue(PointerCapturesProperty);
-
-		public static DependencyProperty PointerCapturesProperty { get; } =
-		DependencyProperty.Register(
-			"PointerCaptures", typeof(global::System.Collections.Generic.IReadOnlyList<global::Windows.UI.Xaml.Input.Pointer>),
-			typeof(global::Windows.UI.Xaml.UIElement),
-			new FrameworkPropertyMetadata(defaultValue: null)
-		);
-
 		public void StartBringIntoView()
 		{
 			StartBringIntoView(new BringIntoViewOptions());
@@ -548,14 +327,17 @@ namespace Windows.UI.Xaml
 #if __IOS__ || __ANDROID__
 			Dispatcher.RunAsync(Core.CoreDispatcherPriority.Normal, () =>
 			{
-		// This currently doesn't support nested scrolling.
-		// This currently doesn't support BringIntoViewOptions.AnimationDesired.
-		var scrollContentPresenter = this.FindFirstParent<IScrollContentPresenter>();
+				// This currently doesn't support nested scrolling.
+				// This currently doesn't support BringIntoViewOptions.AnimationDesired.
+				var scrollContentPresenter = this.FindFirstParent<IScrollContentPresenter>();
 				scrollContentPresenter?.MakeVisible(this, options.TargetRect ?? Rect.Empty);
 			});
 #endif
 		}
 
 		internal virtual bool IsViewHit() => true;
+
+		[global::Uno.NotImplemented]
+		public IList<KeyboardAccelerator> KeyboardAccelerators => _keyboardAccelerators;
 	}
 }

@@ -2,82 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Xaml.Media.Animation
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class SplitCloseThemeAnimation : global::Windows.UI.Xaml.Media.Animation.Timeline
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  string ContentTargetName
-		{
-			get
-			{
-				return (string)this.GetValue(ContentTargetNameProperty);
-			}
-			set
-			{
-				this.SetValue(ContentTargetNameProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.DependencyObject ContentTarget
-		{
-			get
-			{
-				return (global::Windows.UI.Xaml.DependencyObject)this.GetValue(ContentTargetProperty);
-			}
-			set
-			{
-				this.SetValue(ContentTargetProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  string ClosedTargetName
-		{
-			get
-			{
-				return (string)this.GetValue(ClosedTargetNameProperty);
-			}
-			set
-			{
-				this.SetValue(ClosedTargetNameProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.DependencyObject ClosedTarget
-		{
-			get
-			{
-				return (global::Windows.UI.Xaml.DependencyObject)this.GetValue(ClosedTargetProperty);
-			}
-			set
-			{
-				this.SetValue(ClosedTargetProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  double ClosedLength
-		{
-			get
-			{
-				return (double)this.GetValue(ClosedLengthProperty);
-			}
-			set
-			{
-				this.SetValue(ClosedLengthProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  string OpenedTargetName
 		{
@@ -91,7 +21,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.UI.Xaml.DependencyObject OpenedTarget
 		{
@@ -105,7 +35,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  double OpenedLength
 		{
@@ -119,7 +49,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  double OffsetFromCenter
 		{
@@ -133,7 +63,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  double ContentTranslationOffset
 		{
@@ -147,7 +77,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.UI.Xaml.Controls.Primitives.AnimationDirection ContentTranslationDirection
 		{
@@ -161,7 +91,77 @@ namespace Windows.UI.Xaml.Media.Animation
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  string ContentTargetName
+		{
+			get
+			{
+				return (string)this.GetValue(ContentTargetNameProperty);
+			}
+			set
+			{
+				this.SetValue(ContentTargetNameProperty, value);
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::Windows.UI.Xaml.DependencyObject ContentTarget
+		{
+			get
+			{
+				return (global::Windows.UI.Xaml.DependencyObject)this.GetValue(ContentTargetProperty);
+			}
+			set
+			{
+				this.SetValue(ContentTargetProperty, value);
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  string ClosedTargetName
+		{
+			get
+			{
+				return (string)this.GetValue(ClosedTargetNameProperty);
+			}
+			set
+			{
+				this.SetValue(ClosedTargetNameProperty, value);
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::Windows.UI.Xaml.DependencyObject ClosedTarget
+		{
+			get
+			{
+				return (global::Windows.UI.Xaml.DependencyObject)this.GetValue(ClosedTargetProperty);
+			}
+			set
+			{
+				this.SetValue(ClosedTargetProperty, value);
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  double ClosedLength
+		{
+			get
+			{
+				return (double)this.GetValue(ClosedLengthProperty);
+			}
+			set
+			{
+				this.SetValue(ClosedLengthProperty, value);
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty ClosedLengthProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -169,7 +169,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			typeof(global::Windows.UI.Xaml.Media.Animation.SplitCloseThemeAnimation), 
 			new FrameworkPropertyMetadata(default(double)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty ClosedTargetNameProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -177,7 +177,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			typeof(global::Windows.UI.Xaml.Media.Animation.SplitCloseThemeAnimation), 
 			new FrameworkPropertyMetadata(default(string)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty ClosedTargetProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -185,7 +185,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			typeof(global::Windows.UI.Xaml.Media.Animation.SplitCloseThemeAnimation), 
 			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.DependencyObject)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty ContentTargetNameProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -193,7 +193,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			typeof(global::Windows.UI.Xaml.Media.Animation.SplitCloseThemeAnimation), 
 			new FrameworkPropertyMetadata(default(string)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty ContentTargetProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -201,7 +201,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			typeof(global::Windows.UI.Xaml.Media.Animation.SplitCloseThemeAnimation), 
 			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.DependencyObject)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty ContentTranslationDirectionProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -209,7 +209,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			typeof(global::Windows.UI.Xaml.Media.Animation.SplitCloseThemeAnimation), 
 			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.Controls.Primitives.AnimationDirection)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty ContentTranslationOffsetProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -217,7 +217,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			typeof(global::Windows.UI.Xaml.Media.Animation.SplitCloseThemeAnimation), 
 			new FrameworkPropertyMetadata(default(double)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty OffsetFromCenterProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -225,7 +225,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			typeof(global::Windows.UI.Xaml.Media.Animation.SplitCloseThemeAnimation), 
 			new FrameworkPropertyMetadata(default(double)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty OpenedLengthProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -233,7 +233,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			typeof(global::Windows.UI.Xaml.Media.Animation.SplitCloseThemeAnimation), 
 			new FrameworkPropertyMetadata(default(double)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty OpenedTargetNameProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -241,7 +241,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			typeof(global::Windows.UI.Xaml.Media.Animation.SplitCloseThemeAnimation), 
 			new FrameworkPropertyMetadata(default(string)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public static global::Windows.UI.Xaml.DependencyProperty OpenedTargetProperty { get; } = 
 		Windows.UI.Xaml.DependencyProperty.Register(
@@ -249,7 +249,7 @@ namespace Windows.UI.Xaml.Media.Animation
 			typeof(global::Windows.UI.Xaml.Media.Animation.SplitCloseThemeAnimation), 
 			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.DependencyObject)));
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public SplitCloseThemeAnimation() : base()
 		{

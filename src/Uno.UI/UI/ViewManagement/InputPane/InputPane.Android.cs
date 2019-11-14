@@ -1,20 +1,14 @@
 ﻿#if __ANDROID__
 using System;
-using System.Collections.Generic;
-using System.Text;
-using Uno.UI;
 using Android.App;
 using Android.Content;
+using Android.Util;
 using Android.Views.InputMethods;
+using Uno.UI;
 using Windows.Foundation;
-using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Android.Widget;
-using Android.Views;
-using Android.Graphics.Drawables;
-using Uno.Disposables;
-using Uno.Extensions;
+using Windows.UI.Xaml.Input;
 
 namespace Windows.UI.ViewManagement
 {
@@ -40,7 +34,7 @@ namespace Windows.UI.ViewManagement
 			if (view != null)
 			{
 				var imm = (InputMethodManager)activity.GetSystemService(Context.InputMethodService);
-				imm.HideSoftInputFromWindow(view.WindowToken, 0);
+				imm.HideSoftInputFromWindow(view.WindowToken, HideSoftInputFlags.None);
 			}
 		}
 

@@ -2,24 +2,16 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Media.SpeechRecognition
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum SpeechRecognitionConfidence 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		High,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Medium,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Low,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Rejected,
-		#endif
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionConfidence.High
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionConfidence.Medium
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionConfidence.Low
+		// Skipping already declared field Windows.Media.SpeechRecognition.SpeechRecognitionConfidence.Rejected
 	}
 	#endif
 }

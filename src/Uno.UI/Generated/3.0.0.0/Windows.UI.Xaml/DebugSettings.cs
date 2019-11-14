@@ -2,78 +2,27 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Xaml
 {
-	#if false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class DebugSettings 
 	{
-		#if false || false || false || false
+		// Skipping already declared property IsOverdrawHeatMapEnabled
+		// Skipping already declared property IsBindingTracingEnabled
+		// Skipping already declared property EnableFrameRateCounter
+		// Skipping already declared property EnableRedrawRegions
+		// Skipping already declared property IsTextPerformanceVisualizationEnabled
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
-		public  bool IsOverdrawHeatMapEnabled
+		public  bool FailFastOnErrors
 		{
 			get
 			{
-				throw new global::System.NotImplementedException("The member bool DebugSettings.IsOverdrawHeatMapEnabled is not implemented in Uno.");
+				throw new global::System.NotImplementedException("The member bool DebugSettings.FailFastOnErrors is not implemented in Uno.");
 			}
 			set
 			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.DebugSettings", "bool DebugSettings.IsOverdrawHeatMapEnabled");
-			}
-		}
-		#endif
-		#if false || false || false || false
-		[global::Uno.NotImplemented]
-		public  bool IsBindingTracingEnabled
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member bool DebugSettings.IsBindingTracingEnabled is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.DebugSettings", "bool DebugSettings.IsBindingTracingEnabled");
-			}
-		}
-		#endif
-		#if false || false || false || false
-		[global::Uno.NotImplemented]
-		public  bool EnableFrameRateCounter
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member bool DebugSettings.EnableFrameRateCounter is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.DebugSettings", "bool DebugSettings.EnableFrameRateCounter");
-			}
-		}
-		#endif
-		#if false || false || false || false
-		[global::Uno.NotImplemented]
-		public  bool EnableRedrawRegions
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member bool DebugSettings.EnableRedrawRegions is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.DebugSettings", "bool DebugSettings.EnableRedrawRegions");
-			}
-		}
-		#endif
-		#if false || false || false || false
-		[global::Uno.NotImplemented]
-		public  bool IsTextPerformanceVisualizationEnabled
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member bool DebugSettings.IsTextPerformanceVisualizationEnabled is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.DebugSettings", "bool DebugSettings.IsTextPerformanceVisualizationEnabled");
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.DebugSettings", "bool DebugSettings.FailFastOnErrors");
 			}
 		}
 		#endif
@@ -89,21 +38,8 @@ namespace Windows.UI.Xaml
 		// Forced skipping of method Windows.UI.Xaml.DebugSettings.EnableRedrawRegions.set
 		// Forced skipping of method Windows.UI.Xaml.DebugSettings.IsTextPerformanceVisualizationEnabled.get
 		// Forced skipping of method Windows.UI.Xaml.DebugSettings.IsTextPerformanceVisualizationEnabled.set
-		#if false || false || false || false
-		[global::Uno.NotImplemented]
-		public  event global::Windows.UI.Xaml.BindingFailedEventHandler BindingFailed
-		{
-			[global::Uno.NotImplemented]
-			add
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.DebugSettings", "event BindingFailedEventHandler DebugSettings.BindingFailed");
-			}
-			[global::Uno.NotImplemented]
-			remove
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.DebugSettings", "event BindingFailedEventHandler DebugSettings.BindingFailed");
-			}
-		}
-		#endif
+		// Forced skipping of method Windows.UI.Xaml.DebugSettings.FailFastOnErrors.get
+		// Forced skipping of method Windows.UI.Xaml.DebugSettings.FailFastOnErrors.set
+		// Skipping already declared event Windows.UI.Xaml.DebugSettings.BindingFailed
 	}
 }

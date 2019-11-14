@@ -1,14 +1,12 @@
 ﻿#if __ANDROID__
 using System;
-using System.Collections.Generic;
-using System.Text;
+using Android.App;
 using Android.Content;
 using Android.Content.Res;
 using Android.Hardware;
 using Android.Runtime;
 using Android.Views;
 using Uno.UI;
-using Windows.Graphics.Display;
 using Android.Provider;
 using static Android.Provider.Settings;
 using Android.Database;
@@ -16,7 +14,7 @@ using Android.OS;
 
 namespace Windows.Devices.Sensors
 {
-	public partial class SimpleOrientationSensor
+	public partial class SimpleOrientationSensor : Java.Lang.Object, ISensorEventListener
 	{
 		#region Static
 
@@ -29,15 +27,19 @@ namespace Windows.Devices.Sensors
 				if (_defaultDeviceOrientation == Orientation.Undefined)
 				{
 					var context = ContextHelper.Current;
-					var windowManager = context.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
-					var config = context.Resources.Configuration;
-					var rotation = windowManager.DefaultDisplay.Rotation;
 
-					_defaultDeviceOrientation =
-						((rotation == SurfaceOrientation.Rotation0 || rotation == SurfaceOrientation.Rotation180) && config.Orientation == Orientation.Landscape) ||
-						((rotation == SurfaceOrientation.Rotation90 || rotation == SurfaceOrientation.Rotation270) && config.Orientation == Orientation.Portrait)
-							? Orientation.Landscape
-							: Orientation.Portrait;
+					if (context != null)
+					{
+						var windowManager = context.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
+						var config = context.Resources.Configuration;
+						var rotation = windowManager.DefaultDisplay.Rotation;
+
+						_defaultDeviceOrientation =
+							((rotation == SurfaceOrientation.Rotation0 || rotation == SurfaceOrientation.Rotation180) && config.Orientation == Orientation.Landscape) ||
+							((rotation == SurfaceOrientation.Rotation90 || rotation == SurfaceOrientation.Rotation270) && config.Orientation == Orientation.Portrait)
+								? Orientation.Landscape
+								: Orientation.Portrait;
+					}
 				}
 
 				return _defaultDeviceOrientation;
@@ -48,18 +50,59 @@ namespace Windows.Devices.Sensors
 
 		private SimpleOrientationEventListener _orientationListener;
 		private SettingsContentObserver _contentObserver;
+		private SensorManager _sensorManager;
+		// Threshold, in meters per second squared, closely equivalent to an angle of 25 degrees which correspond to the value when Android detect new screen orientation 
+		private const double _threshold = 4.55;
+		private const Android.Hardware.SensorType _gravitySensorType = Android.Hardware.SensorType.Gravity;
 
 		partial void Initialize()
 		{
-			_orientationListener = new SimpleOrientationEventListener(orientation => OnOrientationChanged(orientation));
-			_contentObserver = new SettingsContentObserver(new Handler(Looper.MainLooper), () => OnIsAccelerometerRotationEnabledChanged(IsAccelerometerRotationEnabled));
+			_sensorManager = (SensorManager)Application.Context.GetSystemService(Context.SensorService);
+			var gravitySensor = _sensorManager.GetDefaultSensor(_gravitySensorType);
 
-			ContextHelper.Current.ContentResolver.RegisterContentObserver(Settings.System.GetUriFor(Settings.System.AccelerometerRotation), true, _contentObserver);
-			if (_orientationListener.CanDetectOrientation() && IsAccelerometerRotationEnabled)
+			// If the the device has a gyroscope we will use the SensorType.Gravity, if not we will use single angle orientation calculations instead
+			if (gravitySensor != null)
 			{
-				_orientationListener.Enable();
+				_sensorManager.RegisterListener(this, _sensorManager.GetDefaultSensor(_gravitySensorType), SensorDelay.Normal);
+			}
+			else
+			{
+				_orientationListener = new SimpleOrientationEventListener(orientation => OnOrientationChanged(orientation));
+				_contentObserver = new SettingsContentObserver(new Handler(Looper.MainLooper), () => OnIsAccelerometerRotationEnabledChanged(IsAccelerometerRotationEnabled));
+
+				ContextHelper.Current.ContentResolver.RegisterContentObserver(Settings.System.GetUriFor(Settings.System.AccelerometerRotation), true, _contentObserver);
+				if (_orientationListener.CanDetectOrientation() && IsAccelerometerRotationEnabled)
+				{
+					_orientationListener.Enable();
+				}
 			}
 		}
+
+		#region GraviySensorType Methods
+
+		public void OnAccuracyChanged(Sensor sensor, [GeneratedEnum] SensorStatus accuracy)
+		{
+		}
+
+		public void OnSensorChanged(SensorEvent e)
+		{
+			if (e.Sensor.Type != _gravitySensorType)
+			{
+				return;
+			}
+
+			// All units are negatives compared to iOS : https://developer.android.com/reference/android/hardware/SensorEvent#values
+			var gravityX = -(double)e.Values[0];
+			var gravityY = -(double)e.Values[1];
+			var gravityZ = -(double)e.Values[2];
+
+			var simpleOrientation = ToSimpleOrientation(gravityX, gravityY, gravityZ, _threshold, _currentOrientation);
+			SetCurrentOrientation(simpleOrientation);
+		}
+
+		#endregion
+
+		#region OrientationSensorType Methods and Classes
 
 		private void OnOrientationChanged(int angle)
 		{
@@ -179,6 +222,8 @@ namespace Windows.Devices.Sensors
 
 			public override void OnOrientationChanged(int orientation) => _orientationChanged(orientation);
 		}
+
+		#endregion
 	}
 }
 #endif

@@ -13,7 +13,6 @@ using Windows.UI.Xaml.Data;
 using System.Runtime.CompilerServices;
 using Android.Graphics;
 using Android.Graphics.Drawables;
-using System.Drawing;
 using Uno.UI;
 using Windows.UI.Xaml.Media;
 
@@ -44,7 +43,12 @@ namespace Windows.UI.Xaml.Controls
 
 		partial void Initialize();
 
-		public void UpdateBorder()
+		private void UpdateBorder()
+		{
+			UpdateBorder(false);
+		}
+
+		private void UpdateBorder(bool willUpdateMeasures)
 		{
 			if (IsLoaded)
 			{
@@ -54,7 +58,8 @@ namespace Windows.UI.Xaml.Controls
 					BorderThickness,
 					BorderBrush,
 					CornerRadius,
-					Padding
+					Padding,
+					willUpdateMeasures
 				);
 			}
 		}
@@ -63,7 +68,7 @@ namespace Windows.UI.Xaml.Controls
 		{
 			base.OnLayoutCore(changed, left, top, right, bottom);
 
-			UpdateBorder();
+			UpdateBorder(changed);
 		}
 
 		protected virtual void OnChildrenChanged()
@@ -73,7 +78,7 @@ namespace Windows.UI.Xaml.Controls
 
 		partial void OnPaddingChangedPartial(Thickness oldValue, Thickness newValue)
 		{
-			UpdateBorder();
+			UpdateBorder(true);
 		}
 
 		partial void OnBorderBrushChangedPartial(Brush oldValue, Brush newValue)

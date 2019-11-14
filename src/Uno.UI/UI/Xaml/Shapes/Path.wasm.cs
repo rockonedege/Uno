@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using Windows.Foundation;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Wasm;
+using static System.FormattableString;
 
 namespace Windows.UI.Xaml.Shapes
 {
@@ -30,84 +34,62 @@ namespace Windows.UI.Xaml.Shapes
 						("d", gd.Data),
 						("fill-rule", gd.FillRule == FillRule.EvenOdd ? "evenodd" : "nonzero"));
 					break;
+				case PathGeometry pg:
+					_path.SetAttribute(("d", ToStreamGeometry(pg)));
+					break;
 			}
 		}
-
-		protected override Size MeasureOverride(Size availableSize)
+		/// <summary>
+		/// Transform the figures collection into a SVG Path according to :
+		/// https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
+		/// </summary>
+		/// <param name="geometry"></param>
+		/// <returns></returns>
+		private string ToStreamGeometry(PathGeometry geometry)
 		{
-			var bounds = GetBBox();
+			List<string> pathlist = new List<string>();
 
-			var pathWidth = bounds.Width;
-			var pathHeight = bounds.Height;
-
-			if (ShouldPreserveOrigin)
+			foreach (PathFigure figure in geometry.Figures)
 			{
-				pathWidth += bounds.X;
-				pathHeight += bounds.Y;
-			}
+				pathlist.Add("M " + figure.StartPoint.X + "," + figure.StartPoint.Y);
 
-			var availableWidth = availableSize.Width;
-			var availableHeight = availableSize.Height;
-
-			var userWidth = Width;
-			var userHeight = Height;
-
-			var controlWidth = availableWidth <= 0 ? userWidth : availableWidth;
-			var controlHeight = availableHeight <= 0 ? userHeight : availableHeight;
-
-			// Default values
-			var calculatedWidth = LimitWithUserSize(controlWidth, userWidth, pathWidth);
-			var calculatedHeight = LimitWithUserSize(controlHeight, userHeight, pathHeight);
-
-			var scaleX = (calculatedWidth - ActualStrokeThickness) / pathWidth;
-			var scaleY = (calculatedHeight - ActualStrokeThickness) / pathHeight;
-
-			// Make sure that we have a valid scale if both of them are not set
-			if (double.IsInfinity(scaleX) &&
-			   double.IsInfinity(scaleY))
-			{
-				scaleX = 1;
-				scaleY = 1;
-			}
-
-			// Here we will override some of the default values
-			switch (Stretch)
-			{
-				// If the Stretch is None, the drawing is not the same size as the control
-				case Stretch.None:
-					calculatedWidth = pathWidth;
-					calculatedHeight = pathHeight;
-					break;
-				case Stretch.Fill:
-					if (double.IsInfinity(scaleY))
+				foreach (PathSegment segment in figure.Segments)
+				{
+					if (segment is LineSegment lineSegment)
 					{
-						scaleY = 1;
+						pathlist.Add("L " + lineSegment.Point.X + "," + lineSegment.Point.Y);
 					}
-					if (double.IsInfinity(scaleX))
+					else if (segment is BezierSegment bezierSegment)
 					{
-						scaleX = 1;
+						pathlist.Add(
+							"C " +
+							 bezierSegment.Point1.X + "," + bezierSegment.Point1.Y + " " +
+							 bezierSegment.Point2.X + "," + bezierSegment.Point2.Y + " " +
+							 bezierSegment.Point3.X + "," + bezierSegment.Point3.Y);
 					}
-					calculatedWidth = pathWidth * scaleX;
-					calculatedHeight = pathHeight * scaleY;
+					else if (segment is QuadraticBezierSegment quadraticBezierSegment)
+					{
+						pathlist.Add(
+							 "Q " +
+							 quadraticBezierSegment.Point1.X + "," + quadraticBezierSegment.Point1.Y + " " +
+							 quadraticBezierSegment.Point2.X + "," + quadraticBezierSegment.Point2.Y);
+					}
+					else if (segment is ArcSegment arcSegment)
+					{
+						pathlist.Add(
+							 "A " +
+							 arcSegment.Size.Width + " " + arcSegment.Size.Height + " " +
+							 arcSegment.RotationAngle + " " +
+							 (arcSegment.IsLargeArc ? "1" : "0") + " " +
+							 (arcSegment.SweepDirection == SweepDirection.Clockwise ? "1" : "0") + " " +
+							 arcSegment.Point.X + "," + arcSegment.Point.Y);
+					}
+				}
 
-					break;
-				// Override the _calculated dimensions if the stretch is Uniform or UniformToFill
-				case Stretch.Uniform:
-					double scale = Math.Min(scaleX, scaleY);
-					calculatedWidth = pathWidth * scale;
-					calculatedHeight = pathHeight * scale;
-					break;
-				case Stretch.UniformToFill:
-					scale = Math.Max(scaleX, scaleY);
-					calculatedWidth = pathWidth * scale;
-					calculatedHeight = pathHeight * scale;
-					break;
+				if (figure.IsClosed)
+					pathlist.Add("Z");
 			}
-
-			calculatedWidth += ActualStrokeThickness;
-			calculatedHeight += ActualStrokeThickness;
-
-			return new Size(calculatedWidth, calculatedHeight);
+			return FormattableString.Invariant($"{string.Join(" ", pathlist.ToArray())}");
 		}
 	}
 }

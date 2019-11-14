@@ -1,6 +1,7 @@
-﻿#if !NET46 && !NETSTANDARD2_0
+﻿#if !NET461 && !__WASM__
 using Uno.Extensions;
 using Uno.Diagnostics.Eventing;
+using Windows.UI.Xaml.Automation.Peers;
 using Windows.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
@@ -20,7 +21,7 @@ using UIKit;
 
 namespace Windows.UI.Xaml.Controls
 {
-	public partial class Image : DependencyObject
+	public partial class Image : DependencyObject, ICustomClippingElement
 	{
 		/// <summary>
 		/// Setting this flag instructs the image control not to dispose pending image fetches when it is removed from the visual tree. 
@@ -68,6 +69,11 @@ namespace Windows.UI.Xaml.Controls
 		public event RoutedEventHandler ImageOpened;
 		public event ExceptionRoutedEventHandler ImageFailed;
 
+		/// <summary>
+		/// When set, the resulting image is tentatively converted to Monochrome.
+		/// </summary>
+		internal Color? MonochromeColor { get; set; }
+
 		protected virtual void OnImageFailed(ImageSource imageSource)
 		{
 			if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
@@ -75,7 +81,7 @@ namespace Windows.UI.Xaml.Controls
 				this.Log().Debug(this.ToString() + " Image failed to open");
 			}
 
-			ImageFailed?.Invoke(this, new ExceptionRoutedEventArgs("Image failed to download"));
+			ImageFailed?.Invoke(this, new ExceptionRoutedEventArgs(this, "Image failed to download"));
 		}
 
 		protected virtual void OnImageOpened(ImageSource imageSource)
@@ -85,7 +91,7 @@ namespace Windows.UI.Xaml.Controls
 				this.Log().Debug(this.ToString() + " Image opened successfully");
 			}
 
-			ImageOpened?.Invoke(this, RoutedEventArgs.Empty);
+			ImageOpened?.Invoke(this, new RoutedEventArgs(this));
 			_successfullyOpenedImage = imageSource;
 		}
 
@@ -124,17 +130,31 @@ namespace Windows.UI.Xaml.Controls
 
 		private void OnSourceChanged(ImageSource oldValue, ImageSource newValue)
 		{
-			_sourceDisposable.Disposable =
-				Source?.RegisterDisposablePropertyChangedCallback(
-					BitmapImage.UriSourceProperty, (o, e) =>
-					{
-						if (!object.Equals(e.OldValue, e.NewValue))
+			if (newValue is WriteableBitmap wb)
+			{
+				wb.Invalidated += OnInvalidated;
+				_sourceDisposable.Disposable = Disposable.Create(() => wb.Invalidated -= OnInvalidated);
+
+				void OnInvalidated(object sdn, EventArgs args)
+				{
+					_openedImage = null;
+					TryOpenImage();
+				}
+			}
+			else
+			{
+				_sourceDisposable.Disposable =
+					Source?.RegisterDisposablePropertyChangedCallback(
+						BitmapImage.UriSourceProperty, (o, e) =>
 						{
-							_openedImage = null;
-							TryOpenImage(); 
+							if (!object.Equals(e.OldValue, e.NewValue))
+							{
+								_openedImage = null;
+								TryOpenImage();
+							}
 						}
-					}
-				);
+					);
+			}
 
 			TryOpenImage();
 		}
@@ -191,6 +211,15 @@ namespace Windows.UI.Xaml.Controls
 			_imageFetchDisposable.Disposable = cd;
 		}
 
+		private void Execute(Func<CancellationToken, Task> handler)
+		{
+			var cd = new CancellationDisposable();
+
+			var dummy = handler(cd.Token);
+
+			_imageFetchDisposable.Disposable = cd;
+		}
+
 		/// <summary>
 		/// True if horizontally stretched within finite container, or defined by this.Width
 		/// </summary>
@@ -225,6 +254,23 @@ namespace Windows.UI.Xaml.Controls
 			return base.ToString() + ";Source={0}".InvariantCultureFormat(Source?.ToString() ?? "[null]");
 		}
 
+#if __ANDROID__ || __IOS__
+		private AutomationPeer OnCreateAutomationPeerOverride()
+		{
+			return new ImageAutomationPeer(this);
+		}
+
+		private string GetAccessibilityInnerTextOverride()
+		{
+			return null;
+		}
+#else
+		protected AutomationPeer OnCreateAutomationPeer()
+		{
+			return new ImageAutomationPeer(this);
+		}
+#endif
+
 		private partial class ImageLayouter : Layouter
 		{
 			private Image ImageControl => Panel as Image;
@@ -252,7 +298,7 @@ namespace Windows.UI.Xaml.Controls
 				//			...and not	height = (SourceHeight=100) = 100
 				if (hasKnownWidth ^ hasKnownHeight)
 				{
-					var aspectRatio = sourceSize.Width / sourceSize.Height;
+					var aspectRatio = sourceSize.AspectRatio();
 					var desiredSize = new Size();
 					if (hasKnownWidth)
 					{
@@ -261,8 +307,10 @@ namespace Windows.UI.Xaml.Controls
 						switch (ImageControl.Stretch)
 						{
 							case Stretch.Uniform:
-								//If sourceSize is empty, aspect ratio is undefined so we return 0
-								desiredSize.Height = sourceSize == default(Size) ? 0 : (knownWidth / aspectRatio);
+								// If sourceSize is empty, aspect ratio is undefined so we return 0.
+								// Since apsect ratio can have a lot of decimal, iOS ceils Image size to 0.5 if it's not a precise size (like 111.111111111)
+								// so the desiredSize will never match the actual size causing an infinite measuring and can freeze the app
+								desiredSize.Height = sourceSize == default(Size) ? 0 : Math.Ceiling((knownWidth / aspectRatio) * 2) / 2;
 								break;
 							case Stretch.None:
 								desiredSize.Height = sourceSize.Height;
@@ -288,7 +336,9 @@ namespace Windows.UI.Xaml.Controls
 						{
 							case Stretch.Uniform:
 								//If sourceSize is empty, aspect ratio is undefined so we return 0
-								desiredSize.Width = sourceSize == default(Size) ? 0 : (knownHeight * aspectRatio);
+								// Since apsect ratio can have a lot of decimal, iOS ceils Image size to 0.5 if it's not a precise size (like 111.111111111)
+								// so the desiredSize will never match the actual size causing an infinite measuring and can freeze the app
+								desiredSize.Width = sourceSize == default(Size) ? 0 : Math.Ceiling(knownHeight * aspectRatio * 2) / 2;
 								break;
 							case Stretch.None:
 								desiredSize.Width = sourceSize.Width;
@@ -308,7 +358,7 @@ namespace Windows.UI.Xaml.Controls
 					}
 				}
 
-				if (sourceSize.Width > availableSize.Width || sourceSize.Height > availableSize.Height)
+				if (sourceSize.Width > availableSize.Width || sourceSize.Height > availableSize.Height || (hasKnownWidth && hasKnownHeight))
 				{
 					var knownWidth = ImageControl.GetKnownWidth(availableSize.Width, sourceSize.Width);
 					var knownHeight = ImageControl.GetKnownHeight(availableSize.Height, sourceSize.Height);
@@ -318,9 +368,11 @@ namespace Windows.UI.Xaml.Controls
 					{
 						case Stretch.Uniform:
 							var desiredSize = new Size();
-							var aspectRatio = sourceSize.Width / sourceSize.Height;
-							desiredSize.Width = Math.Min(knownWidth, knownHeight * aspectRatio);
-							desiredSize.Height = Math.Min(knownHeight, knownWidth / aspectRatio);
+							var aspectRatio = sourceSize.AspectRatio();
+							// Since apsect ratio can have a lot of decimal, iOS ceils Image size to 0.5 if it's not a precise size (like 111.111111111)
+							// so the desiredSize will never match the actual size causing an infinite measuring and can freeze the app
+							desiredSize.Width = Math.Min(knownWidth, Math.Ceiling(knownHeight * aspectRatio * 2) / 2);
+							desiredSize.Height = Math.Min(knownHeight, Math.Ceiling(knownWidth / aspectRatio * 2) / 2);
 
 							if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
 							{
@@ -372,6 +424,9 @@ namespace Windows.UI.Xaml.Controls
 				return finalSize;
 			}
 		}
+
+		bool ICustomClippingElement.AllowClippingToLayoutSlot => false;
+		bool ICustomClippingElement.ForceClippingToLayoutSlot => false;
 	}
 }
 #endif

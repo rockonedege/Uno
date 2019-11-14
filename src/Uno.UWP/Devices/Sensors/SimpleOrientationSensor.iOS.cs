@@ -1,55 +1,42 @@
 ﻿#if __IOS__
-using System;
-using System.Collections.Generic;
-using System.Text;
+using CoreMotion;
 using Foundation;
-using UIKit;
-using Windows.Graphics.Display;
+using Uno.Extensions;
+using Uno.Logging;
 
 namespace Windows.Devices.Sensors
 {
 	public partial class SimpleOrientationSensor
 	{
-		private object _orientationDidChangeObserverToken;
+		private SimpleOrientation _previousOrientation;
+		private static CMMotionManager _motionManager;
+		private const double _updateInterval = 0.5;
+		private const double _threshold = 0.5;
 
 		partial void Initialize()
 		{
-			_orientationDidChangeObserverToken = NSNotificationCenter
-				.DefaultCenter
-				.AddObserver(UIDevice.OrientationDidChangeNotification, n => UpdateCurrentOrientation());
-			UIDevice.CurrentDevice.BeginGeneratingDeviceOrientationNotifications();
-			
-			UpdateCurrentOrientation();
-		}
-
-		private void UpdateCurrentOrientation()
-		{
-			var deviceOrientation = UIDevice.CurrentDevice.Orientation;
-			var simpleOrientation = ToSimpleOrientation(deviceOrientation);
-			
-			SetCurrentOrientation(simpleOrientation);
-		}
-
-		private static SimpleOrientation ToSimpleOrientation(UIDeviceOrientation deviceOrientation)
-		{
-			switch (deviceOrientation)
+			_motionManager = new CMMotionManager();
+			if (_motionManager.DeviceMotionAvailable) // DeviceMotion is not available on all devices. iOS4+
 			{
-				case UIDeviceOrientation.Portrait:
-					return SimpleOrientation.NotRotated;
-				case UIDeviceOrientation.PortraitUpsideDown:
-					return SimpleOrientation.Rotated180DegreesCounterclockwise;
-				case UIDeviceOrientation.LandscapeLeft:
-					return SimpleOrientation.Rotated90DegreesCounterclockwise;
-				case UIDeviceOrientation.LandscapeRight:
-					return SimpleOrientation.Rotated270DegreesCounterclockwise;
-				case UIDeviceOrientation.FaceUp:
-					return SimpleOrientation.Faceup;
-				case UIDeviceOrientation.FaceDown:
-					return SimpleOrientation.Facedown;
-				case UIDeviceOrientation.Unknown:
-				default:
-					return SimpleOrientation.NotRotated;
+				var operationQueue = (NSOperationQueue.CurrentQueue == null || NSOperationQueue.CurrentQueue == NSOperationQueue.MainQueue) ? new NSOperationQueue() : NSOperationQueue.CurrentQueue;
+				this.Log().ErrorIfEnabled(() => "DeviceMotion is available");
+				_motionManager.DeviceMotionUpdateInterval = _updateInterval;
+				_motionManager.StartDeviceMotionUpdates(operationQueue, (motion, error) =>
+				{
+					OnMotionChanged(motion);
+				});
 			}
+			else // For iOS devices that don't support CoreMotion
+			{
+				this.Log().ErrorIfEnabled(() => "SimpleOrientationSensor failed to initialize because CoreMotion is not available");
+			}
+		}
+
+		private void OnMotionChanged(CMDeviceMotion motion)
+		{
+			var orientation = ToSimpleOrientation(motion.Gravity.X, motion.Gravity.Y, motion.Gravity.Z, _threshold, _previousOrientation);
+			_previousOrientation = orientation;
+			SetCurrentOrientation(orientation);
 		}
 	}
 }

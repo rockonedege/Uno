@@ -2,556 +2,80 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Xaml.Controls
 {
-	#if false || false || NET46 || __WASM__
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class NavigationView : global::Windows.UI.Xaml.Controls.ContentControl
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  object SelectedItem
-		{
-			get
-			{
-				return (object)this.GetValue(SelectedItemProperty);
-			}
-			set
-			{
-				this.SetValue(SelectedItemProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.Style PaneToggleButtonStyle
-		{
-			get
-			{
-				return (global::Windows.UI.Xaml.Style)this.GetValue(PaneToggleButtonStyleProperty);
-			}
-			set
-			{
-				this.SetValue(PaneToggleButtonStyleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.UIElement PaneFooter
-		{
-			get
-			{
-				return (global::Windows.UI.Xaml.UIElement)this.GetValue(PaneFooterProperty);
-			}
-			set
-			{
-				this.SetValue(PaneFooterProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  double OpenPaneLength
-		{
-			get
-			{
-				return (double)this.GetValue(OpenPaneLengthProperty);
-			}
-			set
-			{
-				this.SetValue(OpenPaneLengthProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  object MenuItemsSource
-		{
-			get
-			{
-				return (object)this.GetValue(MenuItemsSourceProperty);
-			}
-			set
-			{
-				this.SetValue(MenuItemsSourceProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.Controls.DataTemplateSelector MenuItemTemplateSelector
-		{
-			get
-			{
-				return (global::Windows.UI.Xaml.Controls.DataTemplateSelector)this.GetValue(MenuItemTemplateSelectorProperty);
-			}
-			set
-			{
-				this.SetValue(MenuItemTemplateSelectorProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.DataTemplate MenuItemTemplate
-		{
-			get
-			{
-				return (global::Windows.UI.Xaml.DataTemplate)this.GetValue(MenuItemTemplateProperty);
-			}
-			set
-			{
-				this.SetValue(MenuItemTemplateProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.Controls.StyleSelector MenuItemContainerStyleSelector
-		{
-			get
-			{
-				return (global::Windows.UI.Xaml.Controls.StyleSelector)this.GetValue(MenuItemContainerStyleSelectorProperty);
-			}
-			set
-			{
-				this.SetValue(MenuItemContainerStyleSelectorProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.Style MenuItemContainerStyle
-		{
-			get
-			{
-				return (global::Windows.UI.Xaml.Style)this.GetValue(MenuItemContainerStyleProperty);
-			}
-			set
-			{
-				this.SetValue(MenuItemContainerStyleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsSettingsVisible
-		{
-			get
-			{
-				return (bool)this.GetValue(IsSettingsVisibleProperty);
-			}
-			set
-			{
-				this.SetValue(IsSettingsVisibleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsPaneToggleButtonVisible
-		{
-			get
-			{
-				return (bool)this.GetValue(IsPaneToggleButtonVisibleProperty);
-			}
-			set
-			{
-				this.SetValue(IsPaneToggleButtonVisibleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsPaneOpen
-		{
-			get
-			{
-				return (bool)this.GetValue(IsPaneOpenProperty);
-			}
-			set
-			{
-				this.SetValue(IsPaneOpenProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.DataTemplate HeaderTemplate
-		{
-			get
-			{
-				return (global::Windows.UI.Xaml.DataTemplate)this.GetValue(HeaderTemplateProperty);
-			}
-			set
-			{
-				this.SetValue(HeaderTemplateProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  object Header
-		{
-			get
-			{
-				return (object)this.GetValue(HeaderProperty);
-			}
-			set
-			{
-				this.SetValue(HeaderProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  double ExpandedModeThresholdWidth
-		{
-			get
-			{
-				return (double)this.GetValue(ExpandedModeThresholdWidthProperty);
-			}
-			set
-			{
-				this.SetValue(ExpandedModeThresholdWidthProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  double CompactPaneLength
-		{
-			get
-			{
-				return (double)this.GetValue(CompactPaneLengthProperty);
-			}
-			set
-			{
-				this.SetValue(CompactPaneLengthProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  double CompactModeThresholdWidth
-		{
-			get
-			{
-				return (double)this.GetValue(CompactModeThresholdWidthProperty);
-			}
-			set
-			{
-				this.SetValue(CompactModeThresholdWidthProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.Controls.AutoSuggestBox AutoSuggestBox
-		{
-			get
-			{
-				return (global::Windows.UI.Xaml.Controls.AutoSuggestBox)this.GetValue(AutoSuggestBoxProperty);
-			}
-			set
-			{
-				this.SetValue(AutoSuggestBoxProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool AlwaysShowHeader
-		{
-			get
-			{
-				return (bool)this.GetValue(AlwaysShowHeaderProperty);
-			}
-			set
-			{
-				this.SetValue(AlwaysShowHeaderProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.Controls.NavigationViewDisplayMode DisplayMode
-		{
-			get
-			{
-				return (global::Windows.UI.Xaml.Controls.NavigationViewDisplayMode)this.GetValue(DisplayModeProperty);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::System.Collections.Generic.IList<object> MenuItems
-		{
-			get
-			{
-				return (global::System.Collections.Generic.IList<object>)this.GetValue(MenuItemsProperty);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  object SettingsItem
-		{
-			get
-			{
-				return (object)this.GetValue(SettingsItemProperty);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  string PaneTitle
-		{
-			get
-			{
-				return (string)this.GetValue(PaneTitleProperty);
-			}
-			set
-			{
-				this.SetValue(PaneTitleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsBackEnabled
-		{
-			get
-			{
-				return (bool)this.GetValue(IsBackEnabledProperty);
-			}
-			set
-			{
-				this.SetValue(IsBackEnabledProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.Controls.NavigationViewBackButtonVisible IsBackButtonVisible
-		{
-			get
-			{
-				return (global::Windows.UI.Xaml.Controls.NavigationViewBackButtonVisible)this.GetValue(IsBackButtonVisibleProperty);
-			}
-			set
-			{
-				this.SetValue(IsBackButtonVisibleProperty, value);
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty AlwaysShowHeaderProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"AlwaysShowHeader", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty AutoSuggestBoxProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"AutoSuggestBox", typeof(global::Windows.UI.Xaml.Controls.AutoSuggestBox), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.Controls.AutoSuggestBox)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty CompactModeThresholdWidthProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"CompactModeThresholdWidth", typeof(double), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(double)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty CompactPaneLengthProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"CompactPaneLength", typeof(double), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(double)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty DisplayModeProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"DisplayMode", typeof(global::Windows.UI.Xaml.Controls.NavigationViewDisplayMode), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.Controls.NavigationViewDisplayMode)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty ExpandedModeThresholdWidthProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"ExpandedModeThresholdWidth", typeof(double), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(double)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty HeaderProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"Header", typeof(object), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(object)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty HeaderTemplateProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"HeaderTemplate", typeof(global::Windows.UI.Xaml.DataTemplate), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.DataTemplate)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsPaneOpenProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsPaneOpen", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsPaneToggleButtonVisibleProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsPaneToggleButtonVisible", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsSettingsVisibleProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsSettingsVisible", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty MenuItemContainerStyleProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"MenuItemContainerStyle", typeof(global::Windows.UI.Xaml.Style), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.Style)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty MenuItemContainerStyleSelectorProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"MenuItemContainerStyleSelector", typeof(global::Windows.UI.Xaml.Controls.StyleSelector), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.Controls.StyleSelector)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty MenuItemTemplateProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"MenuItemTemplate", typeof(global::Windows.UI.Xaml.DataTemplate), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.DataTemplate)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty MenuItemTemplateSelectorProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"MenuItemTemplateSelector", typeof(global::Windows.UI.Xaml.Controls.DataTemplateSelector), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.Controls.DataTemplateSelector)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty MenuItemsProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"MenuItems", typeof(global::System.Collections.Generic.IList<object>), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(global::System.Collections.Generic.IList<object>)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty MenuItemsSourceProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"MenuItemsSource", typeof(object), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(object)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty OpenPaneLengthProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"OpenPaneLength", typeof(double), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(double)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty PaneFooterProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"PaneFooter", typeof(global::Windows.UI.Xaml.UIElement), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.UIElement)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty PaneToggleButtonStyleProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"PaneToggleButtonStyle", typeof(global::Windows.UI.Xaml.Style), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.Style)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty SelectedItemProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"SelectedItem", typeof(object), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(object)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty SettingsItemProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"SettingsItem", typeof(object), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(object)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsBackButtonVisibleProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsBackButtonVisible", typeof(global::Windows.UI.Xaml.Controls.NavigationViewBackButtonVisible), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(global::Windows.UI.Xaml.Controls.NavigationViewBackButtonVisible)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty IsBackEnabledProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"IsBackEnabled", typeof(bool), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(bool)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public static global::Windows.UI.Xaml.DependencyProperty PaneTitleProperty { get; } = 
-		Windows.UI.Xaml.DependencyProperty.Register(
-			"PaneTitle", typeof(string), 
-			typeof(global::Windows.UI.Xaml.Controls.NavigationView), 
-			new FrameworkPropertyMetadata(default(string)));
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public NavigationView() : base()
-		{
-			global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "NavigationView.NavigationView()");
-		}
-		#endif
+		// Skipping already declared property MenuItemTemplateSelector
+		// Skipping already declared property MenuItemTemplate
+		// Skipping already declared property MenuItemContainerStyleSelector
+		// Skipping already declared property MenuItemContainerStyle
+		// Skipping already declared property IsSettingsVisible
+		// Skipping already declared property IsPaneToggleButtonVisible
+		// Skipping already declared property IsPaneOpen
+		// Skipping already declared property HeaderTemplate
+		// Skipping already declared property Header
+		// Skipping already declared property ExpandedModeThresholdWidth
+		// Skipping already declared property MenuItemsSource
+		// Skipping already declared property CompactPaneLength
+		// Skipping already declared property CompactModeThresholdWidth
+		// Skipping already declared property AutoSuggestBox
+		// Skipping already declared property OpenPaneLength
+		// Skipping already declared property AlwaysShowHeader
+		// Skipping already declared property SelectedItem
+		// Skipping already declared property PaneToggleButtonStyle
+		// Skipping already declared property PaneFooter
+		// Skipping already declared property DisplayMode
+		// Skipping already declared property MenuItems
+		// Skipping already declared property SettingsItem
+		// Skipping already declared property PaneTitle
+		// Skipping already declared property IsBackEnabled
+		// Skipping already declared property IsBackButtonVisible
+		// Skipping already declared property ShoulderNavigationEnabled
+		// Skipping already declared property SelectionFollowsFocus
+		// Skipping already declared property PaneHeader
+		// Skipping already declared property PaneDisplayMode
+		// Skipping already declared property PaneCustomContent
+		// Skipping already declared property OverflowLabelMode
+		// Skipping already declared property IsPaneVisible
+		// Skipping already declared property ContentOverlay
+		// Skipping already declared property TemplateSettings
+		// Skipping already declared property ExpandedModeThresholdWidthProperty
+		// Skipping already declared property IsSettingsVisibleProperty
+		// Skipping already declared property MenuItemContainerStyleProperty
+		// Skipping already declared property MenuItemContainerStyleSelectorProperty
+		// Skipping already declared property MenuItemTemplateProperty
+		// Skipping already declared property MenuItemTemplateSelectorProperty
+		// Skipping already declared property MenuItemsProperty
+		// Skipping already declared property MenuItemsSourceProperty
+		// Skipping already declared property OpenPaneLengthProperty
+		// Skipping already declared property PaneFooterProperty
+		// Skipping already declared property PaneToggleButtonStyleProperty
+		// Skipping already declared property SelectedItemProperty
+		// Skipping already declared property AlwaysShowHeaderProperty
+		// Skipping already declared property AutoSuggestBoxProperty
+		// Skipping already declared property CompactModeThresholdWidthProperty
+		// Skipping already declared property CompactPaneLengthProperty
+		// Skipping already declared property DisplayModeProperty
+		// Skipping already declared property SettingsItemProperty
+		// Skipping already declared property HeaderProperty
+		// Skipping already declared property HeaderTemplateProperty
+		// Skipping already declared property IsPaneOpenProperty
+		// Skipping already declared property IsPaneToggleButtonVisibleProperty
+		// Skipping already declared property IsBackButtonVisibleProperty
+		// Skipping already declared property IsBackEnabledProperty
+		// Skipping already declared property PaneTitleProperty
+		// Skipping already declared property IsPaneVisibleProperty
+		// Skipping already declared property OverflowLabelModeProperty
+		// Skipping already declared property PaneCustomContentProperty
+		// Skipping already declared property PaneDisplayModeProperty
+		// Skipping already declared property PaneHeaderProperty
+		// Skipping already declared property SelectionFollowsFocusProperty
+		// Skipping already declared property ShoulderNavigationEnabledProperty
+		// Skipping already declared property TemplateSettingsProperty
+		// Skipping already declared property ContentOverlayProperty
+		// Skipping already declared method Windows.UI.Xaml.Controls.NavigationView.NavigationView()
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.NavigationView()
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.IsPaneOpen.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.IsPaneOpen.set
@@ -594,20 +118,8 @@ namespace Windows.UI.Xaml.Controls
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.MenuItemContainerStyle.set
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.MenuItemContainerStyleSelector.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.MenuItemContainerStyleSelector.set
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  object MenuItemFromContainer( global::Windows.UI.Xaml.DependencyObject container)
-		{
-			throw new global::System.NotImplementedException("The member object NavigationView.MenuItemFromContainer(DependencyObject container) is not implemented in Uno.");
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Xaml.DependencyObject ContainerFromMenuItem( object item)
-		{
-			throw new global::System.NotImplementedException("The member DependencyObject NavigationView.ContainerFromMenuItem(object item) is not implemented in Uno.");
-		}
-		#endif
+		// Skipping already declared method Windows.UI.Xaml.Controls.NavigationView.MenuItemFromContainer(Windows.UI.Xaml.DependencyObject)
+		// Skipping already declared method Windows.UI.Xaml.Controls.NavigationView.ContainerFromMenuItem(object)
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.SelectionChanged.add
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.SelectionChanged.remove
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.ItemInvoked.add
@@ -630,6 +142,32 @@ namespace Windows.UI.Xaml.Controls
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.PaneOpened.remove
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.PaneOpening.add
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.PaneOpening.remove
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.PaneDisplayMode.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.PaneDisplayMode.set
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.PaneHeader.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.PaneHeader.set
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.PaneCustomContent.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.PaneCustomContent.set
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.ContentOverlay.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.ContentOverlay.set
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.IsPaneVisible.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.IsPaneVisible.set
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.SelectionFollowsFocus.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.SelectionFollowsFocus.set
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.TemplateSettings.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.ShoulderNavigationEnabled.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.ShoulderNavigationEnabled.set
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.OverflowLabelMode.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.OverflowLabelMode.set
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.PaneDisplayModeProperty.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.PaneHeaderProperty.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.PaneCustomContentProperty.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.ContentOverlayProperty.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.IsPaneVisibleProperty.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.SelectionFollowsFocusProperty.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.TemplateSettingsProperty.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.ShoulderNavigationEnabledProperty.get
+		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.OverflowLabelModeProperty.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.IsBackButtonVisibleProperty.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.IsBackEnabledProperty.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.PaneTitleProperty.get
@@ -655,133 +193,13 @@ namespace Windows.UI.Xaml.Controls
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.MenuItemTemplateSelectorProperty.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.MenuItemContainerStyleProperty.get
 		// Forced skipping of method Windows.UI.Xaml.Controls.NavigationView.MenuItemContainerStyleSelectorProperty.get
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  event global::Windows.Foundation.TypedEventHandler<global::Windows.UI.Xaml.Controls.NavigationView, global::Windows.UI.Xaml.Controls.NavigationViewDisplayModeChangedEventArgs> DisplayModeChanged
-		{
-			[global::Uno.NotImplemented]
-			add
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, NavigationViewDisplayModeChangedEventArgs> NavigationView.DisplayModeChanged");
-			}
-			[global::Uno.NotImplemented]
-			remove
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, NavigationViewDisplayModeChangedEventArgs> NavigationView.DisplayModeChanged");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  event global::Windows.Foundation.TypedEventHandler<global::Windows.UI.Xaml.Controls.NavigationView, global::Windows.UI.Xaml.Controls.NavigationViewItemInvokedEventArgs> ItemInvoked
-		{
-			[global::Uno.NotImplemented]
-			add
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, NavigationViewItemInvokedEventArgs> NavigationView.ItemInvoked");
-			}
-			[global::Uno.NotImplemented]
-			remove
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, NavigationViewItemInvokedEventArgs> NavigationView.ItemInvoked");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  event global::Windows.Foundation.TypedEventHandler<global::Windows.UI.Xaml.Controls.NavigationView, global::Windows.UI.Xaml.Controls.NavigationViewSelectionChangedEventArgs> SelectionChanged
-		{
-			[global::Uno.NotImplemented]
-			add
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, NavigationViewSelectionChangedEventArgs> NavigationView.SelectionChanged");
-			}
-			[global::Uno.NotImplemented]
-			remove
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, NavigationViewSelectionChangedEventArgs> NavigationView.SelectionChanged");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  event global::Windows.Foundation.TypedEventHandler<global::Windows.UI.Xaml.Controls.NavigationView, global::Windows.UI.Xaml.Controls.NavigationViewBackRequestedEventArgs> BackRequested
-		{
-			[global::Uno.NotImplemented]
-			add
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, NavigationViewBackRequestedEventArgs> NavigationView.BackRequested");
-			}
-			[global::Uno.NotImplemented]
-			remove
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, NavigationViewBackRequestedEventArgs> NavigationView.BackRequested");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  event global::Windows.Foundation.TypedEventHandler<global::Windows.UI.Xaml.Controls.NavigationView, object> PaneClosed
-		{
-			[global::Uno.NotImplemented]
-			add
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, object> NavigationView.PaneClosed");
-			}
-			[global::Uno.NotImplemented]
-			remove
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, object> NavigationView.PaneClosed");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  event global::Windows.Foundation.TypedEventHandler<global::Windows.UI.Xaml.Controls.NavigationView, global::Windows.UI.Xaml.Controls.NavigationViewPaneClosingEventArgs> PaneClosing
-		{
-			[global::Uno.NotImplemented]
-			add
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, NavigationViewPaneClosingEventArgs> NavigationView.PaneClosing");
-			}
-			[global::Uno.NotImplemented]
-			remove
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, NavigationViewPaneClosingEventArgs> NavigationView.PaneClosing");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  event global::Windows.Foundation.TypedEventHandler<global::Windows.UI.Xaml.Controls.NavigationView, object> PaneOpened
-		{
-			[global::Uno.NotImplemented]
-			add
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, object> NavigationView.PaneOpened");
-			}
-			[global::Uno.NotImplemented]
-			remove
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, object> NavigationView.PaneOpened");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  event global::Windows.Foundation.TypedEventHandler<global::Windows.UI.Xaml.Controls.NavigationView, object> PaneOpening
-		{
-			[global::Uno.NotImplemented]
-			add
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, object> NavigationView.PaneOpening");
-			}
-			[global::Uno.NotImplemented]
-			remove
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Xaml.Controls.NavigationView", "event TypedEventHandler<NavigationView, object> NavigationView.PaneOpening");
-			}
-		}
-		#endif
+		// Skipping already declared event Windows.UI.Xaml.Controls.NavigationView.DisplayModeChanged
+		// Skipping already declared event Windows.UI.Xaml.Controls.NavigationView.ItemInvoked
+		// Skipping already declared event Windows.UI.Xaml.Controls.NavigationView.SelectionChanged
+		// Skipping already declared event Windows.UI.Xaml.Controls.NavigationView.BackRequested
+		// Skipping already declared event Windows.UI.Xaml.Controls.NavigationView.PaneClosed
+		// Skipping already declared event Windows.UI.Xaml.Controls.NavigationView.PaneClosing
+		// Skipping already declared event Windows.UI.Xaml.Controls.NavigationView.PaneOpened
+		// Skipping already declared event Windows.UI.Xaml.Controls.NavigationView.PaneOpening
 	}
 }

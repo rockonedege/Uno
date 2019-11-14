@@ -7,34 +7,43 @@ namespace Windows.UI.Core
 	public sealed partial class SystemNavigationManager
 	{
 		private static SystemNavigationManager _instance;
-		private AppViewBackButtonVisibility _appViewBackButtonVisibility = AppViewBackButtonVisibility.Collapsed;
-
-		public AppViewBackButtonVisibility AppViewBackButtonVisibility
-		{
-			get => _appViewBackButtonVisibility;
-			set
-			{
-				_appViewBackButtonVisibility = value;
-				AppViewBackButtonVisibilityChanged?.Invoke(this, _appViewBackButtonVisibility);
-			}
-		}
-
-		public event EventHandler<BackRequestedEventArgs> BackRequested = delegate { };
-
-		private SystemNavigationManager()
-		{
-
-		}
 
 		public static SystemNavigationManager GetForCurrentView()
 		{
-			if(_instance == null)
+			if (_instance == null)
 			{
 				_instance = new SystemNavigationManager();
 			}
 
 			return _instance;
 		}
+
+		public event EventHandler<BackRequestedEventArgs> BackRequested = delegate { };
+
+		private AppViewBackButtonVisibility _appViewBackButtonVisibility = AppViewBackButtonVisibility.Collapsed;
+
+		private SystemNavigationManager()
+		{
+		}
+
+		public AppViewBackButtonVisibility AppViewBackButtonVisibility
+		{
+			get => _appViewBackButtonVisibility;
+			set
+			{
+				if (_appViewBackButtonVisibility == value)
+				{
+					return;
+				}
+
+				_appViewBackButtonVisibility = value;
+				AppViewBackButtonVisibilityChanged?.Invoke(this, _appViewBackButtonVisibility);
+				OnAppViewBackButtonVisibility(value);
+			}
+		}
+
+		internal event EventHandler<AppViewBackButtonVisibility> AppViewBackButtonVisibilityChanged;
+		partial void OnAppViewBackButtonVisibility(AppViewBackButtonVisibility visibility);
 
 		/// <summary>
 		/// Raise BackRequested
@@ -47,7 +56,5 @@ namespace Windows.UI.Core
 
 			return args.Handled;
 		}
-
-		internal event EventHandler<AppViewBackButtonVisibility> AppViewBackButtonVisibilityChanged;
 	}
 }

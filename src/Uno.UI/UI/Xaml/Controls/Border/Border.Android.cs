@@ -5,7 +5,6 @@ using System.Text;
 using Uno.Extensions;
 using Android.Graphics.Drawables.Shapes;
 using System.Linq;
-using System.Drawing;
 using Uno.Disposables;
 using Windows.UI.Xaml.Media;
 using Uno.UI;
@@ -36,70 +35,79 @@ namespace Windows.UI.Xaml.Controls
 		}
 
 		protected override void OnLayoutCore(bool changed, int left, int top, int right, int bottom)
-        {
-            base.OnLayoutCore(changed, left, top, right, bottom);
+		{
+			base.OnLayoutCore(changed, left, top, right, bottom);
 
-            UpdateBorder();
-        }
+			UpdateBorder();
+		}
 
-        partial void OnChildChangedPartial(View previousValue, View newValue)
-        {
-            if (previousValue != null)
-            {
-                RemoveView(previousValue);
-            }
+		partial void OnChildChangedPartial(View previousValue, View newValue)
+		{
+			if (previousValue != null)
+			{
+				RemoveView(previousValue);
+			}
 
-            AddView(newValue);
-        }
+			if (newValue != null)
+			{
+				AddView(newValue);
+			}
+		}
 
-        private void UpdateBorder()
-        {
-            if (IsLoaded)
-            {
-                _borderRenderer.UpdateLayers(
-                    this,
-                    Background,
-                    BorderThickness,
-                    BorderBrush,
-                    CornerRadius,
-                    Padding
-                );
-            }
-        }
+		private void UpdateBorder()
+		{
+			UpdateBorder(false);
+		}
 
-        protected override void OnLoaded()
-        {
-            base.OnLoaded();
-            UpdateBorder();
-        }
+		private void UpdateBorder(bool willUpdateMeasures)
+		{
+			if (IsLoaded)
+			{
+				_borderRenderer.UpdateLayers(
+					this,
+					Background,
+					BorderThickness,
+					BorderBrush,
+					CornerRadius,
+					Padding,
+					willUpdateMeasures
+				);
+			}
+		}
 
-        partial void OnBorderBrushChangedPartial()
-        {
-            UpdateBorder();
-        }
+		protected override void OnLoaded()
+		{
+			base.OnLoaded();
+			UpdateBorder();
+		}
 
-        protected override void OnBackgroundChanged(DependencyPropertyChangedEventArgs e)
-        {
-            // Don't call base, just update the filling color.
-            _brushChanged.Disposable = Brush.AssignAndObserveBrush(e.NewValue as Brush, c => UpdateBorder(), UpdateBorder);
+		partial void OnBorderBrushChangedPartial()
+		{
+			UpdateBorder();
+		}
 
-            UpdateBorder();
-        }
+		protected override void OnBackgroundChanged(DependencyPropertyChangedEventArgs e)
+		{
+			// Don't call base, just update the filling color.
+			_brushChanged.Disposable = Brush.AssignAndObserveBrush(e.NewValue as Brush, c => UpdateBorder(), UpdateBorder);
 
-        partial void OnBorderThicknessChangedPartial(Thickness oldValue, Thickness newValue)
-        {
-            UpdateBorder();
-        }
+			UpdateBorder();
+		}
 
-        partial void OnPaddingChangedPartial(Thickness oldValue, Thickness newValue)
-        {
-            UpdateBorder();
-        }
+		partial void OnBorderThicknessChangedPartial(Thickness oldValue, Thickness newValue)
+		{
+			UpdateBorder();
+		}
 
-        partial void OnCornerRadiusUpdatedPartial(CornerRadius oldValue, CornerRadius newValue)
-        {
-            UpdateBorder();
-        }
-    }
+		partial void OnPaddingChangedPartial(Thickness oldValue, Thickness newValue)
+		{
+			UpdateBorder(true);
+		}
+
+		partial void OnCornerRadiusUpdatedPartial(CornerRadius oldValue, CornerRadius newValue)
+		{
+			UpdateBorder();
+		}
+	}
 }
 #endif

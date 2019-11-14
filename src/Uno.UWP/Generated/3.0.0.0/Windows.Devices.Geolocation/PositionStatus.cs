@@ -2,30 +2,18 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.Devices.Geolocation
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum PositionStatus 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Ready,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Initializing,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		NoData,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Disabled,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		NotInitialized,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		NotAvailable,
-		#endif
+		// Skipping already declared field Windows.Devices.Geolocation.PositionStatus.Ready
+		// Skipping already declared field Windows.Devices.Geolocation.PositionStatus.Initializing
+		// Skipping already declared field Windows.Devices.Geolocation.PositionStatus.NoData
+		// Skipping already declared field Windows.Devices.Geolocation.PositionStatus.Disabled
+		// Skipping already declared field Windows.Devices.Geolocation.PositionStatus.NotInitialized
+		// Skipping already declared field Windows.Devices.Geolocation.PositionStatus.NotAvailable
 	}
 	#endif
 }

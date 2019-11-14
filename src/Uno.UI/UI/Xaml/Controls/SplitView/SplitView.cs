@@ -23,6 +23,8 @@ namespace Windows.UI.Xaml.Controls
 	{
 		public event TypedEventHandler<SplitView, object> PaneClosed;
 		public event TypedEventHandler<SplitView, SplitViewPaneClosingEventArgs> PaneClosing;
+		public event TypedEventHandler<SplitView, object> PaneOpened;
+		public event TypedEventHandler<SplitView, object> PaneOpening;
 
 		private CompositeDisposable _subscriptions;
 		private readonly SerialDisposable _runningSubscription = new SerialDisposable();
@@ -42,9 +44,9 @@ namespace Windows.UI.Xaml.Controls
 		}
 #endif
 
-        #region CompactPaneLength DependencyProperty
+		#region CompactPaneLength DependencyProperty
 
-        public double CompactPaneLength
+		public double CompactPaneLength
 		{
 			get { return (double)this.GetValue(CompactPaneLengthProperty); }
 			set { this.SetValue(CompactPaneLengthProperty, value); }
@@ -288,11 +290,18 @@ namespace Windows.UI.Xaml.Controls
 			SetNeedsUpdateVisualStates();
 		}
 
+		protected internal override void OnTemplatedParentChanged(DependencyPropertyChangedEventArgs e)
+		{
+			base.OnTemplatedParentChanged(e);
+
+			// This is required to ensure that FrameworkElement.FindName can dig through the tree after
+			// the control has been created.
+			SynchronizeContentTemplatedParent();
+		}
+
 		protected override void OnLoaded()
 		{
 			base.OnLoaded();
-
-
 
 			_subscriptions = new CompositeDisposable();
 
@@ -314,13 +323,17 @@ namespace Windows.UI.Xaml.Controls
         {
 			// Manual propagation of the templated parent to the content property
 			// until we get the propagation running properly
-			if (Content is IFrameworkElement binder)
+			if (Content is IFrameworkElement contentBinder)
 			{
-				binder.TemplatedParent = this.TemplatedParent;
+				contentBinder.TemplatedParent = this.TemplatedParent;
+			}
+			if (Pane is IFrameworkElement paneBinder)
+			{
+				paneBinder.TemplatedParent = this.TemplatedParent;
 			}
 		}
 
-        private void UpdateControl()
+		private void UpdateControl()
 		{
 			if (_isViewReady && _runningSubscription.Disposable != null)
 			{
@@ -366,12 +379,23 @@ namespace Windows.UI.Xaml.Controls
 			{
 				PaneClosing?.Invoke(this, new SplitViewPaneClosingEventArgs());
 			}
+			else
+			{
+				PaneOpening?.Invoke(this, null);
+			}
 
+#if __IOS__
+			PatchInvalidFinalState(stateName);
+#endif
 			VisualStateManager.GoToState(this, stateName, useTransitons);
 
 			if (!IsPaneOpen)
 			{
 				PaneClosed?.Invoke(this, null);
+			}
+			else
+			{
+				PaneOpened?.Invoke(this, null);
 			}
 		}
 

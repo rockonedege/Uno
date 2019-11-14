@@ -1,4 +1,4 @@
-﻿#if NET46
+﻿#if NET461
 #pragma warning disable CS0067
 #endif
 
@@ -29,6 +29,9 @@ using Font = UIKit.UIFont;
 using View = MonoTouch.UIKit.UIView;
 using Color = MonoTouch.UIKit.UIColor;
 using Font = MonoTouch.UIKit.UIFont;
+#elif __MACOS__
+using View = Windows.UI.Xaml.UIElement;
+using Color = Windows.UI.Color;
 #else
 using Color = System.Drawing.Color;
 #endif
@@ -50,8 +53,7 @@ namespace Windows.UI.Xaml.Documents
 		}
 #endif
 
-#region FontFamily Dependency Property
-
+		#region FontFamily Dependency Property
 		public FontFamily FontFamily
 		{
 			get { return (FontFamily)this.GetValue(FontFamilyProperty); }
@@ -76,8 +78,7 @@ namespace Windows.UI.Xaml.Documents
 		}
 
 		partial void OnFontFamilyChangedPartial();
-
-#endregion
+		#endregion
 
 		#region FontStyle Dependency Property
 
@@ -264,7 +265,36 @@ namespace Windows.UI.Xaml.Documents
 
 		partial void OnCharacterSpacingChangedPartial();
 
-#endregion
+		#endregion
+
+		#region TextDecorations
+
+		public TextDecorations TextDecorations
+		{
+			get { return (TextDecorations)GetValue(TextDecorationsProperty); }
+			set { SetValue(TextDecorationsProperty, value); }
+		}
+
+		public static DependencyProperty TextDecorationsProperty =
+			DependencyProperty.Register(
+				"TextDecorations",
+				typeof(int),
+				typeof(TextElement),
+				new FrameworkPropertyMetadata(
+					defaultValue: TextDecorations.None,
+					options: FrameworkPropertyMetadataOptions.Inherits,
+					propertyChangedCallback: (s, e) => ((TextElement)s).OnTextDecorationsChanged()
+				)
+			);
+
+		protected virtual void OnTextDecorationsChanged()
+		{
+			OnTextDecorationsChangedPartial();
+		}
+
+		partial void OnTextDecorationsChangedPartial();
+
+		#endregion
 
 		#region BaseLineAlignment Dependency Property
 
@@ -292,35 +322,6 @@ namespace Windows.UI.Xaml.Documents
 		}
 
 		partial void OnBaseLineAlignmentChangedPartial();
-
-#endregion
-
-		#region UnderlineStyle
-
-		internal UnderlineStyle InternalUnderlineStyle
-		{
-			get => (UnderlineStyle)this.GetValue(InternalUnderlineStyleProperty);
-			set => this.SetValue(InternalUnderlineStyleProperty, value);
-		}
-
-		internal static DependencyProperty InternalUnderlineStyleProperty { get; } =
-			DependencyProperty.Register(
-				"UnderlineStyle",
-				typeof(UnderlineStyle),
-				typeof(TextElement),
-				new FrameworkPropertyMetadata(
-					defaultValue: UnderlineStyle.None,
-					options: FrameworkPropertyMetadataOptions.Inherits,
-					propertyChangedCallback: (s, e) => ((TextElement)s).OnUnderlineStyleChanged()
-				)
-			);
-
-		internal protected virtual void OnUnderlineStyleChanged()
-		{
-			OnUnderlineStyleChangedPartial();
-		}
-
-		partial void OnUnderlineStyleChangedPartial();
 
 		#endregion
 

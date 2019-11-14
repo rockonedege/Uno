@@ -6,45 +6,28 @@ using Windows.Devices.Input;
 
 namespace Windows.UI.Xaml.Input
 {
-	public partial class Pointer
+	public sealed partial class Pointer : IEquatable<Pointer>
 	{
-
-#if XAMARIN_ANDROID
-		internal Pointer(Android.Views.MotionEvent.PointerProperties properties)
+		public Pointer(uint id, PointerDeviceType type, bool isInContact, bool isInRange)
 		{
-			PointerId = (uint)properties.Id;
-			PointerDeviceType = GetPointerType(properties.ToolType);
+			PointerId = id;
+			PointerDeviceType = type;
+			IsInContact = isInContact;
+			IsInRange = isInRange;
 		}
 
-		private static PointerDeviceType GetPointerType(Android.Views.MotionEventToolType nativeType)
-		{
-			switch (nativeType)
-			{
-				case Android.Views.MotionEventToolType.Eraser:
-				case Android.Views.MotionEventToolType.Stylus:
-					return PointerDeviceType.Pen;
-				case Android.Views.MotionEventToolType.Finger:
-					return PointerDeviceType.Touch;
-				case Android.Views.MotionEventToolType.Mouse:
-					return PointerDeviceType.Mouse;
-				case Android.Views.MotionEventToolType.Unknown: // used by Xamarin.UITest
-				default:
-					return default(PointerDeviceType);
-			}
-		}
-#elif __IOS__
-		internal Pointer(UIKit.UIEvent uiEvent)
+
+#if __MACOS__
+		internal Pointer(AppKit.NSEvent uiEvent)
 		{
 			switch (uiEvent.Type)
 			{
-				case UIKit.UIEventType.Touches:
-				case UIKit.UIEventType.Motion:
+				case AppKit.NSEventType.DirectTouch:
 					PointerDeviceType = PointerDeviceType.Touch;
 					break;
 
-				case UIKit.UIEventType.Presses:
-				case UIKit.UIEventType.RemoteControl:
-					PointerDeviceType = PointerDeviceType.Pen;
+				case AppKit.NSEventType.MouseMoved:
+					PointerDeviceType = PointerDeviceType.Mouse;
 					break;
 			}
 		}
@@ -56,17 +39,42 @@ namespace Windows.UI.Xaml.Input
 		}
 #endif
 
-		[NotImplemented]
-		public bool IsInContact => true;
+		public uint PointerId { get; }
 
-		[NotImplemented]
-		public bool IsInRange => true;
+		public PointerDeviceType PointerDeviceType { get;}
 
-		public PointerDeviceType PointerDeviceType { get; private set; }
+		public bool IsInContact { get; }
 
-#if !__WASM__
-		[NotImplemented]
-#endif
-		public uint PointerId { get; private set; }
+		public bool IsInRange { get; }
+
+		public override string ToString()
+		{
+			return $"{PointerDeviceType}/{PointerId}";
+		}
+
+		public bool Equals(Pointer other)
+		{
+			if (ReferenceEquals(null, other)) return false;
+			if (ReferenceEquals(this, other)) return true;
+
+			return PointerDeviceType == other.PointerDeviceType && PointerId == other.PointerId;
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (!(obj is Pointer other)) return false;
+
+			return PointerDeviceType == other.PointerDeviceType && PointerId == other.PointerId;
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return ((int) PointerDeviceType * 397) ^ (int) PointerId;
+			}
+		}
 	}
 }

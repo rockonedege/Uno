@@ -26,14 +26,14 @@ namespace Uno.UI.DataBinding
 	internal static partial class BindingPropertyHelper
 	{
 		/// <summary>
-		/// Converts the input to the outputType using a fast convertion, for known system types.
+		/// Converts the input to the outputType using a fast conversion, for known system types.
 		/// </summary>
 		/// <param name="outputType">The target type</param>
 		/// <param name="input">The input value to use</param>
 		/// <param name="output">The input value converted to the <paramref name="outputType"/>.</param>
-		/// <returns>True if the conversion suceeded, otherwise false.</returns>
+		/// <returns>True if the conversion succeeded, otherwise false.</returns>
 		/// <remarks>
-		/// This is a fast path conversion that avoids going through the TypeConverter 
+		/// This is a fast path conversion that avoids going through the TypeConverter
 		/// infrastructure for known system types.
 		/// </remarks>
 		private static bool FastConvert(Type outputType, object input, ref object output)
@@ -59,6 +59,25 @@ namespace Uno.UI.DataBinding
 				{
 					return true;
 				}
+			}
+
+			if (input is bool boolInput)
+			{
+				if (FastBooleanConvert(outputType, boolInput, ref output))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		private static bool FastBooleanConvert(Type outputType, bool boolInput, ref object output)
+		{
+			if (outputType == typeof(Visibility))
+			{
+				output = boolInput ? Visibility.Visible : Visibility.Collapsed;
+				return true;
 			}
 
 			return false;
@@ -220,6 +239,44 @@ namespace Uno.UI.DataBinding
 				return true;
 			}
 
+			if (FastStringToToolTip(outputType, input, ref output))
+			{
+				return true;
+			}
+
+			if (FastStringToIconElement(outputType, input, ref output))
+			{
+				return true;
+			}
+
+			if (FastStringToUriConvert(outputType, input, ref output))
+			{
+				return true;
+			}
+
+			if (FastStringToTypeConvert(outputType, input, ref output))
+			{
+				return true;
+			}
+
+			// Fallback for Enums. Leave it at the end.
+			if (outputType.IsEnum)
+			{
+				output = Enum.Parse(outputType, input, true);
+				return true;
+			}
+
+			return false;
+		}
+
+		private static bool FastStringToIconElement(Type outputType, string input, ref object output)
+		{
+			if (outputType == typeof(Windows.UI.Xaml.Controls.IconElement))
+			{
+				output = (Windows.UI.Xaml.Controls.IconElement)input;
+				return true;
+			}
+
 			return false;
 		}
 
@@ -242,6 +299,17 @@ namespace Uno.UI.DataBinding
 
 					return true;
 				}
+			}
+
+			return false;
+		}
+
+		private static bool FastStringToToolTip(Type outputType, string input, ref object output)
+		{
+			if (outputType == typeof(Windows.UI.Xaml.Controls.ToolTip))
+			{
+				output = new Windows.UI.Xaml.Controls.ToolTip {Content = input};
+				return true;
 			}
 
 			return false;
@@ -349,7 +417,7 @@ namespace Uno.UI.DataBinding
 			if (outputType == typeof(Windows.UI.Xaml.Media.Matrix))
 			{
 				var fields = input
-					.Split(',')
+					.Split(new[] { ',' })
 					?.Select(v => double.Parse(v, CultureInfo.InvariantCulture))
 					?.ToArray();
 
@@ -365,7 +433,7 @@ namespace Uno.UI.DataBinding
 			if (outputType == typeof(System.Drawing.PointF))
 			{
 				var fields = input
-					.Split(',')
+					.Split(new[] { ',' })
 					?.Select(v => float.Parse(v, CultureInfo.InvariantCulture))
 					?.ToArray();
 
@@ -390,7 +458,7 @@ namespace Uno.UI.DataBinding
 			if (outputType == typeof(Windows.Foundation.Point))
 			{
 				var fields = input
-					.Split(',')
+					.Split(new[] { ',' })
 					?.Select(v => double.Parse(v, CultureInfo.InvariantCulture))
 					?.ToArray();
 
@@ -704,6 +772,32 @@ namespace Uno.UI.DataBinding
 			}
 
 			return false;
+		}
+
+		private static bool FastStringToUriConvert(Type outputType, string input, ref object output)
+		{
+			if (outputType == typeof(Uri))
+			{
+				output = new Uri(input);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		private static bool FastStringToTypeConvert(Type outputType, string input, ref object output)
+		{
+			if (outputType == typeof(Type))
+			{
+				output = Type.GetType(input, throwOnError: true);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 	}
 }

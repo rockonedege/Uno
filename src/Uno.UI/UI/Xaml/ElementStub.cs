@@ -7,6 +7,8 @@ using System.Text;
 using View = Android.Views.View;
 #elif XAMARIN_IOS_UNIFIED
 using View = UIKit.UIView;
+#elif __MACOS__
+using View = AppKit.NSView;
 #else
 using View = System.Object;
 #endif
@@ -59,7 +61,7 @@ namespace Windows.UI.Xaml
 			{
 				var visibilityProperty = GetVisibilityProperty(newContent);
 
-				// Set the visibility at the same precendence it was currently set with on the stub.
+				// Set the visibility at the same precedence it was currently set with on the stub.
 				var precedence = this.GetCurrentHighestValuePrecedence(visibilityProperty);
 
 				targetDependencyObject.SetValue(visibilityProperty, Visibility.Visible, precedence);

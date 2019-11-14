@@ -2,21 +2,15 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Xaml.Automation
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if false || false || false || false || false
+	#if false || false || false || false || false
 	[global::Uno.NotImplemented]
 	#endif
 	public   enum ToggleState 
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Off,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		On,
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		Indeterminate,
-		#endif
+		// Skipping already declared field Windows.UI.Xaml.Automation.ToggleState.Off
+		// Skipping already declared field Windows.UI.Xaml.Automation.ToggleState.On
+		// Skipping already declared field Windows.UI.Xaml.Automation.ToggleState.Indeterminate
 	}
 	#endif
 }

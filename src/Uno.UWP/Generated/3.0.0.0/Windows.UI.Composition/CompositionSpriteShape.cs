@@ -2,82 +2,12 @@
 #pragma warning disable 114 // new keyword hiding
 namespace Windows.UI.Composition
 {
-	#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+	#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 	[global::Uno.NotImplemented]
 	#endif
 	public  partial class CompositionSpriteShape : global::Windows.UI.Composition.CompositionShape
 	{
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Composition.CompositionStrokeCap StrokeDashCap
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member CompositionStrokeCap CompositionSpriteShape.StrokeDashCap is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.CompositionSpriteShape", "CompositionStrokeCap CompositionSpriteShape.StrokeDashCap");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Composition.CompositionBrush StrokeBrush
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member CompositionBrush CompositionSpriteShape.StrokeBrush is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.CompositionSpriteShape", "CompositionBrush CompositionSpriteShape.StrokeBrush");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  bool IsStrokeNonScaling
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member bool CompositionSpriteShape.IsStrokeNonScaling is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.CompositionSpriteShape", "bool CompositionSpriteShape.IsStrokeNonScaling");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Composition.CompositionGeometry Geometry
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member CompositionGeometry CompositionSpriteShape.Geometry is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.CompositionSpriteShape", "CompositionGeometry CompositionSpriteShape.Geometry");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
-		[global::Uno.NotImplemented]
-		public  global::Windows.UI.Composition.CompositionBrush FillBrush
-		{
-			get
-			{
-				throw new global::System.NotImplementedException("The member CompositionBrush CompositionSpriteShape.FillBrush is not implemented in Uno.");
-			}
-			set
-			{
-				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.CompositionSpriteShape", "CompositionBrush CompositionSpriteShape.FillBrush");
-			}
-		}
-		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float StrokeThickness
 		{
@@ -91,7 +21,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.UI.Composition.CompositionStrokeCap StrokeStartCap
 		{
@@ -105,7 +35,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float StrokeMiterLimit
 		{
@@ -119,7 +49,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.UI.Composition.CompositionStrokeLineJoin StrokeLineJoin
 		{
@@ -133,7 +63,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.UI.Composition.CompositionStrokeCap StrokeEndCap
 		{
@@ -147,7 +77,7 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  float StrokeDashOffset
 		{
@@ -161,7 +91,77 @@ namespace Windows.UI.Composition
 			}
 		}
 		#endif
-		#if __ANDROID__ || __IOS__ || NET46 || __WASM__
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::Windows.UI.Composition.CompositionStrokeCap StrokeDashCap
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member CompositionStrokeCap CompositionSpriteShape.StrokeDashCap is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.CompositionSpriteShape", "CompositionStrokeCap CompositionSpriteShape.StrokeDashCap");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::Windows.UI.Composition.CompositionBrush StrokeBrush
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member CompositionBrush CompositionSpriteShape.StrokeBrush is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.CompositionSpriteShape", "CompositionBrush CompositionSpriteShape.StrokeBrush");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  bool IsStrokeNonScaling
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member bool CompositionSpriteShape.IsStrokeNonScaling is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.CompositionSpriteShape", "bool CompositionSpriteShape.IsStrokeNonScaling");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::Windows.UI.Composition.CompositionGeometry Geometry
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member CompositionGeometry CompositionSpriteShape.Geometry is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.CompositionSpriteShape", "CompositionGeometry CompositionSpriteShape.Geometry");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
+		[global::Uno.NotImplemented]
+		public  global::Windows.UI.Composition.CompositionBrush FillBrush
+		{
+			get
+			{
+				throw new global::System.NotImplementedException("The member CompositionBrush CompositionSpriteShape.FillBrush is not implemented in Uno.");
+			}
+			set
+			{
+				global::Windows.Foundation.Metadata.ApiInformation.TryRaiseNotImplemented("Windows.UI.Composition.CompositionSpriteShape", "CompositionBrush CompositionSpriteShape.FillBrush");
+			}
+		}
+		#endif
+		#if __ANDROID__ || __IOS__ || NET461 || __WASM__ || __MACOS__
 		[global::Uno.NotImplemented]
 		public  global::Windows.UI.Composition.CompositionStrokeDashArray StrokeDashArray
 		{
