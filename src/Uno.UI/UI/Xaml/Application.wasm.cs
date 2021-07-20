@@ -1,4 +1,6 @@
-﻿#if __WASM__
+﻿#nullable enable
+
+#if __WASM__
 using System;
 using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
@@ -13,6 +15,17 @@ using Uno.Logging;
 using System.Threading;
 using Uno.UI;
 using Uno.UI.Xaml;
+using Uno;
+using System.Web;
+using System.Collections.Specialized;
+using Uno.Helpers;
+using Microsoft.Extensions.Logging;
+
+#if HAS_UNO_WINUI
+using LaunchActivatedEventArgs = Microsoft.UI.Xaml.LaunchActivatedEventArgs;
+#else
+using LaunchActivatedEventArgs = Windows.ApplicationModel.Activation.LaunchActivatedEventArgs;
+#endif
 
 namespace Windows.UI.Xaml
 {
@@ -27,7 +40,40 @@ namespace Windows.UI.Xaml
 				throw new InvalidOperationException("The application must be started using Application.Start first, e.g. Windows.UI.Xaml.Application.Start(_ => new App());");
 			}
 
+			Current = this;
+			Package.SetEntryAssembly(this.GetType().Assembly);
+
 			CoreDispatcher.Main.RunAsync(CoreDispatcherPriority.Normal, Initialize);
+
+			ObserveApplicationVisibility();
+		}
+
+		[Preserve]
+		public static int DispatchSystemThemeChange()
+		{
+			Windows.UI.Xaml.Application.Current.OnSystemThemeChanged();
+			return 0;
+		}
+
+		[Preserve]
+		public static int DispatchVisibilityChange(bool isVisible)
+		{
+			var application = Windows.UI.Xaml.Application.Current;
+			var window = Windows.UI.Xaml.Window.Current;
+			if (isVisible)
+			{
+				application?.LeavingBackground?.Invoke(application, new LeavingBackgroundEventArgs());
+				window?.OnVisibilityChanged(true);
+				window?.OnActivated(CoreWindowActivationState.CodeActivated);
+			}
+			else
+			{
+				window?.OnActivated(CoreWindowActivationState.Deactivated);
+				window?.OnVisibilityChanged(false);
+				application?.EnteredBackground?.Invoke(application, new EnteredBackgroundEventArgs());
+			}
+
+			return 0;
 		}
 
 		static partial void StartPartial(ApplicationInitializationCallback callback)
@@ -46,17 +92,17 @@ namespace Windows.UI.Xaml
 			callback(new ApplicationInitializationCallbackParams());
 		}
 
+		partial void ObserveSystemThemeChanges()
+		{
+			WebAssemblyRuntime.InvokeJS("Windows.UI.Xaml.Application.observeSystemTheme()");
+		}
 
 		private void Initialize()
 		{
 			using (WritePhaseEventTrace(TraceProvider.LauchedStart, TraceProvider.LauchedStop))
 			{
-				Current = this;
-
 				// Force init
 				Window.Current.ToString();
-
-				Windows.UI.Xaml.GenericStyles.Initialize();
 
 				var arguments = WebAssemblyRuntime.InvokeJS("Uno.UI.WindowManager.findLaunchArguments()");
 
@@ -65,35 +111,45 @@ namespace Windows.UI.Xaml
 					this.Log().Debug("Launch arguments: " + arguments);
 				}
 				InitializationCompleted();
+
+				if (!string.IsNullOrEmpty(arguments))
+				{
+					if (ProtocolActivation.TryParseActivationUri(arguments, out var activationUri))
+					{
+						OnActivated(new ProtocolActivatedEventArgs(activationUri, ApplicationExecutionState.NotRunning));
+						return;
+					}
+				}
+
 				OnLaunched(new LaunchActivatedEventArgs(ActivationKind.Launch, arguments));
 			}
 		}
 
-		private ApplicationTheme GetDefaultSystemTheme()
+		/// <summary>
+		/// Dispatch method from Javascript
+		/// </summary>
+		internal static void DispatchSuspending()
 		{
-			var serializedTheme = WebAssemblyRuntime.InvokeJS("Windows.UI.Xaml.Application.getDefaultSystemTheme()");
-			
-			if (serializedTheme != null)
+			Current?.OnSuspending();
+		}
+
+		partial void OnSuspendingPartial()
+		{
+			var completed = false;
+			var operation = new SuspendingOperation(DateTime.Now.AddSeconds(0), () => completed = true);
+
+			Suspending?.Invoke(this, new SuspendingEventArgs(operation));
+			operation.EventRaiseCompleted();
+
+			if (!completed && this.Log().IsEnabled(LogLevel.Warning))
 			{
-				if (Enum.TryParse(serializedTheme, out ApplicationTheme theme))
-				{
-					if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information))
-					{
-						this.Log().Info("Setting OS preferred theme: " + theme);
-					}
-					return theme;
-				}
-				else
-				{
-					throw new InvalidOperationException($"{serializedTheme} theme is not a supported OS theme");
-				}
+				this.Log().LogWarning($"This platform does not support asynchronous Suspending deferral. Code executed after the of the method called by Suspending may not get executed.");
 			}
-			//OS has no preference or API not implemented, use light as default
-			if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Information))
-			{
-				this.Log().Info("No preferred theme, using Light instead");
-			}
-			return ApplicationTheme.Light;
+		}
+
+		private void ObserveApplicationVisibility()
+		{
+			WebAssemblyRuntime.InvokeJS("Windows.UI.Xaml.Application.observeVisibility()");
 		}
 	}
 }

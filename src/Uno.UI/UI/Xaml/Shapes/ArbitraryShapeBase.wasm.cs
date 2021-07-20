@@ -17,12 +17,11 @@ namespace Windows.UI.Xaml.Shapes
 		private double _scaleY;
 #pragma warning restore CS0067, CS0649
 
-		private IDisposable BuildDrawableLayer()
-		{
-			return Disposable.Empty;
-		}
+		private IDisposable BuildDrawableLayer() => Disposable.Empty;
 
 		private Size GetActualSize() => Size.Empty;
+
+		protected virtual void InvalidateShape() { }
 
 		protected override Size MeasureOverride(Size availableSize)
 		{
@@ -32,6 +31,8 @@ namespace Windows.UI.Xaml.Shapes
 			{
 				return new Size();
 			}
+
+			InvalidateShape();
 
 			var measurements = GetMeasurements(availableSize);
 			var desiredSize = measurements.desiredSize;
@@ -56,7 +57,7 @@ namespace Windows.UI.Xaml.Shapes
 			var translate = Matrix3x2.CreateTranslation((float)measurements.translateX, (float)measurements.translateY);
 			var matrix = translate * scale;
 
-			foreach (FrameworkElement child in GetChildren())
+			foreach (var child in GetChildren())
 			{
 				if (child is DefsSvgElement)
 				{
@@ -148,7 +149,7 @@ namespace Windows.UI.Xaml.Shapes
 		{
 			var bbox = Rect.Empty;
 
-			foreach (FrameworkElement child in GetChildren())
+			foreach (var child in GetChildren())
 			{
 				if (child is DefsSvgElement)
 				{
@@ -170,15 +171,17 @@ namespace Windows.UI.Xaml.Shapes
 			return bbox;
 		}
 
-		private Rect GetBBoxWithStrokeThickness(FrameworkElement element)
+		private Rect GetBBoxWithStrokeThickness(UIElement element)
 		{
 			var bbox = element.GetBBox();
-			if (Stroke == null || StrokeThickness < double.Epsilon)
+			var strokeThickness = ActualStrokeThickness;
+
+			if (Stroke == null || strokeThickness < double.Epsilon)
 			{
 				return bbox;
 			}
 
-			var halfStrokeThickness = StrokeThickness / 2;
+			var halfStrokeThickness = strokeThickness / 2;
 
 			var x = Math.Min(bbox.X, bbox.Left - halfStrokeThickness);
 			var y = Math.Min(bbox.Y, bbox.Top - halfStrokeThickness);

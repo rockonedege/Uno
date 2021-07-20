@@ -14,8 +14,8 @@ namespace Windows.UI.Xaml
 {
 	public static class DependencyObjectExtensions
 	{
-		private static ConditionalWeakTable<object, DependencyObject> _objectData
-			= new ConditionalWeakTable<object, DependencyObject>();
+		private static ConditionalWeakTable<object, AttachedDependencyObject> _objectData
+			= new ConditionalWeakTable<object, AttachedDependencyObject>();
 
 		private static DependencyObjectStore GetStore(object instance)
 		{
@@ -33,8 +33,16 @@ namespace Windows.UI.Xaml
 		/// <returns>A new DependencyObject if none exists, otherwise the existing one.</returns>
 		internal static DependencyObjectStore GetAttachedStore(object instance)
 		{
-			return ((IDependencyObjectStoreProvider)_objectData.GetValue(instance, i => new AttachedDependencyObject(i))).Store;
+			return ((IDependencyObjectStoreProvider)GetAttachedDependencyObject(instance)).Store;
 		}
+
+		/// <summary>
+		/// Provides a DependencyObject proxy for a non-dependency object for DataBinding and x:Bind purposes
+		/// </summary>
+		/// <param name="instance"></param>
+		/// <returns></returns>
+		internal static AttachedDependencyObject GetAttachedDependencyObject(object instance)
+			=> _objectData.GetValue(instance, i => new AttachedDependencyObject(i));
 
 		/// <summary>
 		/// Gets the Unique ID of the specified dependency object.
@@ -56,6 +64,35 @@ namespace Windows.UI.Xaml
 			return GetStore(dependencyObject).Parent;
 		}
 
+		/// <summary>
+		/// Gets the parent dependency object, if any.
+		/// </summary>
+		/// <param name="dependencyObject"></param>
+		/// <returns></returns>
+		internal static object GetParent(this IDependencyObjectStoreProvider provider)
+			=> provider.Store.Parent;
+
+		/// <summary>
+		/// Enables the use of hard references for internal variables to improve the performance
+		/// </summary>
+		[global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Never)]
+		internal static void StoreTryEnableHardReferences(this IDependencyObjectStoreProvider provider)
+			=> provider.Store.TryEnableHardReferences();
+
+		/// <summary>
+		/// Disables the use of hard references for internal variables to improve the performance
+		/// </summary>
+		[global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Never)]
+		internal static void StoreDisableHardReferences(this IDependencyObjectStoreProvider provider)
+			=> provider.Store.DisableHardReferences();
+
+		/// <summary>
+		/// Gets the implicit style for the current object
+		/// </summary>
+		[global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Never)]
+		internal static Style StoreGetImplicitStyle(this IDependencyObjectStoreProvider provider, in SpecializedResourceDictionary.ResourceKey styleKey)
+			=> provider.Store.GetImplicitStyle(styleKey);
+
 		internal static IEnumerable<object> GetParents(this object dependencyObject)
 		{
 			var parent = dependencyObject.GetParent();
@@ -66,12 +103,58 @@ namespace Windows.UI.Xaml
 			}
 		}
 
+		internal static bool HasParent(this object dependencyObject, DependencyObject searchedParent)
+		{
+			var parent = dependencyObject.GetParent();
+			while (parent != null)
+			{
+				if (ReferenceEquals(parent, searchedParent))
+				{
+					return true;
+				}
+
+				parent = parent.GetParent();
+			}
+
+			return false;
+		}
+
 		/// <summary>
 		/// Set the parent of the specified dependency object
 		/// </summary>
 		internal static void SetParent(this object dependencyObject, object parent)
 		{
 			GetStore(dependencyObject).Parent = parent;
+		}
+
+		internal static void SetLogicalParent(this FrameworkElement element, DependencyObject logicalParent)
+		{
+#if UNO_HAS_MANAGED_POINTERS || __WASM__ // WASM has managed-esque pointers
+
+			// UWP distinguishes between the 'logical parent' (or inheritance parent) and the 'visual parent' of an element. Uno already
+			// recognises this distinction on some targets, but for targets using CoerceHitTestVisibility() for hit testing, the pointer
+			// implementation depends upon the logical parent (ie DepObjStore.Parent) being identical to the visual parent, because it
+			// piggybacks on the DP inheritance mechanism. Therefore we use LogicalParentOverride as a workaround to modify the publicly-visible
+			// FrameworkElement.Parent without affecting DP propagation.
+			element.LogicalParentOverride = logicalParent;
+#else
+			SetParent(element, logicalParent);
+#endif
+		}
+
+		/// <summary>
+		/// Parts of the internal UWP API of DependencyObject
+		/// Determines if a DO is a parent of another DO
+		/// </summary>
+		internal static bool IsAncestorOf(this DependencyObject ancestor, DependencyObject descendant)
+		{
+			var current = descendant.GetParent();
+			while (current != null && ancestor != current)
+			{
+				current = current.GetParent();
+			}
+
+			return (ancestor == current);
 		}
 
 		/// <summary>
@@ -157,6 +240,23 @@ namespace Windows.UI.Xaml
 		}
 
 		/// <summary>
+		/// The the value for all precedences.
+		/// </summary>
+		/// <remarks>
+		/// This should only be used for diagnostics and testing purposes.
+		/// </remarks>
+		internal static (object value, DependencyPropertyValuePrecedences precedence)[] GetValueForEachPrecedences(
+			this DependencyObject instance, DependencyProperty property)
+		{
+			var propertyDetails = GetStore(instance).GetPropertyDetails(property).ToList();
+
+			return Enum.GetValues(typeof(DependencyPropertyValuePrecedences))
+				.Cast<DependencyPropertyValuePrecedences>()
+				.Select(precedence => (propertyDetails[(int)precedence], precedence))
+				.ToArray();
+		}
+
+		/// <summary>
 		/// Clears the value for the specified dependency property on the specified instance.
 		/// </summary>
 		/// <param name="instance">The instance on which the property is attached</param>
@@ -209,9 +309,9 @@ namespace Windows.UI.Xaml
 		/// </summary>
 		/// <param name="instance">The instance on which the property is attached</param>
 		/// <param name="property">The dependency property to get</param>
-		internal static void CoerceValue(this object instance, DependencyProperty property)
+		internal static void CoerceValue(this IDependencyObjectStoreProvider storeProvider, DependencyProperty property)
 		{
-			GetStore(instance).CoerceValue(property);
+			storeProvider.Store.CoerceValue(property);
 		}
 
 		/// <summary>
@@ -273,7 +373,7 @@ namespace Windows.UI.Xaml
 					}
 
 					var childDisposable = new SerialDisposable();
-					
+
 					childDisposable.Disposable = (instance.GetValue(property) as DependencyObject)?.RegisterDisposableNestedPropertyChangedCallback(callback, subProperties);
 
 					var disposable = instance.RegisterDisposablePropertyChangedCallback(property, (s, e) =>
@@ -287,26 +387,6 @@ namespace Windows.UI.Xaml
 				})
 				.Apply(disposables => new CompositeDisposable(disposables));
 		}
-
-		/// <summary>
-		/// Register for changes all dependency properties changes notifications for the specified instance.
-		/// </summary>
-		/// <param name="instance">The instance for which to observe properties changes</param>
-		/// <param name="handler">The callback</param>
-		/// <returns>A disposable that will unregister the callback when disposed.</returns>
-		internal static IDisposable RegisterInheritedPropertyChangedCallback(this object instance, ExplicitPropertyChangedCallback handler)
-		{
-			return GetStore(instance).RegisterInheritedPropertyChangedCallback(handler);
-		}
-
-		/// <summary>
-		/// Register for compiled bindings updates propagation
-		/// </summary>
-		/// <param name="instance">The instance for which to observe compiled bindings updates</param>
-		/// <param name="handler">The callback</param>
-		/// <returns>A disposable that will unregister the callback when disposed.</returns>
-		internal static IDisposable RegisterCompiledBindingsUpdateCallback(this object instance, Action handler) 
-			=> GetStore(instance).RegisterCompiledBindingsUpdateCallback(handler);
 
 		/// <summary>
 		/// Registers to parent changes.
@@ -333,6 +413,14 @@ namespace Windows.UI.Xaml
 				.GetCurrentHighestValuePrecedence(property) != DependencyPropertyValuePrecedences.DefaultValue;
 		}
 
+		/// <summary>
+		/// True if a value is set on the property with <see cref="DependencyPropertyValuePrecedences.Local"/> precedence or higher, false otherwise.
+		/// </summary>
+		/// <param name="dependencyObject">The instance on which the property is attached</param>
+		/// <param name="property">The dependency property to test</param>
+		internal static bool IsDependencyPropertyLocallySet(this DependencyObject dependencyObject, DependencyProperty property) =>
+			GetStore(dependencyObject).GetCurrentHighestValuePrecedence(property) <= DependencyPropertyValuePrecedences.Local;
+
 		internal static DependencyPropertyValuePrecedences GetCurrentHighestValuePrecedence(this DependencyObject dependencyObject, DependencyProperty property)
 		{
 			return GetStore(dependencyObject).GetCurrentHighestValuePrecedence(property);
@@ -355,5 +443,19 @@ namespace Windows.UI.Xaml
 			var uielement = d as UIElement ?? d.GetParents().OfType<UIElement>().FirstOrDefault();
 			uielement?.InvalidateRender();
 		}
+
+		internal static void RegisterDefaultValueProvider(this IDependencyObjectStoreProvider storeProvider, DependencyObjectStore.DefaultValueProvider provider)
+			=> storeProvider.Store.RegisterDefaultValueProvider(provider);
+
+		/// <summary>
+		/// See <see cref="DependencyObjectStore.RegisterPropertyChangedCallbackStrong(ExplicitPropertyChangedCallback)"/> for more details
+		/// </summary>
+		internal static void RegisterPropertyChangedCallbackStrong(this IDependencyObjectStoreProvider storeProvider, ExplicitPropertyChangedCallback handler)
+			=> storeProvider.Store.RegisterPropertyChangedCallbackStrong(handler);
+
+		// TODO Uno: MUX uses a IsRightToLeft virtual method on DependencyObject. This
+		// allows for some customization - e.g. glyphs should not respect this.
+		internal static bool IsRightToLeft(this DependencyObject dependencyObject) =>
+			dependencyObject is FrameworkElement fw && fw.FlowDirection == FlowDirection.RightToLeft;
 	}
 }

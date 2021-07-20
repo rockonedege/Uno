@@ -1,7 +1,7 @@
 ---
 name: Enhancement Request
 about: Suggest an enhancement to the Uno project
-labels: kind/enhancement, triage/untriaged
+labels: kind/enhancement, triage/untriaged, difficulty/tbd
 ---
 
 <!-- Please only use this template for submitting enhancement requests -->
@@ -17,6 +17,10 @@ labels: kind/enhancement, triage/untriaged
 - [ ] WebAssembly
 - [ ] WebAssembly renderers for Xamarin.Forms
 - [ ] macOS
+- [ ] Skia
+  - [ ] WPF
+  - [ ] GTK (Linux)
+  - [ ] Tizen
 - [ ] Windows
 - [ ] Build tasks
 - [ ] Solution Templates

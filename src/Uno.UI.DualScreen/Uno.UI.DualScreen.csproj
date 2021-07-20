@@ -1,9 +1,11 @@
 ﻿<Project Sdk="MSBuild.Sdk.Extras" ToolsVersion="15.0">
   <PropertyGroup>
-		<TargetFrameworks>MonoAndroid90</TargetFrameworks>
-		<TargetFrameworksCI>MonoAndroid90</TargetFrameworksCI>
+		<TargetFrameworks>MonoAndroid11.0</TargetFrameworks>
+		<TargetFrameworksCI>MonoAndroid11.0;MonoAndroid10.0</TargetFrameworksCI>
 		<!--<GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">true</GeneratePackageOnBuild>-->
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+		<PackageId Condition="'$(UNO_UWP_BUILD)'!='true'">Uno.WinUI.DualScreen</PackageId>
 	</PropertyGroup>
 	
 	<PropertyGroup Condition="'$(UnoTargetFrameworkOverride)'!=''">
@@ -41,7 +43,7 @@
 
 	<Import Project="..\Uno.CrossTargetting.props" />
 
-	<ItemGroup Condition=" '$(TargetFramework)' == 'MonoAndroid90'">
+	<ItemGroup Condition=" '$(TargetFramework)' == 'MonoAndroid11.0' or '$(TargetFramework)' == 'MonoAndroid10.0'">
 		<PackageReference Include="Xamarin.DuoSdk" />
 	</ItemGroup>
 
@@ -51,10 +53,6 @@
 		<Reference Include="System.json" />
 		<Reference Include="System.Memory" />
 	</ItemGroup>
-
-	<PropertyGroup>
-		<UnoUIGeneratorsBinPath>..\SourceGenerators\Uno.UI.SourceGenerators\bin\$(Configuration)</UnoUIGeneratorsBinPath>
-	</PropertyGroup>
 
 	<Import Project="..\SourceGenerators\Uno.UI.SourceGenerators\Content\Uno.UI.SourceGenerators.props" />
 

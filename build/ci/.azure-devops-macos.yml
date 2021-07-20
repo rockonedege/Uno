@@ -1,6 +1,12 @@
+parameters:
+  vmImage: ''
+  xCodeRoot: ''
+  XamarinSDKVersion: ''
+
 jobs:
 
 - job: macOS
+  displayName: 'macOS Samples App Build'
 
   variables:
     CI_Build: true
@@ -9,23 +15,30 @@ jobs:
     XCODE_ROOT: /Applications/Xcode_10.3.app
 
   pool:
-    vmImage: 'macOS-10.14'
+    vmImage: ${{ parameters.vmImage }}
 
   steps:
   - checkout: self
     clean: true
-
+    
+  - template: templates/dotnet-install.yml
   - template: templates/optimize-roslyn-mono.yml
 
   - template: templates/nuget-cache.yml
     parameters:
       nugetPackages: $(NUGET_PACKAGES)
 
-  - bash: /bin/bash -c "sudo $AGENT_HOMEDIRECTORY/scripts/select-xamarin-sdk.sh 5_18_1"
-    displayName: Select Xamarin Version
-    
-  - bash: /bin/bash -c "echo '##vso[task.setvariable variable=MD_APPLE_SDK_ROOT;]'${XCODE_ROOT};sudo xcode-select --switch ${XCODE_ROOT}/Contents/Developer"
-    displayName: Select Xcode
+  - template: templates/ios-build-select-version.yml
+    parameters:
+      xCodeRoot: ${{ parameters.xCodeRoot }}
+      XamarinSDKVersion: ${{ parameters.XamarinSDKVersion }}
+
+  # Apply workaround for https://github.com/xamarin/xamarin-macios/issues/10652
+  - bash: |
+        curl -o xamarinmac.pkg 'https://bosstoragemirror.blob.core.windows.net/wrench/xcode12.4/a4c70e7d04e3904d17aa60f6d640eb048081c757/4477741/package/notarized/xamarin.mac-7.4.0.10.pkg'
+        sudo installer -pkg xamarinmac.pkg -target /
+
+    displayName: Apply Xamarin.mac workaround
 
   - task: NuGetToolInstaller@0
     inputs:

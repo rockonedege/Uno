@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Android.App;
@@ -22,6 +24,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using static Android.Widget.TextView;
+using Math = System.Math;
 
 namespace Windows.UI.Xaml.Controls
 {
@@ -64,24 +67,24 @@ namespace Windows.UI.Xaml.Controls
 			typeof(TextBox),
 			new FrameworkPropertyMetadata(false));
 
-		protected override void OnUnloaded()
+		private protected override void OnUnloaded()
 		{
 			base.OnUnloaded();
 
 			if (_textBoxView != null)
 			{
 				_textBoxView.OnFocusChangeListener = null;
-			}
 
-			// We always force lose the focus when unloading the control.
-			// This is required as the FocusChangedListener may not be called
-			// when the unloaded propagation is done on the .NET side (see
-			// FeatureConfiguration.FrameworkElement.AndroidUseManagedLoadedUnloaded for
-			// more details.
-			ProcessFocusChanged(false);
+				// We always force lose the focus when unloading the control.
+				// This is required as the FocusChangedListener may not be called
+				// when the unloaded propagation is done on the .NET side (see
+				// FeatureConfiguration.FrameworkElement.AndroidUseManagedLoadedUnloaded for
+				// more details.
+				ProcessFocusChanged(false);
+			}
 		}
 
-		protected override void OnLoaded()
+		private protected override void OnLoaded()
 		{
 			base.OnLoaded();
 			SetupTextBoxView();
@@ -119,7 +122,7 @@ namespace Windows.UI.Xaml.Controls
 			set { this.SetValue(ImeOptionsProperty, value); }
 		}
 
-		public static readonly DependencyProperty ImeOptionsProperty =
+		public static DependencyProperty ImeOptionsProperty { get ; } =
 			DependencyProperty.Register("ImeOptions",
 				typeof(ImeAction),
 				typeof(TextBox),
@@ -322,24 +325,7 @@ namespace Windows.UI.Xaml.Controls
 					inputType |= InputTypes.TextFlagMultiLine;
 				}
 
-				if (IsReadOnly)
-				{
-					_textBoxView.InputType = InputTypes.Null;
-
-					// Clear the listener so the inputs have no effect.
-					// Setting the input type to InputTypes.Null is not enough.
-					_listener = _textBoxView.KeyListener;
-					_textBoxView.KeyListener = null;
-				}
-				else
-				{
-					if (_listener != null)
-					{
-						_textBoxView.KeyListener = _listener;
-					}
-
-					_textBoxView.InputType = inputType;
-				}
+				_textBoxView.InputType = inputType;
 			}
 		}
 
@@ -377,13 +363,12 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
-		protected override void OnIsEnabledChanged(bool oldValue, bool newValue)
+		private protected override void OnIsEnabledChanged(IsEnabledChangedEventArgs e)
 		{
 			if (_textBoxView != null)
 			{
-				_textBoxView.Enabled = newValue;
+				_textBoxView.Enabled = e.NewValue;
 			}
-			base.OnIsEnabledChanged(oldValue, newValue);
 		}
 
 		private static TypefaceStyle GetTypefaceStyle(FontStyle fontStyle, FontWeight fontWeight)
@@ -407,7 +392,26 @@ namespace Windows.UI.Xaml.Controls
 		{
 			if (_textBoxView != null)
 			{
-				UpdateInputScope(InputScope);
+				var isReadOnly = IsReadOnly;
+
+				_textBoxView.Focusable = !isReadOnly;
+				_textBoxView.FocusableInTouchMode = !isReadOnly;
+				_textBoxView.Clickable = !isReadOnly;
+				_textBoxView.LongClickable = !isReadOnly;
+				_textBoxView.SetCursorVisible(!isReadOnly);
+
+				if (isReadOnly)
+				{
+					_listener = _textBoxView.KeyListener;
+					_textBoxView.KeyListener = null;
+				}
+				else
+				{
+					if (_listener != null)
+					{
+						_textBoxView.KeyListener = _listener;
+					}
+				}
 			}
 		}
 
@@ -526,6 +530,77 @@ namespace Windows.UI.Xaml.Controls
 			// Action will be ImeNull if AcceptsReturn is true, in which case we return false to allow the new line to register.
 			// Otherwise we return true to allow the focus to change correctly.
 			return actionId != ImeAction.ImeNull;
+		}
+
+		partial void OnTextCharacterCasingChangedPartial(DependencyPropertyChangedEventArgs e)
+		{
+			if (_textBoxView == null)
+			{
+				return;
+			}
+
+			var casing = (CharacterCasing)e.NewValue;
+
+			UpdateCasing(casing);
+		}
+
+		private void UpdateCasing(CharacterCasing characterCasing)
+		{
+			var currentFilters = _textBoxView.GetFilters()?.ToList() ?? new List<IInputFilter>();
+
+			//Remove any casing filters before applying new ones.
+			currentFilters.Remove(a => a is InputFilterAllLower || a is InputFilterAllCaps);
+
+			switch (characterCasing)
+			{
+				case CharacterCasing.Lower:
+					var lowerFilter = new List<IInputFilter>(currentFilters)
+										{
+											new InputFilterAllLower()
+										};
+					_textBoxView.SetFilters(lowerFilter.ToArray());
+
+					break;
+				case CharacterCasing.Upper:
+					var upperFilter = new List<IInputFilter>(currentFilters)
+										{
+											new InputFilterAllCaps()
+										};
+					_textBoxView.SetFilters(upperFilter.ToArray());
+
+					break;
+				case CharacterCasing.Normal:
+					break;
+			}
+		}
+	}
+
+	class InputFilterAllLower : InputFilterAllCaps
+	{
+		public override Java.Lang.ICharSequence FilterFormatted(Java.Lang.ICharSequence source, int start, int end, ISpanned dest, int dstart, int dend)
+		{
+			for (var x = start; x < end; x++)
+			{
+				if (char.IsUpper(source.ElementAt(x)))
+				{
+					var v = new char[end - start];
+					TextUtils.GetChars(source.ToString(), start, end, v, 0);
+					var s = new string(v).ToLower(CultureInfo.InvariantCulture);
+
+					if (source is ISpanned sourceSpanned)
+					{
+						var sp = new SpannableString(s);
+						TextUtils.CopySpansFrom(sourceSpanned, start, end, null, sp, 0);
+						return sp;
+					}
+					else
+					{
+						return new Java.Lang.String(s);
+					}
+				}
+			}
+
+			return null;
 		}
 	}
 }

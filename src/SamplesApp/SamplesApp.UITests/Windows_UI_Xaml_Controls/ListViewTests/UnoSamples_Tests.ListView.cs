@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Globalization;
+using FluentAssertions;
 using NUnit.Framework;
 using SamplesApp.UITests.TestFramework;
 using Uno.UITest.Helpers;
 using Uno.UITest.Helpers.Queries;
+using Uno.UITests.Helpers;
 
 namespace SamplesApp.UITests.Windows_UI_Xaml_Controls.ListViewTests
 {
@@ -129,9 +132,9 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Controls.ListViewTests
 			TakeScreenshot("after layout");
 
 			var heightStr = _app.GetText("HeightTextBlock");
-			var height = int.Parse(heightStr);
+			var height = float.Parse(heightStr, NumberStyles.Float, NumberFormatInfo.InvariantInfo);
 
-			Assert.AreEqual(224, height);
+			height.Should().BeApproximately(224f, 0.5f);
 		}
 
 		[Test]
@@ -145,7 +148,7 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Controls.ListViewTests
 			TakeScreenshot("1 item");
 
 			var heightStrBefore = _app.GetText("HeightTextBlock");
-			var heightBefore = int.Parse(heightStrBefore);
+			var heightBefore = float.Parse(heightStrBefore, NumberStyles.Float, NumberFormatInfo.InvariantInfo);
 
 			_app.FastTap("AddItemsButton");
 
@@ -154,16 +157,16 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Controls.ListViewTests
 			TakeScreenshot("3 items");
 
 			var heightStrAfter = _app.GetText("HeightTextBlock");
-			var heightAfter = int.Parse(heightStrAfter);
+			var heightAfter = float.Parse(heightStrAfter, NumberStyles.Float, NumberFormatInfo.InvariantInfo);
 
 			Assert.Greater(heightBefore, 0);
 
 			Assert.AreEqual(3 * heightBefore, heightAfter);
 		}
-		
+
 		[Test]
 		[AutoRetry]
-		[ActivePlatforms(Platform.iOS, Platform.Android)] // WASM is disabled https://github.com/unoplatform/uno/issues/2615
+		[ActivePlatforms(Platform.iOS, Platform.Android)] // WASM: ClickCheckBoxAt() fails because AtIndex() isn't supported https://github.com/unoplatform/Uno.UITest/issues/47
 		public void ListView_ExpandableItem_ExpandSingleItem()
 		{
 			Run("SamplesApp.Windows_UI_Xaml_Controls.ListView.ListView_Expandable_Item");
@@ -172,22 +175,22 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Controls.ListViewTests
 			_app.WaitForElement(checkBox);
 
 			// Save initial state(not expanded)
-			var screenshot1 = TakeScreenshot("Initial State");
+			using var screenshot1 = TakeScreenshot("Initial State");
 
 			// Expand and compare
 			ClickCheckBoxAt(0);
-			var screenshot2 = TakeScreenshot("Expanded State");
+			using var screenshot2 = TakeScreenshot("Expanded State");
 			ImageAssert.AreNotEqual(screenshot1, screenshot2);
 
 			// Collapse and compare
 			ClickCheckBoxAt(0);
-			var screenshot3 = TakeScreenshot("Collapsed State");
+			using var screenshot3 = TakeScreenshot("Collapsed State");
 			ImageAssert.AreEqual(screenshot1, screenshot3);
 		}
 
 		[Test]
 		[AutoRetry]
-		[ActivePlatforms(Platform.iOS, Platform.Android)] // WASM is disabled https://github.com/unoplatform/uno/issues/2615
+		[ActivePlatforms(Platform.iOS, Platform.Android)] // WASM: ClickCheckBoxAt() fails because AtIndex() isn't supported https://github.com/unoplatform/Uno.UITest/issues/47
 		public void ListView_ExpandableItem_ExpandMultipleItems()
 		{
 			Run("SamplesApp.Windows_UI_Xaml_Controls.ListView.ListView_Expandable_Item");
@@ -196,20 +199,20 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Controls.ListViewTests
 			_app.WaitForElement(checkBox);
 
 			// Save initial state(not expanded)
-			var screenshot1 = TakeScreenshot("Initial State");
+			using var screenshot1 = TakeScreenshot("Initial State");
 
 			// Expand multiple items and compare
 			ClickCheckBoxAt(0);
 			ClickCheckBoxAt(1);
 			ClickCheckBoxAt(2);
-			var screenshot2 = TakeScreenshot("Expanded State");
+			using var screenshot2 = TakeScreenshot("Expanded State");
 			ImageAssert.AreNotEqual(screenshot1, screenshot2);
 
 			// Collapse all and compare 
 			ClickCheckBoxAt(0);
 			ClickCheckBoxAt(1);
 			ClickCheckBoxAt(2);
-			var screenshot3 = TakeScreenshot("Collapsed State");
+			using var screenshot3 = TakeScreenshot("Collapsed State");
 			ImageAssert.AreEqual(screenshot1, screenshot3);
 		}
 
@@ -271,7 +274,7 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Controls.ListViewTests
 			string heightBefore = fixedHeightContainer.GetDependencyPropertyValue("Height")?.ToString();
 			heightChangeButton.Tap();
 			string heightAfter = fixedHeightContainer.GetDependencyPropertyValue("Height")?.ToString();
-			Assert.AreNotEqual(heightBefore, heightAfter);			
+			Assert.AreNotEqual(heightBefore, heightAfter);
 		}
 
 		[Test]
@@ -301,7 +304,7 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Controls.ListViewTests
 
 		[Test]
 		[AutoRetry]
-		[ActivePlatforms(Platform.iOS, Platform.Android)] // WASM is disabled https://github.com/unoplatform/uno/issues/2615
+		[ActivePlatforms(Platform.iOS, Platform.Android)] // WASM: ListView.Header not implemented https://github.com/unoplatform/uno/issues/1979
 		public void ListView_ExpandableItemLarge_ExpandHeader_Validation()
 		{
 			Run("SamplesApp.Windows_UI_Xaml_Controls.ListView.ListView_Expandable_Item_Large");
@@ -310,22 +313,22 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Controls.ListViewTests
 			_app.WaitForElement(checkBoxHeader);
 
 			// Save initial state(not expanded)
-			var screenshot1 = TakeScreenshot("Initial State");
+			using var screenshot1 = TakeScreenshot("Initial State");
 
 			// Expand and compare
 			checkBoxHeader.Tap();
-			var screenshot2 = TakeScreenshot("Expanded State");
+			using var screenshot2 = TakeScreenshot("Expanded State");
 			ImageAssert.AreNotEqual(screenshot1, screenshot2);
 
 			// Collapse and compare 
 			checkBoxHeader.Tap();
-			var screenshot3 = TakeScreenshot("Collapsed State");
+			using var screenshot3 = TakeScreenshot("Collapsed State");
 			ImageAssert.AreAlmostEqual(screenshot1, screenshot3);
 		}
 
 		[Test]
 		[AutoRetry]
-		[ActivePlatforms(Platform.iOS, Platform.Android)] // WASM is disabled https://github.com/unoplatform/uno/issues/2615
+		[ActivePlatforms(Platform.iOS, Platform.Android)] // WASM: ListView.Header not implemented https://github.com/unoplatform/uno/issues/1979
 		public void ListView_ExpandableItemLarge_ExpandHeaderWithMultipleItems_Validation()
 		{
 			Run("SamplesApp.Windows_UI_Xaml_Controls.ListView.ListView_Expandable_Item_Large");
@@ -334,28 +337,28 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Controls.ListViewTests
 			_app.WaitForElement(checkBoxHeader);
 
 			// Save initial state(not expanded)
-			var screenshot1 = TakeScreenshot("Initial State");
+			using var screenshot1 = TakeScreenshot("Initial State");
 
 			// Expand and compare
 			checkBoxHeader.Tap();
 			ClickCheckBoxAt(0);
 			ClickCheckBoxAt(1);
 			ClickCheckBoxAt(2);
-			var screenshot2 = TakeScreenshot("Expanded State");
-			ImageAssert.AreNotEqual(screenshot1, screenshot2);		
+			using var screenshot2 = TakeScreenshot("Expanded State");
+			ImageAssert.AreNotEqual(screenshot1, screenshot2);
 
 			// Collapse and compare
 			checkBoxHeader.Tap();
 			ClickCheckBoxAt(0);
 			ClickCheckBoxAt(1);
 			ClickCheckBoxAt(2);
-			var screenshot3 = TakeScreenshot("Collapsed State");
+			using var screenshot3 = TakeScreenshot("Collapsed State");
 			ImageAssert.AreEqual(screenshot1, screenshot3);
 		}
 
 		[Test]
 		[AutoRetry]
-		[ActivePlatforms(Platform.iOS, Platform.Android)] // WASM is disabledListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_TestsListViewTests_Tests https://github.com/unoplatform/uno/issues/2615
+		[ActivePlatforms(Platform.iOS, Platform.Android)] // WASM: ListView.Header not implemented https://github.com/unoplatform/uno/issues/1979
 		public void ListView_ExpandableItemLarge_ExpandHeaderWithSingleItem_Validation()
 		{
 			Run("SamplesApp.Windows_UI_Xaml_Controls.ListView.ListView_Expandable_Item_Large");
@@ -364,21 +367,24 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Controls.ListViewTests
 			_app.WaitForElement(checkBoxHeader);
 
 			// Save initial state(not expanded)
-			var screenshot1 = TakeScreenshot("Initial State");
+			using var screenshot1 = TakeScreenshot("Initial State");
 
 			// Expand multiple items, header and compare
 			checkBoxHeader.Tap();
 			ClickCheckBoxAt(0);
-			var screenshot2 = TakeScreenshot("Expanded State");
+			using var screenshot2 = TakeScreenshot("Expanded State");
 			ImageAssert.AreNotEqual(screenshot1, screenshot2);
 
 			// Collapse all and compare 
 			checkBoxHeader.Tap();
 			ClickCheckBoxAt(0);
-			var screenshot3 = TakeScreenshot("Collapsed State");
+			using var screenshot3 = TakeScreenshot("Collapsed State");
 			ImageAssert.AreEqual(screenshot1, screenshot3);
 		}
 
+		[Test]
+		[AutoRetry]
+		[Timeout(3*60*1000)] // On iOS, this test is slow
 		public void ListView_SelectedItems()
 		{
 			Run("SamplesApp.Windows_UI_Xaml_Controls.ListView.ListViewSelectedItems");
@@ -415,6 +421,56 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Controls.ListViewTests
 			_app.FastTap("ClearSelectedItemButton");
 
 			_app.WaitForText("SelectionChangedTextBlock", "SelectionChanged event: AddedItems=(), RemovedItems=(3, 0, 1, 2, )");
+		}
+
+		[Test]
+		[AutoRetry]
+		[ActivePlatforms(Platform.Browser, Platform.iOS)]
+		public void ListView_ObservableCollection_Creation_Count()
+		{
+			Run("UITests.Windows_UI_Xaml_Controls.ListView.ListView_ObservableCollection_CreationCount");
+
+			const string StatusText = "AutomationStepTextBlock";
+			const string AutomateButton = "AutomateButton";
+
+			_app.WaitForElement(StatusText);
+
+			AdvanceAutomation("Added");
+			AdvanceAutomation("Scrolled1");
+
+			var expectedTemplateCreationCount = GetTemplateCreationCount();
+			//var expectedTemplateBindCount = GetTemplateBindCount(); // For some reason WASM performs extra bindings on scrolling
+			var expectedContainerCreationCount = GetContainerCreationCount();
+
+			AdvanceAutomation("Scrolled2");
+
+			Assert.AreEqual(expectedTemplateCreationCount, GetTemplateCreationCount());
+			Assert.AreEqual(expectedContainerCreationCount, GetContainerCreationCount());
+
+			var expectedTemplateBindCount = GetTemplateBindCount();
+
+			AdvanceAutomation("Added above");
+
+			Assert.AreEqual(expectedTemplateCreationCount, GetTemplateCreationCount());
+			Assert.AreEqual(expectedContainerCreationCount, GetContainerCreationCount());
+			Assert.AreEqual(expectedTemplateBindCount, GetTemplateBindCount()); // Note: this doesn't actually seem to be the case on Windows - the bind count increases for some reason
+
+			AdvanceAutomation("Removed above");
+
+			Assert.AreEqual(expectedTemplateCreationCount, GetTemplateCreationCount());
+			Assert.AreEqual(expectedContainerCreationCount, GetContainerCreationCount());
+			Assert.AreEqual(expectedTemplateBindCount, GetTemplateBindCount());
+
+			int GetTemplateCreationCount() => int.Parse(_app.GetText("CreationCountText"));
+			int GetTemplateBindCount() => int.Parse(_app.GetText("BindCountText"));
+			int GetContainerCreationCount() => int.Parse(_app.GetText("CreationCount2Text"));
+
+			void AdvanceAutomation(string automationStep)
+			{
+				_app.FastTap(AutomateButton);
+				_app.WaitForText(StatusText, automationStep);
+				TakeScreenshot(automationStep);
+			}
 		}
 
 		private void ClickCheckBoxAt(int i)

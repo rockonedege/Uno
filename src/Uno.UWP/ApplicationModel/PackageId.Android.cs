@@ -1,16 +1,15 @@
-﻿
-using Android.Content.PM;
-#if __ANDROID__
+﻿#if __ANDROID__
 using Android.App;
+using Android.Content.PM;
 using SystemVersion = global::System.Version;
 
 namespace Windows.ApplicationModel
 {
 	public partial class PackageId
 	{
-		private readonly PackageInfo _packageInfo;
+		private PackageInfo _packageInfo;
 
-		public PackageId()
+		partial void InitializePlatform()
 		{
 			_packageInfo = Application.Context.PackageManager.GetPackageInfo(
 				Application.Context.PackageName,
@@ -43,7 +42,7 @@ namespace Windows.ApplicationModel
 		private long GetVersionCode()
 		{
 #if __ANDROID_28__
-			return Android.Support.V4.Content.PM.PackageInfoCompat.GetLongVersionCode(_packageInfo);
+			return AndroidX.Core.Content.PM.PackageInfoCompat.GetLongVersionCode(_packageInfo);
 #else
 			return _packageInfo.VersionCode;
 #endif

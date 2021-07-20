@@ -1,4 +1,5 @@
-﻿using Uno.Extensions;
+﻿#nullable enable
+using Uno.Extensions;
 using Uno.UI.DataBinding;
 using Windows.UI.Xaml;
 using Uno.UI.Extensions;
@@ -17,7 +18,7 @@ using CoreGraphics;
 
 namespace Windows.UI.Xaml.Controls
 {
-	public partial class ScrollViewer : ContentControl
+	public partial class ScrollViewer : ContentControl, ICustomClippingElement
 	{
 		/// <summary>
 		/// On iOS 10-, we set a flag on the view controller such that the CommandBar doesn't automatically affect ScrollViewer content 
@@ -26,17 +27,17 @@ namespace Windows.UI.Xaml.Controls
 		internal static bool UseContentInsetAdjustmentBehavior => UIDevice.CurrentDevice.CheckSystemVersion(11, 0);
 
 		/// <summary>
-		/// The <see cref="UIScrollView"/> which will actually scroll. Mostly this will be identical to <see cref="_sv"/>, but if we're inside a
+		/// The <see cref="UIScrollView"/> which will actually scroll. Mostly this will be identical to <see cref="_presenter"/>, but if we're inside a
 		/// multi-line TextBox we set it to <see cref="MultilineTextBoxView"/>.
 		/// </summary>
-		private IUIScrollView _scrollableContainer;
+		private IUIScrollView? _scrollableContainer;
 
 		partial void OnApplyTemplatePartial()
 		{
 			SetScrollableContainer();
 		}
 
-		protected override void OnLoaded()
+		private protected override void OnLoaded()
 		{
 			SetScrollableContainer();
 			base.OnLoaded();
@@ -44,7 +45,7 @@ namespace Windows.UI.Xaml.Controls
 
 		private void SetScrollableContainer()
 		{
-			_scrollableContainer = _sv;
+			_scrollableContainer = _presenter;
 
 			if (this.FindFirstParent<TextBox>() != null)
 			{
@@ -56,16 +57,56 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
-		partial void ChangeViewScroll(double? horizontalOffset, double? verticalOffset, bool disableAnimation)
+		private (double? horizontal, double? vertical, bool disableAnimation)? _pendingChangeView;
+
+		protected override void OnAfterArrange()
+		{
+			base.OnAfterArrange();
+
+			if (_pendingChangeView is {} req)
+			{
+				var success = ChangeViewNative(req.horizontal, req.vertical, null, req.disableAnimation);
+				if (success || !IsArrangeDirty)
+				{
+					_pendingChangeView = default;
+				}
+			}
+		}
+
+		private bool ChangeViewNative(double? horizontalOffset, double? verticalOffset, float? zoomFactor, bool disableAnimation)
 		{
 			if (_scrollableContainer != null)
 			{
 				// iOS doesn't limit the offset to the scrollable bounds by itself
-				var newOffset = new CGPoint(horizontalOffset ?? HorizontalOffset, verticalOffset ?? VerticalOffset)
-					.Clamp(CGPoint.Empty, _scrollableContainer.UpperScrollLimit);
+				var limit = _scrollableContainer.UpperScrollLimit;
+				var desiredOffsets = new Windows.Foundation.Point(horizontalOffset ?? HorizontalOffset, verticalOffset ?? VerticalOffset);
+				var clampedOffsets = new Windows.Foundation.Point(MathEx.Clamp(desiredOffsets.X, 0, limit.X), MathEx.Clamp(desiredOffsets.Y, 0, limit.Y));
 
-				_scrollableContainer.SetContentOffset(newOffset, !disableAnimation);
+				var success = desiredOffsets == clampedOffsets;
+				if (!success && IsArrangeDirty)
+				{
+					// If the the requested offsets are out-of - bounds, but we actually does have our final bounds yet,
+					// we allow to set the desired offsets. If needed, they will then be clamped by the OnAfterArrange().
+					// This is needed to allow a ScrollTo before the SV has been layouted.
+
+					_pendingChangeView = (horizontalOffset, verticalOffset, disableAnimation);
+					_scrollableContainer.SetContentOffset(desiredOffsets, !disableAnimation);
+				}
+				else
+				{
+					_scrollableContainer.SetContentOffset(clampedOffsets, !disableAnimation);
+				}
+
+				if(zoomFactor is { } zoom)
+				{
+					ChangeViewZoom(zoom, disableAnimation);
+				}
+
+				// Return true if successfully scrolled to asked offsets
+				return success;
 			}
+
+			return false;
 		}
 
 		partial void OnZoomModeChangedPartial(ZoomMode zoomMode)
@@ -75,17 +116,17 @@ namespace Windows.UI.Xaml.Controls
 			{
 				case ZoomMode.Disabled:
 				default:
-					_sv?.OnMinZoomFactorChanged(1f);
-					_sv?.OnMaxZoomFactorChanged(1f);
+					_presenter?.OnMinZoomFactorChanged(1f);
+					_presenter?.OnMaxZoomFactorChanged(1f);
 					break;
 				case ZoomMode.Enabled:
-					_sv?.OnMinZoomFactorChanged(MinZoomFactor);
-					_sv?.OnMaxZoomFactorChanged(MaxZoomFactor);
+					_presenter?.OnMinZoomFactorChanged(MinZoomFactor);
+					_presenter?.OnMaxZoomFactorChanged(MaxZoomFactor);
 					break;
 			}
 		}
 
-		partial void ChangeViewZoom(float zoomFactor, bool disableAnimation)
+		private void ChangeViewZoom(float zoomFactor, bool disableAnimation)
 		{
 			_scrollableContainer?.SetZoomScale(zoomFactor, animated: !disableAnimation);
 		}
@@ -147,7 +188,10 @@ namespace Windows.UI.Xaml.Controls
 					}
 				}
 
-				_sv.ContentInset = new UIEdgeInsets((nfloat)insetTop, (nfloat)insetLeft, 0, 0);
+				if (_presenter != null)
+				{
+					_presenter.ContentInset = new UIEdgeInsets((nfloat)insetTop, (nfloat)insetLeft, 0, 0);
+				}
 			}
 		}
 
@@ -156,5 +200,8 @@ namespace Windows.UI.Xaml.Controls
 			base.WillMoveToSuperview(newsuper);
 			UpdateSizeChangedSubscription(isCleanupRequired: newsuper == null);
 		}
+
+		bool ICustomClippingElement.AllowClippingToLayoutSlot => true;
+		bool ICustomClippingElement.ForceClippingToLayoutSlot => true; // force scrollviewer to always clip
 	}
 }

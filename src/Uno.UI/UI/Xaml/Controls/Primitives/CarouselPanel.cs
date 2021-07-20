@@ -1,4 +1,4 @@
-﻿#if !__WASM__
+﻿#if !UNO_REFERENCE_API
 using System;
 using System.Collections.Generic;
 using System.Text;

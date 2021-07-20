@@ -1,35 +1,45 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using SamplesApp.UITests.TestFramework;
+using Uno.UITest;
 using Uno.UITest.Helpers;
 using Uno.UITest.Helpers.Queries;
+using Uno.UITests.Helpers;
 
-namespace SamplesApp.UITests
+namespace SamplesApp.UITests.Runtime
 {
 	[TestFixture]
 	public partial class RuntimeTests : SampleControlUITestBase
 	{
 		private const string PendingTestsText = "Pending...";
 		private readonly TimeSpan TestRunTimeout = TimeSpan.FromMinutes(2);
+		private const string TestResultsOutputFilePath = "UNO_UITEST_RUNTIMETESTS_RESULTS_FILE_PATH";
 
 		[Test]
-		[AutoRetry]
+		[AutoRetry(tryCount: 1)]
+		[Timeout(7200000)] // Adjust this timeout based on average test run duration
 		public async Task RunRuntimeTests()
 		{
 			Run("SamplesApp.Samples.UnitTests.UnitTestsPage");
 
-			var runButton = _app.Marked("runButton");
-			var failedTestsCount = _app.Marked("failedTestCount");
-			var failedTests = _app.Marked("failedTests");
-			var runningState = _app.Marked("runningState");
-			var runTestCount = _app.Marked("runTestCount");
+			IAppQuery AllQuery(IAppQuery query)
+				// .All() is not yet supported for wasm.
+				=> AppInitializer.GetLocalPlatform() == Platform.Browser ? query : query.All();
+
+			var runButton = new QueryEx(q => AllQuery(q).Marked("runButton"));
+			var failedTestsCount = new QueryEx(q => AllQuery(q).Marked("failedTestCount"));
+			var failedTests = new QueryEx(q => AllQuery(q).Marked("failedTests"));
+			var runningState = new QueryEx(q => AllQuery(q).Marked("runningState"));
+			var runTestCount = new QueryEx(q => AllQuery(q).Marked("runTestCount"));
+			var unitTestsControl = new QueryEx(q => AllQuery(q).Marked("UnitTestsRootControl"));
 
 			bool IsTestExecutionDone()
-				=> runningState.GetDependencyPropertyValue<string>("Text").Equals("Finished", StringComparison.OrdinalIgnoreCase);
+				=> runningState.GetDependencyPropertyValue("Text")?.ToString().Equals("Finished", StringComparison.OrdinalIgnoreCase) ?? false;
 
 			_app.WaitForElement(runButton);
 
@@ -40,7 +50,7 @@ namespace SamplesApp.UITests
 
 			while(DateTimeOffset.Now - lastChange < TestRunTimeout)
 			{
-				var newValue = runTestCount.GetDependencyPropertyValue<string>("Text");
+				var newValue = runTestCount.GetDependencyPropertyValue("Text")?.ToString();
 
 				if (lastValue != newValue)
 				{
@@ -60,6 +70,8 @@ namespace SamplesApp.UITests
 				Assert.Fail("A test run timed out");
 			}
 
+			TestContext.AddTestAttachment(ArchiveResults(unitTestsControl), "runtimetests-results.zip");
+
 			var count = failedTestsCount.GetDependencyPropertyValue("Text").ToString();
 
 			if (count != "0")
@@ -77,5 +89,35 @@ namespace SamplesApp.UITests
 
 			TakeScreenshot("Runtime Tests Results",	ignoreInSnapshotCompare: true);
 		}
+
+
+		private static string ArchiveResults(QueryEx unitTestsControl)
+		{
+			var document = unitTestsControl.GetDependencyPropertyValue<string>("NUnitTestResultsDocument");
+
+			var file = Path.GetTempFileName();
+			File.WriteAllText(file, document, Encoding.Unicode);
+
+			if (Environment.GetEnvironmentVariable(TestResultsOutputFilePath) is { } path)
+			{
+				File.Copy(file, path);
+			}
+			else
+			{
+				Console.WriteLine($"The environment variable {TestResultsOutputFilePath} is not defined, skipping file system extraction");
+			}
+
+			var finalFile = Path.Combine(Path.GetDirectoryName(file), "test-results.xml");
+
+			if (File.Exists(finalFile))
+			{
+				File.Delete(finalFile);
+			}
+
+			File.Move(file, finalFile);
+
+			return finalFile;
+		}
+
 	}
 }

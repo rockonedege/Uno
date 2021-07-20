@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -14,6 +15,8 @@ namespace Uno.Samples.UITest.Generator
 {
 	public class SnapShotTestGenerator : SourceGenerator
 	{
+		private const int GroupCount = 4;
+
 		private INamedTypeSymbol _sampleControlInfoSymbol;
 		private INamedTypeSymbol _sampleSymbol;
 
@@ -39,32 +42,59 @@ namespace Uno.Samples.UITest.Generator
 						where info != null
 						let sampleInfo = GetSampleInfo(typeSymbol, info)
 						orderby sampleInfo.categories.First()
-						select (typeSymbol, sampleInfo.categories, sampleInfo.name, sampleInfo.ignoreInSnapshotTests);
+						select (typeSymbol, sampleInfo.categories, sampleInfo.name, sampleInfo.ignoreInSnapshotTests, sampleInfo.isManual);
 
 			query = query.Distinct();
 
 			GenerateTests(assembly, context, query);
 		}
 
-		private (string[] categories, string name, bool ignoreInSnapshotTests) GetSampleInfo(INamedTypeSymbol symbol, AttributeData attr)
+		private (string[] categories, string name, bool ignoreInSnapshotTests, bool isManual) GetSampleInfo(INamedTypeSymbol symbol, AttributeData attr)
 		{
 			if (attr.AttributeClass == _sampleControlInfoSymbol)
 			{
 				return (
 					categories: new[] { GetConstructorParameterValue(attr, "category")?.ToString() ?? "Default" },
 					name: AlignName(GetConstructorParameterValue(attr, "controlName")?.ToString() ?? symbol.ToDisplayString()),
-					ignoreInSnapshotTests: GetConstructorParameterValue(attr, "ignoreInSnapshotTests") is bool b && b
+					ignoreInSnapshotTests: GetConstructorParameterValue(attr, "ignoreInSnapshotTests") is bool b && b,
+					isManual: GetConstructorParameterValue(attr, "isManualTest") is bool m && m
 				);
 			}
 			else
 			{
+				var categories = attr
+					.ConstructorArguments
+					.Where(arg => arg.Kind == TypedConstantKind.Array)
+					.Select(arg => GetCategories(arg.Values))
+					.SingleOrDefault()
+					?? GetCategories(attr.ConstructorArguments);
+
+				if (categories?.Any(string.IsNullOrWhiteSpace) ?? false)
+				{
+					throw new InvalidOperationException(
+						"Invalid syntax for the SampleAttribute (found an empty category name). "
+						+ "Usually this is because you used nameof(Control) to set the categories, which is not supported by the compiler. "
+						+ "You should instead use the overload which accepts type (i.e. use typeof() instead of nameof()).");
+				}
+
 				return (
-					categories: !attr.ConstructorArguments.IsDefaultOrEmpty && !attr.ConstructorArguments.Single().Values.IsDefaultOrEmpty
-						? attr.ConstructorArguments.Single().Values.Select(arg => arg.Value.ToString()).ToArray()
-						: new[] { "Default" },
+					categories: (categories?.Any() ?? false) ? categories : new[] { "Default" },
 					name: AlignName(GetAttributePropertyValue(attr, "Name")?.ToString() ?? symbol.ToDisplayString()),
-					ignoreInSnapshotTests: GetAttributePropertyValue(attr, "IgnoreInSnapshotTests") is bool b && b
-				);
+					ignoreInSnapshotTests: GetAttributePropertyValue(attr, "IgnoreInSnapshotTests") is bool b && b,
+					isManual: GetAttributePropertyValue(attr, "IsManualTest") is bool m && m
+					);
+
+				string[] GetCategories(ImmutableArray<TypedConstant> args) => args
+					.Select(v =>
+					{
+						switch (v.Kind)
+						{
+							case TypedConstantKind.Primitive: return v.Value.ToString();
+							case TypedConstantKind.Type: return ((ITypeSymbol)v.Value).Name;
+							default: return null;
+						}
+					})
+					.ToArray();
 			}
 		}
 
@@ -90,7 +120,7 @@ namespace Uno.Samples.UITest.Generator
 		private void GenerateTests(
 			string assembly,
 			SourceGeneratorContext context,
-			IEnumerable<(INamedTypeSymbol symbol, string[] categories, string name, bool ignoreInSnapshotTests)> symbols)
+			IEnumerable<(INamedTypeSymbol symbol, string[] categories, string name, bool ignoreInSnapshotTests, bool isManual)> symbols)
 		{
 			var groups = 
 				from symbol in symbols.Select((v, i) => (index:i, value:v))
@@ -121,17 +151,26 @@ namespace Uno.Samples.UITest.Generator
 						foreach (var test in group.Symbols)
 						{
 							builder.AppendLineInvariant("[global::NUnit.Framework.Test]");
-							builder.AppendLineInvariant($"[global::NUnit.Framework.Description(\"runGroup:{group.Index % 2:00}, automated:{test.symbol.ToDisplayString()}\")]");
+							builder.AppendLineInvariant($"[global::NUnit.Framework.Description(\"runGroup:{group.Index % GroupCount:00}, automated:{test.symbol.ToDisplayString()}\")]");
 
 							if (test.ignoreInSnapshotTests)
 							{
 								builder.AppendLineInvariant("[global::NUnit.Framework.Ignore(\"ignoreInSnapshotTests is set for attribute\")]");
 							}
+							if (test.isManual)
+							{
+								builder.AppendLineInvariant("[global::NUnit.Framework.Ignore(\"isManualTest is set for attribute\")]");
+							}
 
 							builder.AppendLineInvariant("[global::SamplesApp.UITests.TestFramework.AutoRetry]");
-							using (builder.BlockInvariant($"public void {Sanitize(test.categories.First())}_{Sanitize(test.name)}()"))
+							// Set to 60 seconds to cover possible restart of the device
+							builder.AppendLineInvariant("[global::NUnit.Framework.Timeout(60000)]");
+							var testName = $"{Sanitize(test.categories.First())}_{Sanitize(test.name)}";
+							using (builder.BlockInvariant($"public void {testName}()"))
 							{
+								builder.AppendLineInvariant($"Console.WriteLine(\"Running test [{testName}]\");");
 								builder.AppendLineInvariant($"Run(\"{test.symbol}\", waitForSampleControl: false);");
+								builder.AppendLineInvariant($"Console.WriteLine(\"Ran test [{testName}]\");");
 							}
 						}
 					}
@@ -194,8 +233,8 @@ namespace Uno.Samples.UITest.Generator
 		{
 			switch (Path.GetFileName(path).ToLowerInvariant())
 			{
-				case "monoandroid80":
-					yield return $@"{devEnvDir}\..\Common7\IDE\ReferenceAssemblies\Microsoft\Framework\MonoAndroid\v8.0";
+				case "MonoAndroid11.0":
+					yield return $@"{devEnvDir}\..\Common7\IDE\ReferenceAssemblies\Microsoft\Framework\MonoAndroid\v9.0";
 					yield return $@"{devEnvDir}\..\Common7\IDE\ReferenceAssemblies\Microsoft\Framework\MonoAndroid\v1.0";
 					yield break;
 				case "xamarinios10":

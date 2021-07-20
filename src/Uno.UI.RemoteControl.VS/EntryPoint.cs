@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel.Composition;
@@ -39,6 +39,7 @@ namespace Uno.UI.RemoteControl.VS
 		private System.Diagnostics.Process _process;
 
 		private int RemoteControlServerPort;
+		private bool _closing = false;
 
 		public EntryPoint(DTE2 dte2, string toolsPath, AsyncPackage asyncPackage, Action<Func<Task<Dictionary<string, string>>>> globalPropertiesProvider)
 		{
@@ -55,7 +56,7 @@ namespace Uno.UI.RemoteControl.VS
 			_dte.Events.BuildEvents.OnBuildDone +=
 				(s, a) => BuildEvents_OnBuildDoneAsync(s, a);
 
-			_dte.Events.BuildEvents.OnBuildProjConfigBegin += 
+			_dte.Events.BuildEvents.OnBuildProjConfigBegin +=
 				(string project, string projectConfig, string platform, string solutionConfig) => BuildEvents_OnBuildProjConfigBeginAsync(project, projectConfig, platform, solutionConfig);
 
 			// Start the RC server early, as iOS and Android projects capture the globals early
@@ -96,12 +97,36 @@ namespace Uno.UI.RemoteControl.VS
 				.Add(UnoPlatformOutputPane);
 			}
 
-			_debugAction = s => owPane.OutputString("[DEBUG] " + s + "\r\n");
-			_infoAction = s => owPane.OutputString("[INFO] " + s + "\r\n");
-			_infoAction = s => owPane.OutputString("[INFO] " + s + "\r\n");
-			_verboseAction = s => owPane.OutputString("[VERBOSE] " + s + "\r\n");
-			_warningAction = s => owPane.OutputString("[WARNING] " + s + "\r\n");
-			_errorAction = e => owPane.OutputString("[ERROR] " + e + "\r\n");
+			_debugAction = s => {
+				if (!_closing)
+				{
+					owPane.OutputString("[DEBUG] " + s + "\r\n");
+				}
+			};
+			_infoAction = s => {
+				if (!_closing)
+				{
+					owPane.OutputString("[INFO] " + s + "\r\n");
+				}
+			};
+			_verboseAction = s => {
+				if (!_closing)
+				{
+					owPane.OutputString("[VERBOSE] " + s + "\r\n");
+				}
+			};
+			_warningAction = s => {
+				if (!_closing)
+				{
+					owPane.OutputString("[WARNING] " + s + "\r\n");
+				}
+			};
+			_errorAction = e => {
+				if (!_closing)
+				{
+					owPane.OutputString("[ERROR] " + e + "\r\n");
+				}
+			};
 
 			_infoAction($"Uno Remote Control initialized ({GetAssemblyVersion()})");
 		}
@@ -134,13 +159,24 @@ namespace Uno.UI.RemoteControl.VS
 			try
 			{
 				await StartServerAsync();
-
+				var portString = RemoteControlServerPort.ToString(CultureInfo.InvariantCulture);
 				foreach (var p in await GetProjectsAsync())
 				{
-					if (GetMsbuildProject(p.FileName) is Microsoft.Build.Evaluation.Project msbProject && IsApplication(msbProject))
+					var filename = string.Empty;
+					try
 					{
-						var portString = RemoteControlServerPort.ToString(CultureInfo.InvariantCulture);
-						SetGlobalProperty(p.FileName, RemoteControlServerPortProperty, portString);
+						filename = p.FileName;
+					}
+					catch (Exception ex)
+					{
+						_debugAction($"Exception on retrieving {p.UniqueName} details. Err: {ex}.");
+						_warningAction($"Cannot read {p.UniqueName} project details (It may be unloaded).");
+					}
+					if (string.IsNullOrWhiteSpace(filename) == false
+						&& GetMsbuildProject(filename) is Microsoft.Build.Evaluation.Project msbProject
+						&& IsApplication(msbProject))
+					{
+						SetGlobalProperty(filename, RemoteControlServerPortProperty, portString);
 					}
 				}
 			}
@@ -171,6 +207,7 @@ namespace Uno.UI.RemoteControl.VS
 				}
 				finally
 				{
+					_closing = true;
 					_process = null;
 				}
 			}
@@ -185,7 +222,7 @@ namespace Uno.UI.RemoteControl.VS
 				var sb = new StringBuilder();
 
 				var hostBinPath = Path.Combine(_toolsPath, "host", "Uno.UI.RemoteControl.Host.dll");
-				string arguments = $"{hostBinPath} --httpPort {RemoteControlServerPort}";
+				string arguments = $"\"{hostBinPath}\" --httpPort {RemoteControlServerPort}";
 				var pi = new ProcessStartInfo("dotnet", arguments)
 				{
 					UseShellExecute = false,
@@ -232,7 +269,7 @@ namespace Uno.UI.RemoteControl.VS
 
 			if (solutionProjectItems != null)
 			{
-				return EnumerateProjects(solutionProjectItems);				
+				return EnumerateProjects(solutionProjectItems);
 			}
 			else
 			{

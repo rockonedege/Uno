@@ -5,8 +5,9 @@ using Uno.UI.Xaml.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AndroidX.Core.View;
+using Windows.Foundation;
 using Windows.UI.Xaml.Controls;
-using Android.Support.V4.View;
 using Windows.UI.Xaml.Media;
 using Android.Graphics;
 using Android.Views;
@@ -49,8 +50,20 @@ namespace Windows.UI.Xaml
 		public UIElement()
 			: base(ContextHelper.Current)
 		{
+			Initialize();
 			InitializePointers();
 		}
+
+
+		/// <summary>
+		/// Determines if InvalidateMeasure has been called
+		/// </summary>
+		internal bool IsMeasureDirty => IsLayoutRequested;
+
+		/// <summary>
+		/// Determines if InvalidateArrange has been called
+		/// </summary>
+		internal bool IsArrangeDirty => IsLayoutRequested;
 
 		partial void ApplyNativeClip(Rect rect)
 		{
@@ -66,7 +79,14 @@ namespace Windows.UI.Xaml
 				return;
 			}
 
-			ViewCompat.SetClipBounds(this, rect.LogicalToPhysicalPixels());
+			var physicalRect = rect.LogicalToPhysicalPixels();
+			if (FrameRoundingAdjustment is { } fra)
+			{
+				physicalRect.Width += fra.Width;
+				physicalRect.Height += fra.Height;
+			}
+
+			ViewCompat.SetClipBounds(this, physicalRect);
 
 			SetClipChildren(NeedsClipToSlot);
 		}
@@ -140,7 +160,7 @@ namespace Windows.UI.Xaml
 		/// </summary>
 		private bool TryGetParentUIElementForTransformToVisual(out UIElement parentElement, ref double offsetX, ref double offsetY)
 		{
-			var parent = this.GetParent();
+			var parent = this.GetVisualTreeParent();
 			switch (parent) 
 			{
 				// First we try the direct parent, if it's from the known type we won't even have to adjust offsets
@@ -180,7 +200,7 @@ namespace Windows.UI.Xaml
 
 					do
 					{
-						parent = parent.GetParent();
+						parent = parent.GetVisualTreeParent();
 
 						switch (parent)
 						{
@@ -206,16 +226,10 @@ namespace Windows.UI.Xaml
 								return false;
 						}
 					} while (true);
-
-				default:
-					Application.Current.RaiseRecoverableUnhandledException(new InvalidOperationException("Found a parent which is NOT a View."));
-
-					parentElement = null;
-					return false;
 			}
 		}
 
-		protected virtual void OnVisibilityChanged(Visibility oldValue, Visibility newValue)
+		partial void OnVisibilityChangedPartial(Visibility oldValue, Visibility newValue)
 		{
 			var newNativeVisibility = newValue == Visibility.Visible ? Android.Views.ViewStates.Visible : Android.Views.ViewStates.Gone;
 
@@ -366,6 +380,11 @@ namespace Windows.UI.Xaml
 
 		internal Rect? ArrangeLogicalSize { get; set; } // Used to keep "double" precision of arrange phase
 
+		/// <summary>
+		/// The difference between the physical layout width and height taking the origin into account, and the physical width and height that would've been calculated for an origin of (0,0). The difference may be -1,0, or +1 pixels due to different roundings. (Eg, consider a Grid that is 31 logical pixels high, with 3 children with alignment Stretch in successive Star-sized rows. Each child will be measured with a logical height of 10.3, and logical origins of 0, 10.3, and 20.6.  Assume the device scale is 1. The child origins will be converted to 0, 10, and 21 respectively in integer pixel values; this will give heights of 10, 11, and 10 pixels. The FrameRoundingAdjustment values will be (0,0), (0,1), and (0,0) respectively.
+		/// </summary>
+		internal Size? FrameRoundingAdjustment { get; set; }
+
 #if DEBUG
 		public static Predicate<View> ViewOfInterestSelector { get; set; } = v => (v as FrameworkElement)?.Name == "TargetView";
 
@@ -473,8 +492,8 @@ namespace Windows.UI.Xaml
 
 		public FrameworkElement FrameworkElementOfInterest => ViewOfInterest as FrameworkElement;
 
-		public string ShowDescendants() => ViewExtensions.ShowDescendants(this);
-		public string ShowLocalVisualTree(int fromHeight) => ViewExtensions.ShowLocalVisualTree(this, fromHeight);
+		public string ShowDescendants() => Uno.UI.ViewExtensions.ShowDescendants(this);
+		public string ShowLocalVisualTree(int fromHeight) => Uno.UI.ViewExtensions.ShowLocalVisualTree(this, fromHeight);
 #endif
 	}
 }

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.Practices.ServiceLocation;
+using CommonServiceLocator;
 
 namespace Uno.UI.RemoteControl.Host
 {
@@ -22,7 +22,7 @@ namespace Uno.UI.RemoteControl.Host
 
 		public IConfiguration Configuration { get; }
 
-		public void Configure(IApplicationBuilder app, IOptionsMonitor<RemoteControlOptions> optionsAccessor, IHostingEnvironment env)
+		public void Configure(IApplicationBuilder app, IOptionsMonitor<RemoteControlOptions> optionsAccessor)
 		{
 			var provider = new ServiceLocatorAdapter(app.ApplicationServices);
 			ServiceLocator.SetLocatorProvider(() => provider);

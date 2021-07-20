@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -11,6 +12,7 @@ namespace Windows.Foundation
 	public partial struct Rect
 	{
 		private const string _negativeErrorMessage = "Non-negative number required.";
+		private const float Epsilon = 0.00001f;
 
 		public static Rect Empty { get; } = new Rect
 		{
@@ -18,6 +20,14 @@ namespace Windows.Foundation
 			Y = double.PositiveInfinity,
 			Width = double.NegativeInfinity,
 			Height = double.NegativeInfinity
+		};
+
+		internal static Rect Infinite { get; } = new Rect
+		{
+			X = double.NegativeInfinity,
+			Y = double.NegativeInfinity,
+			Width = double.PositiveInfinity,
+			Height = double.PositiveInfinity
 		};
 
 		public Rect(Point point, Size size) : this(point.X, point.Y, size.Width, size.Height) { }
@@ -90,11 +100,26 @@ namespace Windows.Foundation
 
 		public bool IsEmpty => Empty.Equals(this);
 
+		internal bool IsInfinite => Infinite.Equals(this);
+
+		internal bool IsUniform => Math.Abs(Left - Top) < Epsilon && Math.Abs(Left - Right) < Epsilon && Math.Abs(Left - Bottom) < Epsilon;
+
 		public static implicit operator Rect(string text)
 		{
+			if (text == null)
+			{
+				return default;
+			}
+
 			var parts = text
-				.Split(new[] { ',' })
+				.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
 				.SelectToArray(s => double.Parse(s, NumberFormatInfo.InvariantInfo));
+
+			if(parts.Length != 4)
+			{
+				throw new ArgumentException(
+					"Cannot create a Rect from " + text + ": needs 4 parts separated by a comma or a space.");
+			}
 
 			return new Rect
 			(
@@ -119,6 +144,9 @@ namespace Windows.Foundation
 		}
 
 		public override string ToString() => (string)this;
+
+		internal string ToDebugString()
+			=> IsEmpty ? "--empty--" : FormattableString.Invariant($"{Size.ToDebugString()}@{Location.ToDebugString()}");
 
 		/// <summary>
 		/// Provides the size of this rectangle.
@@ -159,24 +187,28 @@ namespace Windows.Foundation
 				throw new InvalidOperationException("Can't inflate empty rectangle");
 			}
 
-			this.X -= width;
-			this.Y -= height;
-			this.Width += width;
-			this.Width += width;
-			this.Height += height;
-			this.Height += height;
+			X -= width;
+			Y -= height;
+			Width += width;
+			Width += width;
+			Height += height;
+			Height += height;
 
-			if (this.Width < 0.0 || this.Height < 0.0)
+			if (Width < 0.0 || Height < 0.0)
 			{
 				this = Rect.Empty;
 			}
 		}
 
-		public bool Contains(Point point) =>
-			point.X >= X
-			&& point.X <= X + Width
-			&& point.Y >= Y
-			&& point.Y <= Y + Height;
+		public bool Contains(Point point)
+			// We include points on the edge as "contained".
+			// We do "point.X - Width <= X" instead of "point.X <= X + Width"
+			// so that this check works when Width is PositiveInfinity
+			// and X is NegativeInfinity.
+			=> point.X >= X
+				&& point.X - Width <= X
+				&& point.Y >= Y
+				&& point.Y - Height <= Y;
 
 		/// <summary>
 		/// Finds the intersection of the rectangle represented by the current Windows.Foundation.Rect
@@ -212,9 +244,9 @@ namespace Windows.Foundation
 		public void Union(Rect rect)
 		{
 			var left = Math.Min(Left, rect.Left);
-			var right = Math.Max(left + Width, rect.Right);
+			var right = Math.Max(Left + Width, rect.Right);
 			var top = Math.Min(Top, rect.Top);
-			var bottom = Math.Max(top + Height, rect.Bottom);
+			var bottom = Math.Max(Top + Height, rect.Bottom);
 			this = new Rect(left, top, right - left, bottom - top);
 		}
 
@@ -226,7 +258,7 @@ namespace Windows.Foundation
 				&& value.Width == Width
 				&& value.Height == Height;
 
-		public override bool Equals(object obj)
+		public override bool Equals(object? obj)
 			=> obj is Rect r ? r.Equals(this) : base.Equals(obj);
 
 		public static bool operator ==(Rect left, Rect right) => left.Equals(right);

@@ -3,6 +3,7 @@ using Windows.UI.Xaml;
 using System;
 using System.ComponentModel;
 using Uno.Media;
+using Windows.Foundation;
 
 #if XAMARIN_IOS_UNIFIED
 using Foundation;
@@ -24,7 +25,7 @@ namespace Windows.UI.Xaml.Media
 	[TypeConverter(typeof(GeometryConverter))]
 	public partial class Geometry : DependencyObject, IDisposable
 	{
-		public Geometry()
+		internal Geometry()
 		{
 			InitializeBinder();
 		}
@@ -38,6 +39,13 @@ namespace Windows.UI.Xaml.Media
 #endif
 		}
 
+		public Windows.Foundation.Rect Bounds => ComputeBounds();
+
+		private protected virtual Windows.Foundation.Rect ComputeBounds()
+		{
+			throw new NotImplementedException($"Bounds property is not implemented on {GetType().Name}.");
+		}
+
 		#region Transform
 
 		public Transform Transform
@@ -46,7 +54,7 @@ namespace Windows.UI.Xaml.Media
 			set => this.SetValue(TransformProperty, value);
 		}
 
-		public static readonly DependencyProperty TransformProperty =
+		public static DependencyProperty TransformProperty { get ; } =
 			DependencyProperty.Register(
 				"Transform",
 				typeof(Transform),

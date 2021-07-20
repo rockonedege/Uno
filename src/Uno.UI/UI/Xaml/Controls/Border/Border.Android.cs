@@ -41,7 +41,7 @@ namespace Windows.UI.Xaml.Controls
 			UpdateBorder();
 		}
 
-		partial void OnChildChangedPartial(View previousValue, View newValue)
+		partial void OnChildChangedPartial(UIElement previousValue, UIElement newValue)
 		{
 			if (previousValue != null)
 			{
@@ -68,7 +68,7 @@ namespace Windows.UI.Xaml.Controls
 		{
 			if (IsLoaded)
 			{
-				_borderRenderer.UpdateLayers(
+				_borderRenderer.UpdateLayer(
 					this,
 					Background,
 					BorderThickness,

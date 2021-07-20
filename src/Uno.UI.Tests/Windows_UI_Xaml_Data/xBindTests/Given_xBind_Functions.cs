@@ -11,24 +11,28 @@ namespace Uno.UI.Tests.Windows_UI_Xaml_Data.xBindTests
 		{
 			var SUT = new Functions_Control();
 
-			Assert.IsNull(SUT._InstanceProperty.Text);
-			Assert.IsNull(SUT._StaticProperty.Text);
-			Assert.IsNull(SUT._StaticPrivateProperty.Text);
-			Assert.IsNull(SUT._StaticPrivateReadonlyField.Text);
-			Assert.IsNull(SUT._InstanceDP.Text);
-			Assert.IsNull(SUT._InnerProperty.Text);
-			Assert.IsNull(SUT._StaticClass_PublicStaticProperty.Text);
-			Assert.IsNull(SUT._InstanceFunction_OneParam.Text);
-			Assert.IsNull(SUT._InstanceFunction_OneParam_DP_Update_OneTime.Text);
-			Assert.IsNull(SUT._InstanceFunction_OneParam_DP_Update_OneWay.Text);
-			Assert.IsNull(SUT._InstanceFunction_TwoParam.Text);
-			Assert.IsNull(SUT._InstanceFunction_TwoParam_WithConstant.Text);
-			Assert.IsNull(SUT._System_Function.Text);
-			Assert.IsNull(SUT._System_Function_with_Quote.Text);
-			Assert.IsNull(SUT._InstanceFunction_Parameterless.Text);
-			Assert.IsNull(SUT._StaticFunction_Parameterless.Text);
-			Assert.IsNull(SUT._InstanceFunction_Boolean_False.Text);
-			Assert.IsNull(SUT._InstanceFunction_Boolean_True.Text);
+			Assert.AreEqual(string.Empty, SUT._InstanceProperty.Text);
+			Assert.AreEqual(string.Empty, SUT._StaticProperty.Text);
+			Assert.AreEqual(string.Empty, SUT._StaticPrivateProperty.Text);
+			Assert.AreEqual(string.Empty, SUT._StaticPrivateReadonlyField.Text);
+			Assert.AreEqual(string.Empty, SUT._InstanceDP.Text);
+			Assert.AreEqual(string.Empty, SUT._InnerProperty.Text);
+			Assert.AreEqual(string.Empty, SUT._StaticClass_PublicStaticProperty.Text);
+			Assert.AreEqual(string.Empty, SUT._InstanceFunction_OneParam.Text);
+			Assert.AreEqual(string.Empty, SUT._InstanceFunction_OneParam_DP_Update_OneTime.Text);
+			Assert.AreEqual(string.Empty, SUT._InstanceFunction_OneParam_DP_Update_OneWay.Text);
+			Assert.AreEqual(string.Empty, SUT._InstanceFunction_TwoParam.Text);
+			Assert.AreEqual(string.Empty, SUT._InstanceFunction_TwoParam_WithConstant.Text);
+			Assert.AreEqual(string.Empty, SUT._System_Function.Text);
+			Assert.AreEqual(string.Empty, SUT._System_Function_with_Quote.Text);
+			Assert.AreEqual(string.Empty, SUT._InstanceFunction_Parameterless.Text);
+			Assert.AreEqual(string.Empty, SUT._StaticFunction_Parameterless.Text);
+			Assert.AreEqual(string.Empty, SUT._InstanceFunction_Boolean_False.Text);
+			Assert.AreEqual(string.Empty, SUT._InstanceFunction_Boolean_True.Text);
+			Assert.AreEqual(string.Empty, SUT._StaticClass_PublicConstField.Text);
+			Assert.AreEqual(string.Empty, SUT._StaticPrivateConstField.Text);
+			Assert.AreEqual(string.Empty, SUT._InnerConstField.Text);
+
 
 			SUT.ForceLoaded();
 
@@ -38,7 +42,7 @@ namespace Uno.UI.Tests.Windows_UI_Xaml_Data.xBindTests
 			Assert.AreEqual("45", SUT._StaticPrivateReadonlyField.Text);
 			Assert.AreEqual("-1", SUT._InstanceDP.Text);
 			Assert.AreEqual("Initial", SUT._InnerProperty.Text);
-			Assert.AreEqual("46", SUT._StaticClass_PublicStaticProperty.Text);
+			Assert.AreEqual("47", SUT._StaticClass_PublicStaticProperty.Text);
 			Assert.AreEqual("52", SUT._InstanceFunction_OneParam.Text);
 			Assert.AreEqual("9", SUT._InstanceFunction_OneParam_DP_Update_OneWay.Text);
 			Assert.AreEqual("9", SUT._InstanceFunction_OneParam_DP_Update_OneTime.Text);
@@ -50,6 +54,10 @@ namespace Uno.UI.Tests.Windows_UI_Xaml_Data.xBindTests
 			Assert.AreEqual("Static Parameter-less result", SUT._StaticFunction_Parameterless.Text);
 			Assert.AreEqual("Was false", SUT._InstanceFunction_Boolean_False.Text);
 			Assert.AreEqual("Was true", SUT._InstanceFunction_Boolean_True.Text);
+			Assert.AreEqual("48", SUT._StaticClass_PublicConstField.Text);
+			Assert.AreEqual("46", SUT._StaticPrivateConstField.Text);
+			Assert.AreEqual("-5", SUT._InnerConstField.Text);
+
 
 			Assert.AreEqual(1, SUT.AddDoubleCallCount);
 			Assert.AreEqual(2, SUT.AddIntCallCount);
@@ -61,7 +69,7 @@ namespace Uno.UI.Tests.Windows_UI_Xaml_Data.xBindTests
 		{
 			var SUT = new Functions_Control();
 
-			Assert.IsNull(SUT._InstanceDP.Text);
+			Assert.AreEqual(string.Empty, SUT._InstanceDP.Text);
 
 			SUT.ForceLoaded();
 
@@ -77,7 +85,7 @@ namespace Uno.UI.Tests.Windows_UI_Xaml_Data.xBindTests
 		{
 			var SUT = new Functions_Control();
 
-			Assert.IsNull(SUT._InnerProperty.Text);
+			Assert.AreEqual(string.Empty, SUT._InnerProperty.Text);
 
 			SUT.ForceLoaded();
 
@@ -93,8 +101,8 @@ namespace Uno.UI.Tests.Windows_UI_Xaml_Data.xBindTests
 		{
 			var SUT = new Functions_Control();
 
-			Assert.IsNull(SUT._InstanceFunction_OneParam_DP_Update_OneTime.Text);
-			Assert.IsNull(SUT._InstanceFunction_OneParam_DP_Update_OneWay.Text);
+			Assert.AreEqual(string.Empty, SUT._InstanceFunction_OneParam_DP_Update_OneTime.Text);
+			Assert.AreEqual(string.Empty, SUT._InstanceFunction_OneParam_DP_Update_OneWay.Text);
 
 			Assert.AreEqual(0, SUT.AddDoubleCallCount);
 			Assert.AreEqual(0, SUT.AddIntCallCount);
@@ -124,7 +132,7 @@ namespace Uno.UI.Tests.Windows_UI_Xaml_Data.xBindTests
 		{
 			var SUT = new Functions_Control();
 
-			Assert.IsNull(SUT._InstanceFunction_TwoParam_Update.Text);
+			Assert.AreEqual(string.Empty, SUT._InstanceFunction_TwoParam_Update.Text);
 
 			Assert.AreEqual(0, SUT.AddDoubleCallCount);
 			Assert.AreEqual(0, SUT.AddIntCallCount);
@@ -160,7 +168,7 @@ namespace Uno.UI.Tests.Windows_UI_Xaml_Data.xBindTests
 		{
 			var SUT = new Binding_Nullable();
 
-			Assert.IsNull(SUT._NullableBinding.Text);
+			Assert.AreEqual(string.Empty, SUT._NullableBinding.Text);
 
 			SUT.ForceLoaded();
 
@@ -186,11 +194,11 @@ namespace Uno.UI.Tests.Windows_UI_Xaml_Data.xBindTests
 			SUT.myCheckBox.IsThreeState = true;
 			SUT.myCheckBox.IsChecked = null;
 
-			Assert.IsNull(SUT._NullableBinding.Text);
+			Assert.AreEqual(string.Empty, SUT._NullableBinding.Text);
 
 			SUT.ForceLoaded();
 
-			Assert.IsNull(SUT._NullableBinding.Text);
+			Assert.AreEqual(string.Empty, SUT._NullableBinding.Text);
 
 			SUT.myCheckBox.IsChecked = true;
 

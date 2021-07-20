@@ -1,6 +1,4 @@
-﻿using Uno.UI.UI.Xaml.Documents;
-
-namespace Windows.UI.Xaml.Documents
+﻿namespace Windows.UI.Xaml.Documents
 {
 	partial class TextElement
 	{
@@ -26,11 +24,6 @@ namespace Windows.UI.Xaml.Documents
 		partial void OnForegroundChangedPartial()
 		{
 			this.SetForeground(ReadLocalValue(ForegroundProperty));
-		}
-
-		partial void OnStyleChangedPartial()
-		{
-
 		}
 
 		partial void OnFontWeightChangedPartial()

@@ -9,7 +9,6 @@ using Windows.UI.Xaml.Data;
 using Uno.UI.Converters;
 using Uno.Client;
 using System.Threading.Tasks;
-using Microsoft.Practices.ServiceLocation;
 using Uno.Diagnostics.Eventing;
 using Uno.UI.Controls;
 using Windows.UI.Core;
@@ -204,7 +203,7 @@ namespace Windows.UI.Xaml.Controls
 				// does not eagerly get all the items of the ItemsSource.
 				UpdateLastMaterializedItem(indexPath);
 
-				var index = Owner?.XamlParent?.GetIndexFromIndexPath(IndexPath.FromNSIndexPath(indexPath)) ?? -1;
+				var index = Owner?.XamlParent?.GetIndexFromIndexPath(Uno.UI.IndexPath.FromNSIndexPath(indexPath)) ?? -1;
 
 				var identifier = GetReusableCellIdentifier(indexPath);
 
@@ -232,7 +231,7 @@ namespace Windows.UI.Xaml.Controls
 
 						// Ensure the item has a parent, since it's added to the native collection view
 						// which does not automatically sets the parent DependencyObject.
-						selectorItem.SetParent(Owner?.XamlParent?.InternalItemsPanelRoot);
+						selectorItem.SetParentOverride(Owner?.XamlParent?.InternalItemsPanelRoot);
 					}
 					else if (this.Log().IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
 					{
@@ -280,7 +279,7 @@ namespace Windows.UI.Xaml.Controls
 
 		public override void WillDisplayCell(UICollectionView collectionView, UICollectionViewCell cell, NSIndexPath indexPath)
 		{
-			var index = Owner?.XamlParent?.GetIndexFromIndexPath(IndexPath.FromNSIndexPath(indexPath)) ?? -1;
+			var index = Owner?.XamlParent?.GetIndexFromIndexPath(Uno.UI.IndexPath.FromNSIndexPath(indexPath)) ?? -1;
 			var container = cell as ListViewBaseInternalContainer;
 			var selectorItem = container?.Content as SelectorItem;
 			//Update IsSelected and multi-select state immediately before display, in case either was modified after cell was prefetched but before it became visible
@@ -392,6 +391,7 @@ namespace Windows.UI.Xaml.Controls
 
 		internal void SetIsAnimatedScrolling() => _isInAnimatedScroll = true;
 
+#if !MACCATALYST  // Fix on .NET 6 Preview 6 https://github.com/unoplatform/uno/issues/5873
 		public override void Scrolled(UIScrollView scrollView)
 		{
 			InvokeOnScroll();
@@ -431,6 +431,7 @@ namespace Windows.UI.Xaml.Controls
 			// obvious what it would be in the case of a list).
 			Owner.XamlParent?.ScrollViewer?.OnZoomInternal((float)Owner.ZoomScale);
 		}
+#endif
 
 		private void OnAnimatedScrollEnded()
 		{
@@ -448,6 +449,7 @@ namespace Windows.UI.Xaml.Controls
 			Owner.XamlParent?.ScrollViewer?.OnScrollInternal(clampedOffset.X, clampedOffset.Y, isIntermediate: _isInAnimatedScroll);
 		}
 
+#if !MACCATALYST // Fix on .NET 6 Preview 6 https://github.com/unoplatform/uno/issues/5873
 		public override void WillEndDragging(UIScrollView scrollView, CGPoint velocity, ref CGPoint targetContentOffset)
 		{
 			// If snap points are enabled, override the target offset with the calculated snap point.
@@ -457,6 +459,7 @@ namespace Windows.UI.Xaml.Controls
 				targetContentOffset = snapTo.Value;
 			}
 		}
+#endif
 
 		#endregion
 
@@ -590,8 +593,11 @@ namespace Windows.UI.Xaml.Controls
 				{
 					container.Style = style;
 				}
-
-				container.ContentTemplate = dataTemplate;
+				
+				if (!container.IsContainerFromTemplateRoot)
+				{
+					container.ContentTemplate = dataTemplate;
+				}
 				try
 				{
 					// Attach templated container to visual tree while measuring. This works around the bug that default Style is not 
@@ -694,7 +700,7 @@ namespace Windows.UI.Xaml.Controls
 			{
 				GC.ReRegisterForFinalize(this);
 
-				Core.CoreDispatcher.Main.RunIdleAsync(_ => Dispose());
+				CoreDispatcher.Main.RunIdleAsync(_ => Dispose());
 			}
 			else
 			{
@@ -744,7 +750,6 @@ namespace Windows.UI.Xaml.Controls
 			{
 				base.Frame = value;
 				UpdateContentViewFrame();
-				UpdateContentLayoutSlots(value);
 			}
 		}
 
@@ -761,7 +766,6 @@ namespace Windows.UI.Xaml.Controls
 				}
 				base.Bounds = value;
 				UpdateContentViewFrame();
-				UpdateContentLayoutSlots(Frame);
 			}
 		}
 
@@ -774,20 +778,6 @@ namespace Windows.UI.Xaml.Controls
 			if (ContentView != null)
 			{
 				ContentView.Frame = Bounds;
-			}
-		}
-
-		/// <summary>
-		/// Fakely propagate the applied Frame of this internal container as the LayoutSlot of the publicly visible container.
-		/// This is required for the UIElement.TransformToVisual to work properly.
-		/// </summary>
-		private void UpdateContentLayoutSlots(Rect frame)
-		{
-			var content = Content;
-			if (content != null)
-			{
-				content.LayoutSlot = frame;
-				content.LayoutSlotWithMarginsAndAlignments = frame;
 			}
 		}
 
@@ -928,11 +918,6 @@ namespace Windows.UI.Xaml.Controls
 			if (Content != null)
 			{
 				Layouter.ArrangeChild(Content, new Rect(0, 0, (float)size.Width, (float)size.Height));
-
-				// The item has to be arranged relative to this internal container (at 0,0),
-				// but doing this the LayoutSlot[WithMargins] has been updated, 
-				// so we fakely re-inject the relative position of the item in its parent.
-				UpdateContentLayoutSlots(Frame);
 			}
 		}
 

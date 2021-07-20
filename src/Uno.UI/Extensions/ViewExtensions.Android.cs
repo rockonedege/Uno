@@ -18,6 +18,8 @@ using System.Drawing;
 using Windows.UI.Core;
 using System.Threading.Tasks;
 using Android.Views.Animations;
+using Windows.UI.Xaml.Controls;
+using Uno.UI.Controls;
 
 namespace Uno.UI
 {
@@ -33,9 +35,7 @@ namespace Uno.UI
 
 		public static bool HasParent(this View view)
 		{
-			var provider = view as DependencyObject;
-
-			if (provider != null)
+			if (view is DependencyObject provider)
 			{
 				// This value is set in OnLoaded, which avoids 
 				// interacting with JNI, for performance.
@@ -45,6 +45,15 @@ namespace Uno.UI
 			return view.Parent != null;
 		}
 
+		/// <summary>
+		/// Return First parent of the view of specified T type.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="view"></param>
+		/// <returns>First parent of the view of specified T type.</returns>
+		public static T FindFirstParent<T>(this IViewParent view) where T : class => FindFirstParent<T>(view, includeCurrent: false);
+
+		public static T FindFirstParent<T>(this IViewParent view, bool includeCurrent) where T : class => FindFirstParentOfView<T>(view as View, includeCurrent);
 
 		/// <summary>
 		/// Return First parent of the view of specified T type.
@@ -52,18 +61,13 @@ namespace Uno.UI
 		/// <typeparam name="T"></typeparam>
 		/// <param name="view"></param>
 		/// <returns>First parent of the view of specified T type.</returns>
-		public static T FindFirstParent<T>(this IViewParent view) where T : class => FindFirstParentOfView<T>(view as View);
+		public static T FindFirstParentOfView<T>(this View childView) where T : class => FindFirstParentOfView<T>(childView, includeCurrent: false);
 
-		/// <summary>
-		/// Return First parent of the view of specified T type.
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="view"></param>
-		/// <returns>First parent of the view of specified T type.</returns>
-		public static T FindFirstParentOfView<T>(this View childView)
+		public static T FindFirstParentOfView<T>(this View childView, bool includeCurrent)
 			where T : class
 		{
-			var view = childView?.Parent;
+			var view = includeCurrent ? childView as IViewParent : null;
+			view ??= childView?.Parent;
 
 			while (view != null)
 			{
@@ -92,8 +96,7 @@ namespace Uno.UI
 
 			while (view != null)
 			{
-				var typed = view as T;
-				if (typed != null && predicate(typed))
+				if (view is T typed && predicate(typed))
 				{
 					return typed;
 				}
@@ -128,13 +131,11 @@ namespace Uno.UI
 		/// <summary>
 		/// Gets an enumerator containing all the children of a View group
 		/// </summary>
-		/// <param name="group"></param>
-		/// <returns></returns>
+		/// <param name="group">View group</param>
+		/// <returns>Children in default order</returns>
 		public static IEnumerable<View> GetChildren(this ViewGroup group)
 		{
-			var shadowProvider = group as Controls.IShadowChildrenProvider;
-
-			if (shadowProvider != null)
+			if (group is IShadowChildrenProvider shadowProvider)
 			{
 				// To avoid calling ChildCount/GetChildAt too much during enumeration, use
 				// a fast path that relies on a shadowed list of the children in BindableView.
@@ -147,15 +148,38 @@ namespace Uno.UI
 		}
 
 		/// <summary>
+		/// Gets an reverse enumerator containing all the children of a View group
+		/// </summary>
+		/// <param name="group">View group</param>
+		/// <returns>Children in reverse order</returns>
+		public static IEnumerable<View> GetChildrenReverse(this ViewGroup group)
+		{
+			if (group is IShadowChildrenProvider shadowProvider)
+			{
+				// To avoid calling ChildCount/GetChildAt too much during enumeration, use
+				// a fast path that relies on a shadowed list of the children in BindableView.
+				for (int i = shadowProvider.ChildrenShadow.Count - 1; i >= 0; i--)
+				{
+					yield return shadowProvider.ChildrenShadow[i];
+				}
+			}
+			else
+			{
+				foreach (var child in GetChildrenReverseSlow(group))
+				{
+					yield return child;
+				}
+			}
+		}
+
+		/// <summary>
 		/// Finds the first child <see cref="View"/> of the provided <see cref="ViewGroup"/>.
 		/// </summary>
 		/// <param name="group">The <see cref="ViewGroup"/> to search into.</param>
 		/// <returns>A <see cref="View"/> if any, otherwise null.</returns>
 		public static View FindFirstChild(this ViewGroup group)
 		{
-			var shadowProvider = group as Controls.IShadowChildrenProvider;
-
-			if (shadowProvider != null)
+			if (group is IShadowChildrenProvider shadowProvider)
 			{
 				// To avoid calling ChildCount/GetChildAt too much during enumeration, use
 				// a fast path that relies on a shadowed list of the children in BindableView.
@@ -183,6 +207,19 @@ namespace Uno.UI
 			var count = group.ChildCount;
 
 			for (int i = 0; i < count; i++)
+			{
+				yield return group.GetChildAt(i);
+			}
+		}
+
+		/// <summary>
+		/// A reverse enumerator for ViewGroup children that uses interop calls.
+		/// </summary>
+		private static IEnumerable<View> GetChildrenReverseSlow(ViewGroup group)
+		{
+			var count = group.ChildCount;
+
+			for (int i = count - 1; i >= 0; i++)
 			{
 				yield return group.GetChildAt(i);
 			}
@@ -223,11 +260,37 @@ namespace Uno.UI
 				}
 				else if (maxDepth > 0)
 				{
-					var childGroup = sub as ViewGroup;
-
-					if (childGroup != null)
+					if (sub is ViewGroup childGroup)
 					{
 						foreach (var subResult in childGroup.EnumerateAllChildren(selector, maxDepth - 1))
+						{
+							yield return subResult;
+						}
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Enumerates all the children for a specified view group in reverse order.
+		/// </summary>
+		/// <param name="view">The view group to get the children from</param>
+		/// <param name="selector">The selector function</param>
+		/// <param name="maxDepth">The depth to stop looking for children.</param>
+		/// <returns>A lazy enumerable of views in reverse order</returns>
+		public static IEnumerable<View> EnumerateAllChildrenReverse(this ViewGroup view, Func<View, bool> selector, int maxDepth = 20)
+		{
+			foreach (var sub in view.GetChildrenReverse())
+			{
+				if (selector(sub))
+				{
+					yield return sub;
+				}
+				else if (maxDepth > 0)
+				{
+					if (sub is ViewGroup childGroup)
+					{
+						foreach (var subResult in childGroup.EnumerateAllChildrenReverse(selector, maxDepth - 1))
 						{
 							yield return subResult;
 						}
@@ -250,9 +313,7 @@ namespace Uno.UI
 
 				if (maxDepth > 0)
 				{
-					var childGroup = sub as ViewGroup;
-
-					if (childGroup != null)
+					if (sub is ViewGroup childGroup)
 					{
 						foreach (var subResult in childGroup.EnumerateAllChildren(maxDepth - 1))
 						{
@@ -295,11 +356,7 @@ namespace Uno.UI
 			}
 			else
 			{
-				childSelector = child =>
-				{
-					var t = child as T;
-					return t != null && selector(t);
-				};
+				childSelector = child => child is T t && selector(t);
 			}
 
 			if (includeCurrent
@@ -308,9 +365,7 @@ namespace Uno.UI
 				return view as T;
 			}
 
-			var maxDepth = childLevelLimit.HasValue
-				? childLevelLimit.Value
-				: Int32.MaxValue;
+			var maxDepth = childLevelLimit ?? int.MaxValue;
 
 			return (T)view.EnumerateAllChildren(childSelector, maxDepth).FirstOrDefault();
 		}
@@ -340,9 +395,7 @@ namespace Uno.UI
 		/// <param name="child">The child view to remove</param>
 		public static void RemoveViewAndDispose(this ViewGroup view, View child)
 		{
-			var bindableView = view as Controls.BindableView;
-
-			if (bindableView != null)
+			if (view is Controls.BindableView bindableView)
 			{
 				// Use the C# implementation of RemoveView so that it is
 				// executed faster. See UnoViewGroup for details.
@@ -360,9 +413,7 @@ namespace Uno.UI
 		/// <param name="view">The view to invalidate.</param>
 		public static void InvalidateMeasure(this View view)
 		{
-			var bindableView = view as Controls.BindableView;
-
-			if (bindableView != null)
+			if (view is Controls.BindableView bindableView)
 			{
 				// Use the C# implementation of RequestLayout so that it is
 				// executed faster. See UnoViewGroup for details.
@@ -477,22 +528,6 @@ namespace Uno.UI
 			return Disposable.Create(() => view.RunIfNativeInstanceAvailable(v => v.Click -= handler));
 		}
 
-		/// <summary>
-		/// Gets an identifier that can be used for logging
-		/// </summary>
-		public static string GetDebugIdentifier(this View element)
-		{
-			if (element == null)
-			{
-				return "--NULL--";
-			}
-
-			var name = (element as IFrameworkElement)?.Name;
-			return name.HasValue()
-				? element.GetType().Name + "_" + name + "_" + element.GetHashCode()
-				: element.GetType().Name + "_" + element.GetHashCode();
-		}
-
 		public static Task AnimateAsync(this View view, Animation animation)
 		{
 			var tcs = new TaskCompletionSource<object>();
@@ -519,12 +554,14 @@ namespace Uno.UI
 
 			while (current != null)
 			{
-				var visualParent = current.Parent as ViewGroup;
-				if (visualParent == null)
+				if (current.Parent is ViewGroup visualParent)
+				{
+					current = visualParent;
+				}
+				else
 				{
 					return current;
 				}
-				current = visualParent;
 			}
 
 			return null;
@@ -535,7 +572,7 @@ namespace Uno.UI
 		/// </summary>
 		public static string ShowDescendants(this ViewGroup viewGroup, StringBuilder sb = null, string spacing = "", ViewGroup viewOfInterest = null)
 		{
-			sb = sb ?? new StringBuilder();
+			sb ??= new StringBuilder();
 
 			Inner(viewGroup, spacing);
 			return sb.ToString();
@@ -571,17 +608,22 @@ namespace Uno.UI
 					.Append(s)
 					.Append(innerView == viewOfInterest ? "*>" : ">")
 					.Append(innerView.ToString() + namePart)
-					.Append($"-({ViewHelper.PhysicalToLogicalPixels(innerView.Width)}x{ViewHelper.PhysicalToLogicalPixels(innerView.Height)})@({ViewHelper.PhysicalToLogicalPixels(innerView.Left)},{ViewHelper.PhysicalToLogicalPixels(innerView.Top)})")
+					.Append($"-({ViewHelper.PhysicalToLogicalPixels(innerView.Width):F1}x{ViewHelper.PhysicalToLogicalPixels(innerView.Height):F1})@({ViewHelper.PhysicalToLogicalPixels(innerView.Left):F1},{ViewHelper.PhysicalToLogicalPixels(innerView.Top):F1})")
 					.Append($"  {innerView.Visibility}")
 					.Append(fe != null ? $" HA={fe.HorizontalAlignment},VA={fe.VerticalAlignment}" : "")
 					.Append(fe != null && fe.Margin != default ? $" Margin={fe.Margin}" : "")
 					.Append(fe != null && fe.TryGetBorderThickness(out var b) && b != default ? $" Border={b}" : "")
 					.Append(fe != null && fe.TryGetPadding(out var p) && p != default ? $" Padding={p}" : "")
-					.Append(u != null ? $" DesiredSize={u.DesiredSize}" : "")
-					.Append(u != null && u.NeedsClipToSlot ? "CLIPPED_TO_SLOT" : "")
-					.Append(u != null && u.RenderTransform != null ? $"RENDER_TRANSFORM({u.RenderTransform.MatrixCore})" : "")
+					.Append(u != null ? $" DesiredSize={u.DesiredSize.ToString("F1")}" : "")
+					.Append(u != null && u.NeedsClipToSlot ? " CLIPPED_TO_SLOT" : "")
 					.Append(u?.Clip != null ? $" Clip={u.Clip.Rect}" : "")
 					.Append(u == null && vg != null ? $" ClipChildren={vg.ClipChildren}" : "")
+					.Append(fe?.Background != null ? $" Background={fe.Background}" : "")
+					.Append(u?.GetElementSpecificDetails())
+					.Append(u?.GetElementGridOrCanvasDetails())
+					.Append(u?.RenderTransform.GetTransformDetails())
+					.Append($" IsLayoutRequested={innerView.IsLayoutRequested}")
+					.Append(innerView is TextBlock textBlock ? $" Text=\"{textBlock.Text}\"" : "")
 					.AppendLine();
 			}
 		}
@@ -597,9 +639,9 @@ namespace Uno.UI
 			var root = viewGroup;
 			for (int i = 0; i < fromHeight; i++)
 			{
-				if (root.Parent is ViewGroup)
+				if (root.Parent is ViewGroup parent)
 				{
-					root = root.Parent as ViewGroup;
+					root = parent;
 				}
 				else
 				{

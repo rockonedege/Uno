@@ -6,7 +6,6 @@ using Windows.UI.Xaml.Documents;
 using Uno.Extensions;
 using Uno.Foundation;
 using System.Linq;
-using Uno.UI.UI.Xaml.Documents;
 using Microsoft.Extensions.Logging;
 using Windows.UI.Text;
 using Windows.UI.Xaml.Media;
@@ -39,15 +38,23 @@ namespace Windows.UI.Xaml.Controls
 			OnFontWeightChangedPartial();
 			OnTextChangedPartial();
 			OnFontFamilyChangedPartial();
+			OnFontSizeChangedPartial();
 			OnCharacterSpacingChangedPartial();
 			OnLineHeightChangedPartial();
 			OnTextAlignmentChangedPartial();
 			OnTextWrappingChangedPartial();
+			OnIsTextSelectionEnabledChangedPartial();
+			InitializeDefaultValues();
+
 		}
 
-		partial void InvalidateTextBlockPartial()
+		/// <summary>
+		/// Set default properties to vertical top.
+		/// In wasm, this behavior is closer to the default textblock property than stretch.
+		/// </summary>
+		private void InitializeDefaultValues()
 		{
-
+			this.SetValue(VerticalAlignmentProperty, VerticalAlignment.Top, DependencyPropertyValuePrecedences.DefaultValue);
 		}
 
 		private void ConditionalUpdate(ref bool condition, Action action)
@@ -118,11 +125,49 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
+		/// <summary>
+		/// When the control is constrained, it should only take it's desired size or
+		/// it will show all of it's content.
+		/// </summary>
+		/// <param name="finalSize"></param>
+		/// <returns></returns>
+		protected override Size ArrangeOverride(Size finalSize)
+		{
+			Size arrangeSize;
+			if (IsLayoutConstrainedByMaxLines)
+			{
+				arrangeSize = DesiredSize;
+
+				if (HorizontalAlignment == HorizontalAlignment.Stretch)
+				{
+					arrangeSize.Width = finalSize.Width;
+				}
+			}
+			else
+			{
+				arrangeSize = finalSize;
+			}
+
+			return base.ArrangeOverride(arrangeSize);
+		}
+
 		private int GetCharacterIndexAtPoint(Point point) => throw new NotSupportedException();
 
 		partial void OnFontStyleChangedPartial() => _fontStyleChanged = true;
 
 		partial void OnFontWeightChangedPartial() => _fontWeightChanged = true;
+
+		partial void OnIsTextSelectionEnabledChangedPartial()
+		{
+			if (IsTextSelectionEnabled)
+			{
+				SetCssClasses("selectionEnabled");
+			}
+			else
+			{
+				UnsetCssClasses("selectionEnabled");
+			}
+		}
 
 		partial void OnTextChangedPartial()
 		{
@@ -154,7 +199,5 @@ namespace Windows.UI.Xaml.Controls
 		partial void OnTextWrappingChangedPartial() => _textWrappingChanged = true;
 
 		partial void OnPaddingChangedPartial() => _paddingChangedChanged = true;
-
-		internal override bool IsViewHit() => Text != null || base.IsViewHit();
 	}
 }

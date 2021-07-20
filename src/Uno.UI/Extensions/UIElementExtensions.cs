@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Windows.UI.Xaml;
@@ -9,6 +11,46 @@ namespace Uno.UI.Extensions
 {
 	public static partial class UIElementExtensions
 	{
+		/// <summary>
+		/// Get a display name for the element for debug purposes
+		/// </summary>
+		internal static string GetDebugName(this object? elt)
+			=> elt switch
+			{
+				null => "--null--",
+#if __WASM__
+				FrameworkElement fwElt when fwElt.Name.HasValue() => $"{fwElt.Name}-{fwElt.HtmlId}",
+				UIElement uiElt => $"{elt.GetType().Name}-{uiElt.HtmlId}",
+#else
+				FrameworkElement fwElt when fwElt.Name.HasValue() => $"{fwElt.Name}-{elt.GetHashCode():X8}",
+#endif
+				_ => $"{elt.GetType().Name}-{elt.GetHashCode():X8}",
+			};
+
+		internal static string GetDebugIdentifier(this object? elt)
+			=> $"{new string('\t', Math.Max(0, elt.GetDebugDepth()))} [{elt.GetDebugName()}]";
+
+		internal static int GetDebugDepth(this object? elt) =>
+			elt switch
+			{
+				null => 0,
+#if NETSTANDARD
+				UIElement fwElt => fwElt.Depth,
+#endif
+				_ => elt.GetParent()?.GetDebugDepth() + 1?? 0,
+			};
+
+		internal static CornerRadius GetCornerRadius(this UIElement uiElement)
+		{
+			if (uiElement is FrameworkElement fe && fe.TryGetCornerRadius(out var cornerRadius))
+			{
+				return cornerRadius;
+			}
+
+			var property = uiElement.FindDependencyPropertyUsingReflection<Thickness>("CornerRadius");
+			return property != null && uiElement.GetValue(property) is CornerRadius t ? t : default;
+		}
+
 		internal static Thickness GetPadding(this UIElement uiElement)
 		{
 			if(uiElement is FrameworkElement fe && fe.TryGetPadding(out var padding))
@@ -16,7 +58,7 @@ namespace Uno.UI.Extensions
 				return padding;
 			}
 
-			var property = uiElement.GetDependencyPropertyUsingReflection<Thickness>("PaddingProperty");
+			var property = uiElement.FindDependencyPropertyUsingReflection<Thickness>("PaddingProperty");
 			return property != null && uiElement.GetValue(property) is Thickness t ? t : default;
 		}
 
@@ -27,7 +69,7 @@ namespace Uno.UI.Extensions
 				return borderThickness;
 			}
 
-			var property = uiElement.GetDependencyPropertyUsingReflection<Thickness>("BorderThicknessProperty");
+			var property = uiElement.FindDependencyPropertyUsingReflection<Thickness>("BorderThicknessProperty");
 			return property != null && uiElement.GetValue(property) is Thickness t ? t : default;
 		}
 
@@ -38,7 +80,7 @@ namespace Uno.UI.Extensions
 				return true;
 			}
 
-			var property = uiElement.GetDependencyPropertyUsingReflection<Thickness>("PaddingProperty");
+			var property = uiElement.FindDependencyPropertyUsingReflection<Thickness>("PaddingProperty");
 			if(property != null)
 			{
 				uiElement.SetValue(property, padding);
@@ -55,7 +97,7 @@ namespace Uno.UI.Extensions
 				return true;
 			}
 
-			var property = uiElement.GetDependencyPropertyUsingReflection<Thickness>("BorderThicknessProperty");
+			var property = uiElement.FindDependencyPropertyUsingReflection<Thickness>("BorderThicknessProperty");
 			if (property != null)
 			{
 				uiElement.SetValue(property, borderThickness);
@@ -65,17 +107,15 @@ namespace Uno.UI.Extensions
 			return false;
 		}
 
-		private static Dictionary<(Type type, string property), DependencyProperty> _dependencyPropertyReflectionCache;
+		private static Dictionary<(Type type, string property), DependencyProperty?>? _dependencyPropertyReflectionCache;
 
-		internal static DependencyProperty GetDependencyPropertyUsingReflection<TProperty>(this UIElement uiElement, string propertyName)
+		internal static DependencyProperty? FindDependencyPropertyUsingReflection<TProperty>(this UIElement uiElement, string propertyName)
 		{
 			var type = uiElement.GetType();
 			var propertyType = typeof(TProperty);
 			var key = (ownerType: type, propertyName);
 
-			_dependencyPropertyReflectionCache =
-				_dependencyPropertyReflectionCache
-				?? new Dictionary<(Type, string), DependencyProperty>(2);
+			_dependencyPropertyReflectionCache ??= new Dictionary<(Type, string), DependencyProperty?>(2);
 
 			if (_dependencyPropertyReflectionCache.TryGetValue(key, out var property))
 			{

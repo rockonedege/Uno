@@ -13,32 +13,33 @@ using Uno.Logging;
 using Uno.UI;
 using Uno.UI.Extensions;
 using Uno.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+using Windows.System;
+using System.Reflection;
+using Microsoft.Extensions.Logging;
+using Uno.Core.Comparison;
+using Uno.Foundation.Runtime.WebAssembly.Interop;
 
 namespace Windows.UI.Xaml
 {
 	public partial class UIElement : DependencyObject
 	{
-		// Even if this a concept of FrameworkElement, the loaded state is handled by the UIElement in order to avoid
-		// to cast to FrameworkElement each time a child is added or removed.
-		internal bool IsLoaded;
+		internal const string DefaultHtmlTag = "div";
 
 		private readonly GCHandle _gcHandle;
-		private readonly bool _isFrameworkElement;
 
-		private protected int? Depth { get; private set; }
-
-		private static class ClassNames
+		private static class UIElementNativeRegistrar
 		{
-			private static readonly Dictionary<Type, string[]> _classNames = new Dictionary<Type, string[]>();
+			private static readonly Dictionary<Type, int> _classNames = new Dictionary<Type, int>();
 
-			internal static string[] GetForType(Type type)
+			internal static int GetForType(Type type)
 			{
-				if (!_classNames.TryGetValue(type, out var names))
+				if (!_classNames.TryGetValue(type, out var classNamesRegistrationId))
 				{
-					_classNames[type] = names = GetClassesForType(type).ToArray();
+					_classNames[type] = classNamesRegistrationId = WindowManagerInterop.RegisterUIElement(type.FullName, GetClassesForType(type).ToArray(), type.Is<FrameworkElement>());
 				}
 
-				return names;
+				return classNamesRegistrationId;
 			}
 
 			private static IEnumerable<string> GetClassesForType(Type type)
@@ -73,11 +74,21 @@ namespace Windows.UI.Xaml
 			return new Rect(double.Parse(sizeParts[0]), double.Parse(sizeParts[1]), double.Parse(sizeParts[2]), double.Parse(sizeParts[3]));
 		}
 
-		public UIElement(string htmlTag = "div", bool isSvg = false)
+		public UIElement() : this(null, false) { }
+
+		public UIElement(string htmlTag = DefaultHtmlTag) : this(htmlTag, false) { }
+
+		public UIElement(string htmlTag, bool isSvg)
 		{
+			_log = this.Log();
+			_logDebug = _log.IsEnabled(LogLevel.Debug) ? _log : null;
+
+			Initialize();
+
 			_gcHandle = GCHandle.Alloc(this, GCHandleType.Weak);
 			_isFrameworkElement = this is FrameworkElement;
-			HtmlTag = htmlTag;
+
+			HtmlTag = GetHtmlTag(htmlTag);
 			HtmlTagIsSvg = isSvg;
 
 			var type = GetType();
@@ -85,22 +96,55 @@ namespace Windows.UI.Xaml
 			Handle = GCHandle.ToIntPtr(_gcHandle);
 			HtmlId = Handle;
 
-
 			Uno.UI.Xaml.WindowManagerInterop.CreateContent(
 				htmlId: HtmlId,
 				htmlTag: HtmlTag,
 				handle: Handle,
-				fullName: type.FullName,
+				uiElementRegistrationId: UIElementNativeRegistrar.GetForType(type),
 				htmlTagIsSvg: HtmlTagIsSvg,
-				isFrameworkElement: _isFrameworkElement,
-				isFocusable: false,
-				classes: ClassNames.GetForType(type)
+				isFocusable: false
 			);
 
 			InitializePointers();
 			UpdateHitTest();
+		}
 
-			FocusManager.Track(this);
+		private static Dictionary<Type, string> _htmlTagCache = new Dictionary<Type, string>(FastTypeComparer.Default);
+		private static Type _htmlElementAttribute;
+		private static PropertyInfo _htmlTagAttributeTagGetter;
+		private static readonly Assembly _unoUIAssembly = typeof(UIElement).Assembly;
+
+		private string GetHtmlTag(string htmlTag)
+		{
+			var currentType = GetType();
+
+			if (currentType.Assembly != _unoUIAssembly)
+			{
+				if (_htmlElementAttribute == null)
+				{
+					_htmlElementAttribute = GetUnoUIRuntimeWebAssembly().GetType("Uno.UI.Runtime.WebAssembly.HtmlElementAttribute", true);
+					_htmlTagAttributeTagGetter = _htmlElementAttribute.GetProperty("Tag");
+				}
+
+				if (!_htmlTagCache.TryGetValue(currentType, out var htmlTagOverride))
+				{
+					// Set the tag from the internal explicit UIElement parameter
+					htmlTagOverride = htmlTag;
+
+					if (currentType.GetCustomAttribute(_htmlElementAttribute, true) is Attribute attr)
+					{
+						_htmlTagCache[currentType] = htmlTagOverride = _htmlTagAttributeTagGetter.GetValue(attr, Array.Empty<object>()) as string;
+					}
+
+					_htmlTagCache[currentType] = htmlTagOverride;
+				}
+
+				return htmlTagOverride;
+			}
+			else
+			{
+				return htmlTag;
+			}
 		}
 
 		~UIElement()
@@ -109,6 +153,8 @@ namespace Windows.UI.Xaml
 			{
 				this.Log().Debug($"Collecting UIElement for [{HtmlId}]");
 			}
+
+			Cleanup();
 
 			Uno.UI.Xaml.WindowManagerInterop.DestroyView(HtmlId);
 
@@ -144,6 +190,40 @@ namespace Windows.UI.Xaml
 		}
 
 		/// <summary>
+		/// Add/Set CSS classes to the HTML element.
+		/// </summary>
+		/// <remarks>
+		/// No effect for classes already present on the element.
+		/// </remarks>
+		protected internal void SetCssClasses(params string[] classesToSet)
+		{
+			Uno.UI.Xaml.WindowManagerInterop.SetUnsetCssClasses(HtmlId, classesToSet, null);
+		}
+
+		/// <summary>
+		/// Remove/Unset CSS classes to the HTML element.
+		/// </summary>
+		/// <remarks>
+		/// No effect for classes already absent from the element.
+		/// </remarks>
+		protected internal void UnsetCssClasses(params string[] classesToUnset)
+		{
+			Uno.UI.Xaml.WindowManagerInterop.SetUnsetCssClasses(HtmlId, null, classesToUnset);
+
+		}
+
+		/// <summary>
+		/// Set and Unset css classes on a HTML element in a single operation.
+		/// </summary>
+		/// <remarks>
+		/// Identical to calling <see cref="SetCssClasses"/> followed by <see cref="UnsetCssClasses"/>.
+		/// </remarks>
+		protected internal void SetUnsetCssClasses(string[] classesToSet, string[] classesToUnset)
+		{
+			Uno.UI.Xaml.WindowManagerInterop.SetUnsetCssClasses(HtmlId, classesToSet, classesToUnset);
+		}
+
+		/// <summary>
 		/// Set a specified CSS class to an element from a set of possible values.
 		/// All other possible values will be removed from the element.
 		/// </summary>
@@ -162,9 +242,8 @@ namespace Windows.UI.Xaml
 		/// Natively arranges and clips an element.
 		/// </summary>
 		/// <param name="rect">The dimensions to apply to the element</param>
-		/// <param name="clipToBounds">Whether the element should be clipped to its bounds</param>
 		/// <param name="clipRect">The Clip rect to set, if any</param>
-		protected internal void ArrangeElementNative(Rect rect, bool clipToBounds, Rect? clipRect)
+		protected internal void ArrangeVisual(Rect rect, Rect? clipRect)
 		{
 			LayoutSlotWithMarginsAndAlignments =
 				VisualTreeHelper.GetParent(this) is UIElement parent
@@ -176,7 +255,14 @@ namespace Windows.UI.Xaml
 				UpdateDOMXamlProperty(nameof(LayoutSlotWithMarginsAndAlignments), LayoutSlotWithMarginsAndAlignments);
 			}
 
-			Uno.UI.Xaml.WindowManagerInterop.ArrangeElement(HtmlId, rect, clipToBounds, clipRect);
+			if (Visibility == Visibility.Collapsed)
+			{
+				// cf. OnVisibilityChanged
+				rect.X = rect.Y = -100000;
+			}
+
+			Uno.UI.Xaml.WindowManagerInterop.ArrangeElement(HtmlId, rect, clipRect);
+			OnViewportUpdated(clipRect ?? Rect.Empty);
 
 #if DEBUG
 			var count = ++_arrangeCount;
@@ -187,16 +273,11 @@ namespace Windows.UI.Xaml
 
 		protected internal void SetNativeTransform(Matrix3x2 matrix)
 		{
-			Uno.UI.Xaml.WindowManagerInterop.SetElementTransform(HtmlId, matrix, requiresClipping: RequiresClipping);
+			Uno.UI.Xaml.WindowManagerInterop.SetElementTransform(HtmlId, matrix);
 		}
 
 		protected internal void ResetStyle(params string[] names)
 		{
-			if (names == null || names.Length == 0)
-			{
-				// nothing to do
-			}
-
 			Uno.UI.Xaml.WindowManagerInterop.ResetStyle(HtmlId, names);
 
 		}
@@ -253,10 +334,9 @@ namespace Windows.UI.Xaml
 
 		partial void ApplyNativeClip(Rect rect)
 		{
-
 			if (rect.IsEmpty)
 			{
-				SetStyle("clip", "");
+				ResetStyle("clip");
 				return;
 			}
 
@@ -265,12 +345,13 @@ namespace Windows.UI.Xaml
 
 			SetStyle(
 				"clip",
-				"rect("
-				+ Math.Floor(rect.Y) + "px,"
-				+ Math.Ceiling(rect.X + width) + "px,"
-				+ Math.Ceiling(rect.Y + height) + "px,"
-				+ Math.Floor(rect.X) + "px"
-				+ ")"
+				string.Concat(
+					"rect(",
+					Math.Floor(rect.Y).ToStringInvariant(), "px,",
+					Math.Ceiling(rect.X + width).ToStringInvariant(), "px,",
+					Math.Ceiling(rect.Y + height).ToStringInvariant(), "px,",
+					Math.Floor(rect.X).ToStringInvariant(), "px)"
+				)
 			);
 		}
 
@@ -288,7 +369,6 @@ namespace Windows.UI.Xaml
 
 		private Rect _arranged;
 		private string _name;
-		internal readonly IList<UIElement> _children = new MaterializableList<UIElement>();
 
 		public string Name
 		{
@@ -330,22 +410,12 @@ namespace Windows.UI.Xaml
 
 		public Func<Size, Size> DesiredSizeSelector { get; set; }
 
-		internal Windows.Foundation.Point GetPosition(Point position, global::Windows.UI.Xaml.UIElement relativeTo)
-			=> TransformToVisual(relativeTo).TransformPoint(position);
-
-		protected virtual void OnVisibilityChanged(Visibility oldValue, Visibility newVisibility)
+		partial void OnVisibilityChangedPartial(Visibility oldValue, Visibility newVisibility)
 		{
 			InvalidateMeasure();
 			UpdateHitTest();
 
-			if (newVisibility == Visibility.Visible)
-			{
-				ResetStyle("visibility");
-			}
-			else
-			{
-				SetStyle("visibility", "hidden");
-			}
+			WindowManagerInterop.SetVisibility(HtmlId, newVisibility == Visibility.Visible);
 
 			if (FeatureConfiguration.UIElement.AssignDOMXamlProperties)
 			{
@@ -387,8 +457,6 @@ namespace Windows.UI.Xaml
 			return base.ToString();
 		}
 
-		internal virtual bool IsEnabledOverride() => true;
-
 		public UIElement FindFirstChild() => _children.FirstOrDefault();
 
 		public virtual IEnumerable<UIElement> GetChildren() => _children;
@@ -422,16 +490,16 @@ namespace Windows.UI.Xaml
 
 			OnAddingChild(child);
 
-			_children.Add(child);
-
-			if (index.HasValue)
+			if (index is { } i)
 			{
-				Uno.UI.Xaml.WindowManagerInterop.AddView(HtmlId, child.HtmlId, index);
+				_children.Insert(i, child);
 			}
 			else
 			{
-				Uno.UI.Xaml.WindowManagerInterop.AddView(HtmlId, child.HtmlId);
+				_children.Add(child);
 			}
+
+			Uno.UI.Xaml.WindowManagerInterop.AddView(HtmlId, child.HtmlId, index);
 
 			OnChildAdded(child);
 
@@ -443,16 +511,52 @@ namespace Windows.UI.Xaml
 
 		public void ClearChildren()
 		{
-			foreach (var child in _children)
+			for (var i = 0; i < _children.Count; i++)
 			{
-				child.SetParent(null);
-				Uno.UI.Xaml.WindowManagerInterop.RemoveView(HtmlId, child.HtmlId);
+				var child = _children[i];
 
+				RemoveNativeView(child);
 				OnChildRemoved(child);
 			}
 
 			_children.Clear();
 			InvalidateMeasure();
+		}
+
+		private void RemoveNativeView(UIElement child)
+		{
+			var childParent = child.GetParent();
+
+			child.SetParent(null);
+
+			// The parent may already be null if the parent has already been collected.
+			// In such case, there is no need to remove the child from its parent in the DOM.
+			if (childParent != null)
+			{
+				Uno.UI.Xaml.WindowManagerInterop.RemoveView(HtmlId, child.HtmlId);
+			}
+		}
+
+		private void Cleanup()
+		{
+			if (this.GetParent() is UIElement originalParent)
+			{
+				originalParent.RemoveChild(this);
+			}
+
+			if (this is Windows.UI.Xaml.Controls.Panel panel)
+			{
+				panel.Children.Clear();
+			}
+			else
+			{
+				for (var i = 0; i < _children.Count; i++)
+				{
+					RemoveNativeView(_children[i]);
+				}
+
+				_children.Clear();
+			}
 		}
 
 		public bool RemoveChild(UIElement child)
@@ -491,126 +595,8 @@ namespace Windows.UI.Xaml
 			InvalidateMeasure();
 		}
 
-		private void OnAddingChild(UIElement child)
-		{
-			if (FeatureConfiguration.FrameworkElement.WasmUseManagedLoadedUnloaded
-				&& IsLoaded
-				&& child._isFrameworkElement)
-			{
-				if (child.IsLoaded)
-				{
-					this.Log().Error($"{this}: Inconsistent state: child {child} is already loaded (OnAddingChild)");
-				}
-				else
-				{
-					child.ManagedOnLoading();
-				}
-			}
-		}
-
-		private void OnChildAdded(UIElement child)
-		{
-			if (!FeatureConfiguration.FrameworkElement.WasmUseManagedLoadedUnloaded
-			    || !IsLoaded
-			    || !child._isFrameworkElement)
-			{
-				return;
-			}
-
-			if (child.IsLoaded)
-			{
-				this.Log().Error($"{this}: Inconsistent state: child {child} is already loaded (OnChildAdded)");
-			}
-			else
-			{
-				child.ManagedOnLoaded((Depth ?? int.MinValue) + 1);
-			}
-		}
-
-		private void OnChildRemoved(UIElement child)
-		{
-			if (!FeatureConfiguration.FrameworkElement.WasmUseManagedLoadedUnloaded
-			    || !IsLoaded
-			    || !child._isFrameworkElement)
-			{
-				return;
-			}
-
-			if (child.IsLoaded)
-			{
-				child.ManagedOnUnloaded();
-			}
-			else
-			{
-				this.Log().Error($"{this}: Inconsistent state: child {child} is not loaded (OnChildRemoved)");
-			}
-		}
-
-		internal virtual void ManagedOnLoading()
-		{
-			foreach (var child in _children)
-			{
-				child.ManagedOnLoading();
-			}
-		}
-
-		internal virtual void ManagedOnLoaded(int depth)
-		{
-			IsLoaded = true;
-			Depth = depth;
-
-			foreach (var child in _children)
-			{
-				child.ManagedOnLoaded(depth + 1);
-			}
-		}
-
-		internal virtual void ManagedOnUnloaded()
-		{
-			IsLoaded = false;
-			Depth = null;
-
-			foreach (var child in _children)
-			{
-				child.ManagedOnUnloaded();
-			}
-		}
-
 		// We keep track of registered routed events to avoid registering the same one twice (mainly because RemoveHandler is not implemented)
 		private RoutedEventFlag _registeredRoutedEvents;
-
-		partial void AddFocusHandler(RoutedEvent routedEvent, int handlersCount, object handler, bool handledEventsToo)
-		{
-			if (handlersCount != 1
-				// We do not remove event handlers for now, so do not rely only on the handlersCount and keep track of registered events
-				|| _registeredRoutedEvents.HasFlag(routedEvent.Flag))
-			{
-				return;
-			}
-			_registeredRoutedEvents |= routedEvent.Flag;
-
-			string domEventName;
-			if (routedEvent.Flag == RoutedEventFlag.GotFocus)
-			{
-				domEventName = "focus";
-			}
-			else
-			{
-				domEventName = routedEvent.Flag == RoutedEventFlag.LostFocus
-					? "focusout"
-					: throw new ArgumentOutOfRangeException(nameof(routedEvent), "Not a focus event");
-			}
-
-			RegisterEventHandler(
-				domEventName,
-				handler: new RoutedEventHandlerWithHandled((snd, args) => RaiseEvent(routedEvent, args)),
-				onCapturePhase: false,
-				canBubbleNatively: true,
-				eventFilter: HtmlEventFilter.Default,
-				eventExtractor: HtmlEventExtractor.FocusEventExtractor,
-				payloadConverter: PayloadToFocusArgs
-			);
-		}
 
 		partial void AddKeyHandler(RoutedEvent routedEvent, int handlersCount, object handler, bool handledEventsToo)
 		{
@@ -637,9 +623,8 @@ namespace Windows.UI.Xaml
 			RegisterEventHandler(
 				domEventName,
 				handler: new RoutedEventHandlerWithHandled((snd, args) => RaiseEvent(routedEvent, args)),
+				invoker: GenericEventHandlers.RaiseRoutedEventHandlerWithHandled,
 				onCapturePhase: false,
-				canBubbleNatively: true,
-				eventFilter: HtmlEventFilter.Default,
 				eventExtractor: HtmlEventExtractor.KeyboardEventExtractor,
 				payloadConverter: PayloadToKeyArgs
 			);
@@ -673,7 +658,7 @@ namespace Windows.UI.Xaml
 
 		private static KeyRoutedEventArgs PayloadToKeyArgs(object src, string payload)
 		{
-			return new KeyRoutedEventArgs(src, System.VirtualKeyHelper.FromKey(payload));
+			return new KeyRoutedEventArgs(src, VirtualKeyHelper.FromKey(payload)) {CanBubbleNatively = true};
 		}
 
 		private static RoutedEventArgs PayloadToFocusArgs(object src, string payload)
@@ -687,6 +672,22 @@ namespace Windows.UI.Xaml
 			}
 
 			return new RoutedEventArgs(src);
+		}
+
+		private static Assembly GetUnoUIRuntimeWebAssembly()
+		{
+			const string UnoUIRuntimeWebAssemblyName = "Uno.UI.Runtime.WebAssembly";
+
+			if (PlatformHelper.IsNetCore)
+			{
+				// .NET Core fails to load assemblies property because of ALC issues: https://github.com/dotnet/runtime/issues/44269
+				return AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == UnoUIRuntimeWebAssemblyName)
+					?? throw new InvalidOperationException($"Unable to find {UnoUIRuntimeWebAssemblyName} in the loaded assemblies");
+			}
+			else
+			{
+				return Assembly.Load(UnoUIRuntimeWebAssemblyName);
+			}
 		}
 	}
 }

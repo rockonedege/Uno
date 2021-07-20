@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Windows.UI.Xaml;
@@ -6,11 +6,44 @@ using Windows.UI.Xaml.Automation;
 using Windows.UI.Xaml.Automation.Peers;
 using Windows.UI.Xaml.Controls;
 using Uno.UI.Xaml.Controls;
+using System.ComponentModel;
+using Windows.UI.Xaml.Media;
+using Microsoft.Extensions.Logging;
 
 namespace Uno.UI
 {
 	public static class FeatureConfiguration
 	{
+		public static class ApiInformation
+		{
+			/// <summary>
+			/// Determines if runtime use of not implemented members raises an exception, or logs an error message.
+			/// </summary>
+			public static bool IsFailWhenNotImplemented
+			{
+				get => Windows.Foundation.Metadata.ApiInformation.IsFailWhenNotImplemented;
+				set => Windows.Foundation.Metadata.ApiInformation.IsFailWhenNotImplemented = value;
+			}
+
+			/// <summary>
+			/// Determines if runtime use of not implemented members is logged only once, or at each use.
+			/// </summary>
+			public static bool AlwaysLogNotImplementedMessages
+			{
+				get => Windows.Foundation.Metadata.ApiInformation.AlwaysLogNotImplementedMessages;
+				set => Windows.Foundation.Metadata.ApiInformation.AlwaysLogNotImplementedMessages = value;
+			}
+
+			/// <summary>
+			/// The message log level used when a not implemented member is used at runtime, if <see cref="IsFailWhenNotImplemented"/> is false.
+			/// </summary>
+			public static LogLevel NotImplementedLogLevel
+			{
+				get => Windows.Foundation.Metadata.ApiInformation.NotImplementedLogLevel;
+				set => Windows.Foundation.Metadata.ApiInformation.NotImplementedLogLevel = value;
+			}
+		}
+
 		public static class AutomationPeer
 		{
 			/// <summary>
@@ -34,6 +67,20 @@ namespace Uno.UI
 			/// Note: This is incompatible with the way accessibility works on UWP.
 			/// </remarks>
 			public static bool UseSimpleAccessibility { get; set; } = false;
+		}
+
+		public static class ComboBox
+		{
+			/// <summary>
+			/// This defines the default value of the <see cref="UI.Xaml.Controls.ComboBox.DropDownPreferredPlacementProperty"/>. (cf. Remarks.)
+			/// </summary>
+			/// <remarks>
+			/// As this value is read only once when initializing the dependency property,
+			/// make sure to define it in the early stages of you application initialization,
+			/// before any UI related initialization (like generic styles init) and even before
+			/// referencing the ** type ** ComboBox in any way.
+			/// </remarks>
+			public static Uno.UI.Xaml.Controls.DropDownPlacement DefaultDropDownPreferredPlacement { get; set; } = Uno.UI.Xaml.Controls.DropDownPlacement.Auto;
 		}
 
 		public static class CompositionTarget
@@ -72,6 +119,20 @@ namespace Uno.UI
 			/// in the constructor of a control.
 			/// </summary>
 			public static bool UseLegacyLazyApplyTemplate { get; set; } = false;
+
+			/// <summary>
+			/// If the call to "OnApplyTemplate" should be deferred to mimic UWP sequence of events.
+			/// </summary>
+			/// <remarks>
+			/// Will never be deferred when .ApplyTemplate() is called explicitly.
+			/// More information there: https://github.com/unoplatform/uno/issues/3519
+			/// </remarks>
+			public static bool UseDeferredOnApplyTemplate { get; set; }
+#if __ANDROID__ || __IOS__ || __MACOS__
+				= false; // opt-in for iOS/Android/macOS
+#else
+				= true;
+#endif
 		}
 
 		public static class DataTemplateSelector
@@ -84,16 +145,34 @@ namespace Uno.UI
 			public static bool UseLegacyTemplateSelectorOverload { get; set; } = false;
 		}
 
+		public static class DependencyObject
+		{
+			/// <summary>
+			/// When set to true, the <see cref="DependencyObjectStore"/> will create hard references
+			/// instead of weak references for some highly used fields, in common cases to improve the
+			/// overall performance.
+			/// </summary>
+			/// <remarks>
+			/// This feature is disabled on WebAssembly as it reveals or creates a memory corruption issue
+			/// in the garbage collector. This can be revisited when upgrading tests to .NET 5+.
+			/// See https://github.com/unoplatform/uno/issues/4730 for details.
+			/// </remarks>
+			public static bool IsStoreHardReferenceEnabled { get; set; }
+				= true;
+		}
+
 		public static class Font
 		{
 			/// <summary>
 			/// Defines the default font to be used when displaying symbols, such as in SymbolIcon.
 			/// </summary>
 			public static string SymbolsFont { get; set; } =
-#if !__ANDROID__
+#if __SKIA__
+				"ms-appx:///Assets/Fonts/uno-fluentui-assets.ttf#Symbols";
+#elif !__ANDROID__
 				"Symbols";
 #else
-				"ms-appx:///Assets/Fonts/winjs-symbols.ttf#Symbols";
+				"ms-appx:///Assets/Fonts/uno-fluentui-assets.ttf#Symbols";
 #endif
 			/// <summary>
 			/// Ignores text scale factor, resulting in a font size as dictated by the control.
@@ -103,18 +182,13 @@ namespace Uno.UI
 
 		public static class FrameworkElement
 		{
-			/// <summary>
-			/// Enables the behavior for which the style is applied before the inherited
-			/// FrameworkElement instances constructors. The UWP behavior is to apply
-			/// </summary>
-			public static bool UseLegacyApplyStylePhase { get; set; } = false;
+			[Obsolete("This flag is no longer used.")]
+			[EditorBrowsable(EditorBrowsableState.Never)]
+			public static bool UseLegacyApplyStylePhase { get; set; }
 
-			/// <summary>
-			/// When changing a style on a <see cref="Windows.UI.Xaml.FrameworkElement"/> clears
-			/// the previous style setters. This property is applicable only when <see cref="UseLegacyApplyStylePhase"/>
-			/// is set to <see cref="false"/>.
-			/// </summary>
-			public static bool ClearPreviousOnStyleChange { get; set; } = true;
+			[Obsolete("This flag is no longer used.")]
+			[EditorBrowsable(EditorBrowsableState.Never)]
+			public static bool ClearPreviousOnStyleChange { get; set; }
 
 #if __ANDROID__
 			/// <summary>
@@ -124,23 +198,21 @@ namespace Uno.UI
 			/// </summary>
 			/// <remarks>
 			/// This setting impacts significantly the loading performance of controls on Android.
-			/// Setting it to <see cref="true"/> avoids the use of costly Java->C# interop.
+			/// Setting it to true avoids the use of costly Java->C# interop.
 			/// </remarks>
 			public static bool AndroidUseManagedLoadedUnloaded { get; set; } = true;
 #endif
 
-#if __WASM__
 			/// <summary>
-			/// Controls the propagation of <see cref="Windows.UI.Xaml.FrameworkElement.Loaded"/> and
+			/// [WebAssembly Only] Controls the propagation of <see cref="Windows.UI.Xaml.FrameworkElement.Loaded"/> and
 			/// <see cref="Windows.UI.Xaml.FrameworkElement.Unloaded"/> events through managed
 			/// or native visual tree traversal.
 			/// </summary>
 			/// <remarks>
 			/// This setting impacts significantly the loading performance of controls on Web Assembly.
-			/// Setting it to <see cref="true"/> avoids the use of costly JavaScript->C# interop.
+			/// Setting it to true avoids the use of costly JavaScript->C# interop.
 			/// </remarks>
 			public static bool WasmUseManagedLoadedUnloaded { get; set; } = true;
-#endif
 		}
 
 		public static class Image
@@ -150,6 +222,24 @@ namespace Uno.UI
 			/// New way is using the Layer to better position the image according to alignments.
 			/// </summary>
 			public static bool LegacyIosAlignment { get; set; } = false;
+		}
+
+		public static class Interop
+		{
+			/// <summary>
+			/// [WebAssembly Only] Used to control the behavior of the C#/Javascript interop. Setting this
+			/// flag to true forces the use of the Javascript eval mode, instead of binary interop.
+			/// This flag has no effect when running in hosted mode.
+			/// </summary>
+			public static bool ForceJavascriptInterop { get; set; } = false;
+		}
+
+		public static class Binding
+		{
+			/// <summary>
+			/// Determines if the binding engine should ignore identical references in binding paths.
+			/// </summary>
+			public static bool IgnoreINPCSameReferences { get; set; } = false;
 		}
 
 		public static class Popup
@@ -162,24 +252,19 @@ namespace Uno.UI
 #endif
 		}
 
-		public static class Interop
+		public static class ProgressRing
 		{
-#if __WASM__
-			/// <summary>
-			/// Used to control the behavior of the C#/Javascript interop. Setting this
-			/// flag to true forces the use of the Javascript eval mode, instead of binary interop.
-			/// This flag has no effect when running in hosted mode.
-			/// </summary>
-			public static bool ForceJavascriptInterop { get; set; } = false;
-#endif
+			public static Uri ProgressRingAsset { get; set; } = new Uri("embedded://Uno.UI/Uno.UI.Microsoft.UI.Xaml.Controls.ProgressRing.ProgressRingIntdeterminate.json");
+			public static Uri DeterminateProgressRingAsset { get; set; } = new Uri("embedded://Uno.UI/Uno.UI.Microsoft.UI.Xaml.Controls.ProgressRing.ProgressRingDeterminate.json");
 		}
 
 		public static class ListViewBase
 		{
 			/// <summary>
 			/// Sets the value to use for <see cref="ItemsStackPanel.CacheLength"/> and <see cref="ItemsWrapGrid.CacheLength"/> if not set
-			/// explicitly in Xaml or code. Higher values will cache more views either side of the visible window, improving list performance
-			/// at the expense of consuming more memory. Setting this to null will leave the default value at the UWP default of 4.0.
+			/// explicitly in Xaml or code. Higher values will cache more views either side of the visible window, improving list scroll
+			/// performance at the expense of consuming more memory and taking longer to initially load. Setting this to null will leave
+			/// the default value at the UWP default of 4.0.
 			/// </summary>
 			public static double? DefaultCacheLength = 1.0;
 		}
@@ -236,14 +321,48 @@ namespace Uno.UI
 			/// <summary>
 			/// Determines if Uno.UI should be using native styles for controls that have
 			/// a native counterpart. (e.g. Button, Slider, ComboBox, ...)
+			///
+			/// By default this is true.
 			/// </summary>
 			public static bool UseUWPDefaultStyles { get; set; } = true;
+
+			/// <summary>
+			/// Override the native styles usage per control type.
+			/// </summary>
+			/// <remarks>
+			/// Usage: 'UseUWPDefaultStylesOverride[typeof(Frame)] = false;' will result in the native style always being the default for Frame, irrespective
+			/// of the value of <see cref="UseUWPDefaultStyles"/>. This is useful when an app uses the UWP default look for most controls but the native
+			/// appearance/comportment for a few particular controls, or vice versa.
+			/// </remarks>
+			public static IDictionary<Type, bool> UseUWPDefaultStylesOverride { get; } = new Dictionary<Type, bool>();
+
+			/// <summary>
+			/// This enables native frame navigation on Android and iOS by setting related classes (<see cref="Frame"/>, <see cref="Windows.UI.Xaml.Controls.CommandBar"/>
+			/// and <see cref="Windows.UI.Xaml.Controls.AppBarButton"/>) to use their native styles.
+			/// </summary>
+			public static void ConfigureNativeFrameNavigation()
+			{
+				SetUWPDefaultStylesOverride<Frame>(useUWPDefaultStyle: false);
+				SetUWPDefaultStylesOverride<Windows.UI.Xaml.Controls.CommandBar>(useUWPDefaultStyle: false);
+				SetUWPDefaultStylesOverride<Windows.UI.Xaml.Controls.AppBarButton>(useUWPDefaultStyle: false);
+			}
+
+			/// <summary>
+			/// Override the native styles useage for control type <typeparamref name="TControl"/>.
+			/// </summary>
+			/// <typeparam name="TControl"></typeparam>
+			/// <param name="useUWPDefaultStyle">
+			/// Whether instances of <typeparamref name="TControl"/> should use the UWP default style.
+			/// If false, the native default style (if one exists) will be used.
+			/// </param>
+			public static void SetUWPDefaultStylesOverride<TControl>(bool useUWPDefaultStyle) where TControl : Windows.UI.Xaml.Controls.Control
+				=> UseUWPDefaultStylesOverride[typeof(TControl)] = useUWPDefaultStyle;
 		}
 
 		public static class TextBlock
 		{
 			/// <summary>
-			/// Determines if the measure cache is enabled. (WASM only)
+			/// [WebAssembly Only] Determines if the measure cache is enabled.
 			/// </summary>
 			public static bool IsMeasureCacheEnabled { get; set; } = true;
 		}
@@ -255,6 +374,70 @@ namespace Uno.UI
 			/// </summary>
 			/// <remarks>This feature is used to avoid screenshot comparisons false positives</remarks>
 			public static bool HideCaret { get; set; } = false;
+		}
+
+		public static class ScrollViewer
+		{
+			/// <summary>
+			/// This defines the default value of the <see cref="Uno.UI.Xaml.Controls.ScrollViewer.UpdatesModeProperty"/>.
+			/// For backward compatibility, you should set it to Synchronous.
+			/// For better compatibility with Windows, you should keep the default value 'AsynchronousIdle'.
+			/// </summary>
+			/// <remarks>
+			/// As this value is read only once when initializing the dependency property,
+			/// make sure to define it in the early stages of you application initialization,
+			/// before any UI related initialization (like generic styles init) and even before
+			/// referencing the ** type ** ScrollViewer in any way.
+			/// </remarks>
+			public static ScrollViewerUpdatesMode DefaultUpdatesMode { get; set; } = ScrollViewerUpdatesMode.AsynchronousIdle;
+
+			/// <summary>
+			/// Defines the delay after which the scrollbars hide themselves when pointer is not over.<br/>
+			/// Default is 4 sec.<br/>
+			/// Setting this to <see cref="TimeSpan.MaxValue"/> will completely disable the auto hide feature.
+			/// </summary>
+			/// <remarks>This is effective only for managed scrollbars (WASM, macOS and Skia for now)</remarks>
+			public static TimeSpan? DefaultAutoHideDelay { get; set; }
+
+#if __ANDROID__
+			/// <summary>
+			/// This value defines an optional delay to be set for native ScrollBar thumbs to disapear. The
+			/// platform default is 300ms, which can make the thumbs appear on screenshots, changing this value
+			/// to <see cref="TimeSpan.Zero"/> makes those disapear faster.
+			/// </summary>
+			public static TimeSpan? AndroidScrollbarFadeDelay { get; set; }
+#endif
+		}
+
+		public static class ThemeAnimation
+		{
+			/// <summary>
+			/// Default duration for xxxThemeAnimation
+			/// </summary>
+			public static TimeSpan DefaultThemeAnimationDuration { get; set; } = TimeSpan.FromSeconds(0.75);
+		}
+
+		public static class ToolTip
+		{
+			public static bool UseToolTips { get; set; }
+#if __WASM__
+				= true;
+#endif
+
+			public static int ShowDelay { get; set; } = 1000;
+
+			public static int ShowDuration { get; set; } = 7000;
+		}
+
+		public static class NativeFramePresenter
+		{
+#if __ANDROID__
+			/// <summary>
+			/// Determines if pages in the backstack are kept in the visual tree.
+			/// Defaults to false for performance considerations.
+			/// </summary>
+			public static bool AndroidUnloadInactivePages { get; set; } = false;
+#endif
 		}
 
 		public static class UIElement
@@ -274,21 +457,20 @@ namespace Uno.UI
 			/// </remarks>
 			public static bool ShowClippingBounds { get; set; } = false;
 
-#if __WASM__
 			/// <summary>
-			/// Enable the assignation of the "xamlname", "xuid" and "xamlautomationid" attributes on DOM elements created
+			/// [WebAssembly Only] Enable the assignation of the "xamlname", "xuid" and "xamlautomationid" attributes on DOM elements created
 			/// from the XAML visual tree. This enables tools such as Puppeteer to select elements
 			/// in the DOM for automation purposes.
 			/// </summary>
 			public static bool AssignDOMXamlName { get; set; } = false;
 
 			/// <summary>
-			/// Enable UIElement.ToString() to return the element's unique ID
+			/// [WebAssembly Only] Enable UIElement.ToString() to return the element's unique ID
 			/// </summary>
 			public static bool RenderToStringWithId { get; set; } = true;
 
 			/// <summary>
-			/// Enables the assignation of properties from the XAML visual tree as DOM attributes: Height -> "xamlheight",
+			/// [WebAssembly Only] Enables the assignation of properties from the XAML visual tree as DOM attributes: Height -> "xamlheight",
 			/// HorizontalAlignment -> "xamlhorizontalalignment" etc. 
 			/// </summary>
 			/// <remarks>
@@ -298,7 +480,8 @@ namespace Uno.UI
 			/// the values change subsequently. This restriction doesn't apply to debug Uno builds.
 			/// </remarks>
 			public static bool AssignDOMXamlProperties { get; set; } = false;
-#elif __ANDROID__
+
+#if __ANDROID__
 			/// <summary>
 			/// When this is set, non-UIElements will always be clipped to their bounds (<see cref="Android.Views.ViewGroup.ClipChildren"/> will
 			/// always be set to true on their parent). 
@@ -310,41 +493,18 @@ namespace Uno.UI
 #endif
 		}
 
-		public static class ScrollViewer
+		public static class WebView
 		{
-			/// <summary>
-			/// This defines the default value of the <see cref="Uno.UI.Xaml.Controls.ScrollViewer.UpdatesModeProperty"/>.
-			/// For backward compatibility, you should set it to Synchronous.
-			/// For better compatibility with Windows, you should keep the default value 'AsynchronousIdle'.
-			/// </summary>
-			/// <remarks>
-			/// As this value is read only once when initializing the dependency property,
-			/// make sure to define it in the early stages of you application initialization,
-			/// before any UI related initialization (like generic styles init) and even before
-			/// referencing the ** type ** ScrollViewer in any way.
-			/// </remarks>
-			public static ScrollViewerUpdatesMode DefaultUpdatesMode { get; set; } = ScrollViewerUpdatesMode.AsynchronousIdle;
-
 #if __ANDROID__
 			/// <summary>
-			/// This value defines an optional delay to be set for native ScrollBar thumbs to disapear. The
-			/// platform default is 300ms, which can make the thumbs appear on screenshots, changing this value
-			/// to <see cref="TimeSpan.Zero"/> makes those disapear faster.
+			/// Prevent the WebView from using hardware rendering.
+			/// This was previously the default behavior in Uno to work around a keyboard-related visual glitch in Android 5.0 (http://stackoverflow.com/questions/27172217/android-systemui-glitches-in-lollipop), however it prevents video and 3d content from being rendered.
 			/// </summary>
-			public static TimeSpan? AndroidScrollbarFadeDelay { get; set; }
+			/// <remarks>
+			/// See this for more info: https://github.com/unoplatform/uno/blob/26c5cc5992cae3c8c25adf51eb77ca4b0dd34e93/src/Uno.UI/UI/Xaml/Controls/WebView/WebView.Android.cs#L251_L255
+			/// </remarks>
+			public static bool ForceSoftwareRendering { get; set; } = false;
 #endif
-		}
-
-		public static class ToolTip
-		{
-			public static bool UseToolTips { get; set; }
-#if __WASM__
-				= true;
-#endif
-
-			public static int ShowDelay { get; set; } = 1000;
-
-			public static int ShowDuration { get; set; } = 7000;
 		}
 
 		public static class Xaml
@@ -355,21 +515,68 @@ namespace Uno.UI
 			/// <remarks>
 			/// This is a mechanism to prevent hard-to-diagnose stack overflow when a resource name is not found.
 			/// </remarks>
+			[Obsolete("This flag is no longer used.")]
+			[EditorBrowsable(EditorBrowsableState.Never)]
 			public static int MaxRecursiveResolvingDepth { get; set; } = 12;
 		}
 
-		public static class ComboBox
+		public static class DatePicker
 		{
+#if __IOS__
+			public static bool UseLegacyStyle { get; set; } = false;
+#endif
+		}
+
+		public static class TimePicker
+		{
+#if __IOS__
+			public static bool UseLegacyStyle { get; set; } = false;
+#endif
+		}
+
+		public static class CommandBar
+		{
+#if __IOS__
 			/// <summary>
-			/// This defines the default value of the <see cref="UI.Xaml.Controls.ComboBox.DropDownPreferredPlacementProperty"/>. (cf. Remarks.)
+			/// Gets or Set whether the AllowNativePresenterContent feature is on or off.
 			/// </summary>
 			/// <remarks>
-			/// As this value is read only once when initializing the dependency property,
-			/// make sure to define it in the early stages of you application initialization,
-			/// before any UI related initialization (like generic styles init) and even before
-			/// referencing the ** type ** ComboBox in any way.
+			/// This feature is used in the context of the sample application to test NavigationBars outside of a NativeFramePresenter for
+			/// UI Testing. In general cases, this should not happen as the bar may be moved back to to this presenter while
+			/// another page is already visible, making this bar overlay on top of another.
 			/// </remarks>
-			public static Uno.UI.Xaml.Controls.DropDownPlacement DefaultDropDownPreferredPlacement { get; set; } = Uno.UI.Xaml.Controls.DropDownPlacement.Auto;
+			/// <returns>True if this feature is on, False otherwise</returns>
+			public static bool AllowNativePresenterContent { get; set; } = false;
+#endif
+		}
+
+		public static class AppBarButton
+		{
+#if __ANDROID__
+			/// <summary>
+			/// Gets or set whether the EnableBitmapIconTint feature is on or off.
+			/// </summary>
+			/// <remarks>
+			/// This Feature will allow any <see cref="Windows.UI.Xaml.Controls.AppBarButton"/>
+			/// inside a <see cref="Windows.UI.Xaml.Controls.CommandBar"/> to use the Foreground <see cref="SolidColorBrush"/>
+			/// as their tint Color.
+			/// <para/>Default value is False.
+			/// </remarks>
+			/// <returns>True if this feature is on, False otherwise</returns>
+			public static bool EnableBitmapIconTint { get; set; } = false;
+#endif
+		}
+
+		public static class Cursors
+		{
+#if UNO_REFERENCE_API
+			/// <summary>
+			/// Gets or sets a value indicating whether "interactive" controls like
+			/// Buttons and ToggleSwitches use the pointer cursor in WebAssembly
+			/// to emulate a "web-like" feel. Default is <see langword="true"/>.
+			/// </summary>
+			public static bool UseHandForInteraction { get; set; } = true;
+#endif
 		}
 	}
 }

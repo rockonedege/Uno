@@ -1,5 +1,4 @@
 ﻿using Uno.Extensions;
-using Uno.UI.UI.Xaml.Documents;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 
@@ -10,9 +9,8 @@ namespace Windows.UI.Xaml.Controls
 		private TextBoxView _textBoxView;
 		
 		protected override bool IsDelegatingFocusToTemplateChild() => true; // _textBoxView
-		protected override bool RequestFocus(FocusState state) => FocusTextView();
 		partial void OnTextClearedPartial() => FocusTextView();
-		protected virtual bool FocusTextView() => FocusManager.Focus(_textBoxView);
+		internal bool FocusTextView() => FocusManager.FocusNative(_textBoxView);
 
 		private void UpdateTextBoxView()
 		{
@@ -99,11 +97,11 @@ namespace Windows.UI.Xaml.Controls
 			_textBoxView?.SetAttribute("spellcheck", IsSpellCheckEnabled.ToString());
 		}
 
-		protected override void OnIsEnabledChanged(bool oldValue, bool newValue)
+		private protected override void OnIsEnabledChanged(IsEnabledChangedEventArgs e)
 		{
-			base.OnIsEnabledChanged(oldValue, newValue);
+			base.OnIsEnabledChanged(e);
 
-			ApplyEnabled(newValue);
+			ApplyEnabled(e.NewValue);
 		}
 
 		partial void OnIsReadonlyChangedPartial(DependencyPropertyChangedEventArgs e)

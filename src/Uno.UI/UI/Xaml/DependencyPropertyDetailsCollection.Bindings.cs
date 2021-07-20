@@ -59,6 +59,18 @@ namespace Windows.UI.Xaml
 			for (int i = 0; i < bindings.Length; i++)
 			{
 				bindings[i].ApplyCompiledSource();
+			}
+		}
+
+		/// <summary>
+		/// Applies the <see cref="Binding"/> instances which contain an ElementName property
+		/// </summary>
+		internal void ApplyElementNameBindings()
+		{
+			var bindings = _bindings.Data;
+
+			for (int i = 0; i < bindings.Length; i++)
+			{
 				bindings[i].ApplyElementName();
 			}
 		}
@@ -153,7 +165,7 @@ namespace Windows.UI.Xaml
 			}
 			else if (Equals(binding.ParentBinding.RelativeSource, RelativeSource.Self))
 			{
-				binding.DataContext = _ownerReference.Target;
+				binding.DataContext = Owner;
 			}
 			else
 			{
@@ -164,11 +176,6 @@ namespace Windows.UI.Xaml
 					binding.DataContext = dataContext;
 				}
 			}
-		}
-
-
-		internal void Dispose()
-		{
 		}
 
 		/// <summary>

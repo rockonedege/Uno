@@ -15,14 +15,15 @@ using System.Runtime.CompilerServices;
 using Windows.UI.Xaml.Media;
 using Uno.UI;
 using Uno.UI.Xaml;
+using Windows.UI;
+using System.Dynamic;
+using Windows.UI.Xaml.Shapes;
 
 namespace Windows.UI.Xaml
 {
 	public partial class FrameworkElement : IEnumerable
 	{
 		bool IFrameworkElementInternal.HasLayouter => true;
-
-		partial void OnLoadingPartial();
 
 		/*
 			About NativeOn** vs ManagedOn** methods:
@@ -34,32 +35,9 @@ namespace Windows.UI.Xaml
 				The propagation of this loaded state is also made by the UIElement.
 		 */
 
-		internal sealed override void ManagedOnLoading()
-		{
-			OnLoadingPartial();
-			ApplyCompiledBindings();
-
-			try
-			{
-				// Raise event before invoking base in order to raise them top to bottom
-				_loading?.Invoke(this, new RoutedEventArgs(this));
-			}
-			catch (Exception error)
-			{
-				_log.Error("ManagedOnLoading failed in FrameworkElement", error);
-				Application.Current.RaiseRecoverableUnhandledException(error);
-			}
-
-			// Explicit propagation of the loading even must be performed
-			// after the compiled bindings are applied (cf. OnLoading), as there may be altered
-			// properties that affect the visual tree.
-			base.ManagedOnLoading();
-		}
-
 		private void NativeOnLoading(object sender, RoutedEventArgs args)
 		{
 			OnLoadingPartial();
-			ApplyCompiledBindings();
 
 			// Explicit propagation of the loading even must be performed
 			// after the compiled bindings are applied, as there may be altered
@@ -70,33 +48,6 @@ namespace Windows.UI.Xaml
 			}
 		}
 
-		internal sealed override void ManagedOnLoaded(int depth)
-		{
-			if (!base.IsLoaded)
-			{
-				// Make sure to set the flag before raising the loaded event (duplicated with the base.ManagedOnLoaded)
-				base.IsLoaded = true;
-
-				if (FeatureConfiguration.UIElement.AssignDOMXamlProperties)
-				{
-					UpdateDOMProperties();
-				}
-
-				try
-				{
-					// Raise event before invoking base in order to raise them top to bottom
-					OnLoaded();
-					_loaded?.Invoke(this, new RoutedEventArgs(this));
-				}
-				catch (Exception error)
-				{
-					_log.Error("ManagedOnLoaded failed in FrameworkElement", error);
-					Application.Current.RaiseRecoverableUnhandledException(error);
-				}
-			}
-
-			base.ManagedOnLoaded(depth);
-		}
 
 		private void NativeOnLoaded(object sender, RoutedEventArgs args)
 		{
@@ -118,22 +69,6 @@ namespace Windows.UI.Xaml
 			}
 		}
 
-		internal sealed override void ManagedOnUnloaded()
-		{
-			base.ManagedOnUnloaded(); // Will set flag IsLoaded to false
-
-			try
-			{
-				// Raise event after invoking base in order to raise them bottom to top
-				OnUnloaded();
-				_unloaded?.Invoke(this, new RoutedEventArgs(this));
-			}
-			catch (Exception error)
-			{
-				_log.Error("ManagedOnUnloaded failed in FrameworkElement", error);
-				Application.Current.RaiseRecoverableUnhandledException(error);
-			}
-		}
 
 		private void NativeOnUnloaded(object sender, RoutedEventArgs args)
 		{
@@ -156,11 +91,8 @@ namespace Windows.UI.Xaml
 		}
 
 		public bool HasParent()
-		{
-			return Parent != null;
-		}
+			=> Parent != null;
 
-		private Size _actualSize;
 		public double ActualWidth => GetActualWidth();
 		public double ActualHeight => GetActualHeight();
 
@@ -172,12 +104,10 @@ namespace Windows.UI.Xaml
 			_renderTransform?.UpdateSize(args.NewSize);
 		}
 
-		internal void SetActualSize(Size size) => _actualSize = size;
+		internal void SetActualSize(Size size)
+			=> AssignedActualSize = size;
 
-		private protected virtual double GetActualWidth() => _actualSize.Width;
-		private protected virtual double GetActualHeight() => _actualSize.Height;
-
-		static partial void OnGenericPropertyUpdatedPartial(object dependencyObject, DependencyPropertyChangedEventArgs args);
+		partial void OnGenericPropertyUpdatedPartial(DependencyPropertyChangedEventArgs args);
 
 		private event RoutedEventHandler _loading;
 		public event RoutedEventHandler Loading
@@ -190,7 +120,7 @@ namespace Windows.UI.Xaml
 				}
 				else
 				{
-					RegisterEventHandler("loading", value);
+					RegisterEventHandler("loading", value, GenericEventHandlers.RaiseRoutedEventHandler);
 				}
 			}
 			remove
@@ -201,7 +131,7 @@ namespace Windows.UI.Xaml
 				}
 				else
 				{
-					UnregisterEventHandler("loading", value);
+					UnregisterEventHandler("loading", value, GenericEventHandlers.RaiseRoutedEventHandler);
 				}
 			}
 		}
@@ -217,7 +147,7 @@ namespace Windows.UI.Xaml
 				}
 				else
 				{
-					RegisterEventHandler("loaded", value);
+					RegisterEventHandler("loaded", value, GenericEventHandlers.RaiseRoutedEventHandler);
 				}
 			}
 			remove
@@ -228,7 +158,7 @@ namespace Windows.UI.Xaml
 				}
 				else
 				{
-					UnregisterEventHandler("loaded", value);
+					UnregisterEventHandler("loaded", value, GenericEventHandlers.RaiseRoutedEventHandler);
 				}
 			}
 		}
@@ -244,7 +174,7 @@ namespace Windows.UI.Xaml
 				}
 				else
 				{
-					RegisterEventHandler("unloaded", value);
+					RegisterEventHandler("unloaded", value, GenericEventHandlers.RaiseRoutedEventHandler);
 				}
 			}
 			remove
@@ -255,12 +185,10 @@ namespace Windows.UI.Xaml
 				}
 				else
 				{
-					UnregisterEventHandler("unloaded", value);
+					UnregisterEventHandler("unloaded", value, GenericEventHandlers.RaiseRoutedEventHandler);
 				}
 			}
 		}
-
-		public new bool IsLoaded => base.IsLoaded; // The IsLoaded state is managed by the UIElement, FrameworkElement only makes it publicly visible
 
 		private bool IsTopLevelXamlView() => throw new NotSupportedException();
 
@@ -271,275 +199,173 @@ namespace Windows.UI.Xaml
 		public IEnumerator GetEnumerator() => _children.GetEnumerator();
 
 		protected void SetCornerRadius(CornerRadius cornerRadius)
-		{
-			var borderRadius = cornerRadius == CornerRadius.None
-				? ""
-				: $"{cornerRadius.TopLeft}px {cornerRadius.TopRight}px {cornerRadius.BottomRight}px {cornerRadius.BottomLeft}px";
+			=> BorderLayerRenderer.SetCornerRadius(this, cornerRadius);
 
-			SetStyle("border-radius", borderRadius);
-		}
-
-		protected void SetBorder(Thickness thickness, Brush brush, CornerRadius cornerRadius)
-		{
-			var borderRadius = cornerRadius == CornerRadius.None
-				? ""
-				: $"{cornerRadius.TopLeft}px {cornerRadius.TopRight}px {cornerRadius.BottomRight}px {cornerRadius.BottomLeft}px";
-
-			if (thickness == Thickness.Empty)
-			{
-				SetStyle(
-					("border-style", "none"),
-					("border-color", ""),
-					("border-width", ""),
-					("border-radius", borderRadius));
-			}
-			else
-			{
-				var borderColor = Colors.Transparent;
-				var borderImage = "";
-
-				switch (brush)
-				{
-					case SolidColorBrush solidColorBrush:
-						borderColor = solidColorBrush.ColorWithOpacity;
-						break;
-					case LinearGradientBrush linearGradientBrush:
-						borderImage = linearGradientBrush.ToCssString(RenderSize); // TODO: Reevaluate when size is changing
-						break;
-				}
-
-				SetStyle(
-					("border-style", "solid"),
-					("border-color", borderColor.ToCssString()),
-					("border-image", borderImage),
-					("border-width", $"{thickness.Top}px {thickness.Right}px {thickness.Bottom}px {thickness.Left}px"),
-					("border-radius", borderRadius));
-			}
-		}
+		protected void SetBorder(Thickness thickness, Brush brush)
+			=> BorderLayerRenderer.SetBorder(this, thickness, brush);
 
 		internal override bool IsEnabledOverride() => IsEnabled && base.IsEnabledOverride();
 
 		#region Margin Dependency Property
-
-		public static readonly DependencyProperty MarginProperty =
-			DependencyProperty.Register(
-				"Margin",
-				typeof(Thickness),
-				typeof(FrameworkElement),
-				new FrameworkPropertyMetadata(
-					defaultValue: Thickness.Empty,
-					options: FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
+		[GeneratedDependencyProperty(
+			Options = FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
 #if DEBUG
-					,
-					propertyChangedCallback: OnGenericPropertyUpdated
+			, ChangedCallbackName = nameof(OnGenericPropertyUpdated)
 #endif
-				)
-		);
+		)]
+		public static DependencyProperty MarginProperty { get ; } = CreateMarginProperty();
 
 		public virtual Thickness Margin
 		{
-			get { return (Thickness)this.GetValue(MarginProperty); }
-			set { this.SetValue(MarginProperty, value); }
+			get => GetMarginValue();
+			set => SetMarginValue(value);
 		}
+		private static Thickness GetMarginDefaultValue() => Thickness.Empty;
 		#endregion
 
 		#region HorizontalAlignment Dependency Property
-
-		public static readonly DependencyProperty HorizontalAlignmentProperty =
-			DependencyProperty.Register(
-				"HorizontalAlignment",
-				typeof(HorizontalAlignment),
-				typeof(FrameworkElement),
-				new FrameworkPropertyMetadata(
-					defaultValue: Xaml.HorizontalAlignment.Stretch,
-					options: FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
+		[GeneratedDependencyProperty(
+			DefaultValue = Xaml.HorizontalAlignment.Stretch,
+			Options = FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
 #if DEBUG
-					,
-					propertyChangedCallback: OnGenericPropertyUpdated
+			, ChangedCallbackName = nameof(OnGenericPropertyUpdated)
 #endif
-				)
-			);
+		)]
+		public static DependencyProperty HorizontalAlignmentProperty { get ; } = CreateHorizontalAlignmentProperty();
 
 		public HorizontalAlignment HorizontalAlignment
 		{
-			get { return (HorizontalAlignment)this.GetValue(HorizontalAlignmentProperty); }
-			set { this.SetValue(HorizontalAlignmentProperty, value); }
+			get => GetHorizontalAlignmentValue();
+			set => SetHorizontalAlignmentValue(value);
 		}
 		#endregion
 
 		#region HorizontalAlignment Dependency Property
-
-		public static readonly DependencyProperty VerticalAlignmentProperty =
-			DependencyProperty.Register(
-				"VerticalAlignment",
-				typeof(VerticalAlignment),
-				typeof(FrameworkElement),
-				new FrameworkPropertyMetadata(
-					defaultValue: Xaml.VerticalAlignment.Stretch,
-					options: FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
+		[GeneratedDependencyProperty(
+			DefaultValue = Xaml.HorizontalAlignment.Stretch,
+			Options = FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
 #if DEBUG
-					,
-					propertyChangedCallback: OnGenericPropertyUpdated
+			, ChangedCallbackName = nameof(OnGenericPropertyUpdated)
 #endif
-				)
-			);
+		)]
+		public static DependencyProperty VerticalAlignmentProperty { get ; } = CreateVerticalAlignmentProperty();
 
 		public VerticalAlignment VerticalAlignment
 		{
-			get { return (VerticalAlignment)this.GetValue(VerticalAlignmentProperty); }
-			set { this.SetValue(VerticalAlignmentProperty, value); }
+			get => GetVerticalAlignmentValue();
+			set => SetVerticalAlignmentValue(value);
 		}
 		#endregion
 
 		#region Width Dependency Property
-
-		public static readonly DependencyProperty WidthProperty =
-			DependencyProperty.Register(
-				"Width",
-				typeof(double),
-				typeof(FrameworkElement),
-				new FrameworkPropertyMetadata(
-					defaultValue: double.NaN,
-					options: FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
+		[GeneratedDependencyProperty(
+			DefaultValue = double.NaN,
+			Options = FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
 #if DEBUG
-					,
-					propertyChangedCallback: OnGenericPropertyUpdated
+			, ChangedCallbackName = nameof(OnGenericPropertyUpdated)
 #endif
-				)
-			);
+		)]
+		public static DependencyProperty WidthProperty { get ; } = CreateWidthProperty();
 
 		public double Width
 		{
-			get { return (double)this.GetValue(WidthProperty); }
-			set { this.SetValue(WidthProperty, value); }
+			get => GetWidthValue();
+			set => SetWidthValue(value);
 		}
 		#endregion
 
 		#region Height Dependency Property
-
-		public static readonly DependencyProperty HeightProperty =
-			DependencyProperty.Register(
-				"Height",
-				typeof(double),
-				typeof(FrameworkElement),
-				new FrameworkPropertyMetadata(
-					defaultValue: double.NaN,
-					options: FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
+		[GeneratedDependencyProperty(
+			DefaultValue = double.NaN,
+			Options = FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
 #if DEBUG
-					,
-					propertyChangedCallback: OnGenericPropertyUpdated
+			, ChangedCallbackName = nameof(OnGenericPropertyUpdated)
 #endif
-				)
-			);
+		)]
+		public static DependencyProperty HeightProperty { get ; } = CreateHeightProperty();
 
 		public double Height
 		{
-			get { return (double)this.GetValue(HeightProperty); }
-			set { this.SetValue(HeightProperty, value); }
+			get => GetHeightValue();
+			set => SetHeightValue(value);
 		}
 		#endregion
 
 		#region MinWidth Dependency Property
-
-		public static readonly DependencyProperty MinWidthProperty =
-			DependencyProperty.Register(
-				"MinWidth",
-				typeof(double),
-				typeof(FrameworkElement),
-				new FrameworkPropertyMetadata(
-					defaultValue: 0.0d,
-					options: FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
+		[GeneratedDependencyProperty(
+			DefaultValue = 0.0d,
+			Options = FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
 #if DEBUG
-					,
-					propertyChangedCallback: OnGenericPropertyUpdated
+			, ChangedCallbackName = nameof(OnGenericPropertyUpdated)
 #endif
-				)
-			);
+		)]
+		public static DependencyProperty MinWidthProperty { get ; } = CreateMinWidthProperty();
 
 		public double MinWidth
 		{
-			get { return (double)this.GetValue(MinWidthProperty); }
-			set { this.SetValue(MinWidthProperty, value); }
+			get => GetMinWidthValue();
+			set => SetMinWidthValue(value);
 		}
 		#endregion
 
 		#region MinHeight Dependency Property
 
-		public static readonly DependencyProperty MinHeightProperty =
-			DependencyProperty.Register(
-				"MinHeight",
-				typeof(double),
-				typeof(FrameworkElement),
-				new FrameworkPropertyMetadata(
-					defaultValue: 0.0d,
-					options: FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
+		[GeneratedDependencyProperty(
+			DefaultValue = 0.0d,
+			Options = FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
 #if DEBUG
-					,
-					propertyChangedCallback: OnGenericPropertyUpdated
+			, ChangedCallbackName = nameof(OnGenericPropertyUpdated)
 #endif
-					)
-			);
+		)]
+		public static DependencyProperty MinHeightProperty { get ; } = CreateMinHeightProperty();
 
 		public double MinHeight
 		{
-			get { return (double)this.GetValue(MinHeightProperty); }
-			set { this.SetValue(MinHeightProperty, value); }
+			get => GetMinHeightValue();
+			set => SetMinHeightValue(value);
 		}
 		#endregion
 
 		#region MaxWidth Dependency Property
-
-		public static readonly DependencyProperty MaxWidthProperty =
-			DependencyProperty.Register(
-				"MaxWidth",
-				typeof(double),
-				typeof(FrameworkElement),
-				new FrameworkPropertyMetadata(
-					defaultValue: double.PositiveInfinity,
-					options: FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
+		[GeneratedDependencyProperty(
+			DefaultValue = double.PositiveInfinity,
+			Options = FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
 #if DEBUG
-					,
-					propertyChangedCallback: OnGenericPropertyUpdated
+			, ChangedCallbackName = nameof(OnGenericPropertyUpdated)
 #endif
-					)
-			);
+		)]
+		public static DependencyProperty MaxWidthProperty { get ; } = CreateMaxWidthProperty();
 
 		public double MaxWidth
 		{
-			get { return (double)this.GetValue(MaxWidthProperty); }
-			set { this.SetValue(MaxWidthProperty, value); }
+			get => GetMaxWidthValue();
+			set => SetMaxWidthValue(value);
 		}
 		#endregion
 
 		#region MaxHeight Dependency Property
 
-		public static readonly DependencyProperty MaxHeightProperty =
-			DependencyProperty.Register(
-				"MaxHeight",
-				typeof(double),
-				typeof(FrameworkElement),
-				new FrameworkPropertyMetadata(
-					defaultValue: double.PositiveInfinity,
-					options: FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
+		[GeneratedDependencyProperty(
+			DefaultValue = double.PositiveInfinity,
+			Options = FrameworkPropertyMetadataOptions.AutoConvert | FrameworkPropertyMetadataOptions.AffectsMeasure
 #if DEBUG
-					,
-					propertyChangedCallback: OnGenericPropertyUpdated
+			, ChangedCallbackName = nameof(OnGenericPropertyUpdated)
 #endif
-					)
-			);
+		)]
+		public static DependencyProperty MaxHeightProperty { get ; } = CreateMaxHeightProperty();
 
 		public double MaxHeight
 		{
-			get { return (double)this.GetValue(MaxHeightProperty); }
-			set { this.SetValue(MaxHeightProperty, value); }
+			get => GetMaxHeightValue();
+			set => SetMaxHeightValue(value);
 		}
 		#endregion
 
-		private static void OnGenericPropertyUpdated(object dependencyObject, DependencyPropertyChangedEventArgs args)
+		private void OnGenericPropertyUpdated(DependencyPropertyChangedEventArgs args)
 		{
 			if (FeatureConfiguration.UIElement.AssignDOMXamlProperties)
 			{
-				((FrameworkElement)dependencyObject).UpdateDOMProperties();
+				UpdateDOMProperties();
 			}
 		}
 
@@ -564,6 +390,11 @@ namespace Windows.UI.Xaml
 				UpdateDOMXamlProperty(nameof(MaxWidth), MaxWidth);
 				UpdateDOMXamlProperty(nameof(MaxHeight), MaxHeight);
 				UpdateDOMXamlProperty(nameof(IsEnabled), IsEnabled);
+
+				if (this.TryGetPadding(out var padding))
+				{
+					UpdateDOMXamlProperty("Padding", padding);
+				}
 
 				base.UpdateDOMProperties();
 			}

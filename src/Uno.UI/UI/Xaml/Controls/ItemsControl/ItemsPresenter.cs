@@ -35,7 +35,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
-		protected override void OnLoaded()
+		private protected override void OnLoaded()
 		{
 			base.OnLoaded();
 
@@ -68,7 +68,7 @@ namespace Windows.UI.Xaml.Controls
 				"Padding",
 				typeof(Thickness),
 				typeof(ItemsPresenter),
-				new PropertyMetadata(
+				new FrameworkPropertyMetadata(
 					(Thickness)Thickness.Empty,
 					(s, e) => ((ItemsPresenter)s)?.OnPaddingChanged((Thickness)e.OldValue, (Thickness)e.NewValue)
 				)
@@ -128,8 +128,8 @@ namespace Windows.UI.Xaml.Controls
 				this.AddSubview(_itemsPanel);
 #elif XAMARIN_ANDROID
 			this.AddView(_itemsPanel);
-#elif __WASM__
-			AddChild(_itemsPanel);
+#elif UNO_REFERENCE_API || NET461
+				AddChild(_itemsPanel);
 #endif
 
 				PropagatePadding();
@@ -140,14 +140,14 @@ namespace Windows.UI.Xaml.Controls
 
 		private void RemoveChildViews()
 		{
-#if XAMARIN_IOS
+#if XAMARIN_IOS || __MACOS__
 			foreach (var subview in this.Subviews)
 			{
 				subview.RemoveFromSuperview();
 			}
 #elif XAMARIN_ANDROID
 			this.RemoveAllViews();
-#elif __WASM__
+#elif UNO_REFERENCE_API
 			ClearChildren();
 #endif
 		}
@@ -212,5 +212,11 @@ namespace Windows.UI.Xaml.Controls
 
 			return SnapPointsProvider.GetRegularSnapPoints(orientation, alignment, out offset);
 		}
+
+		internal override bool CanHaveChildren() => true;
+		
+		internal static double OffsetToIndex(double offset) => Math.Max(0, offset - 2);
+
+		internal static double IndexToOffset(int index) => index >= 0 ? index + 2 : 0;
 	}
 }

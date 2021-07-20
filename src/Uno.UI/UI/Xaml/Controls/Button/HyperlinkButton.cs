@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Windows.Foundation;
 using Windows.System;
 using Windows.UI.Xaml.Automation.Peers;
 using Windows.UI.Xaml.Controls.Primitives;
-using Windows.Foundation;
 using Windows.UI.Xaml.Media;
 
 namespace Windows.UI.Xaml.Controls
@@ -16,8 +16,10 @@ namespace Windows.UI.Xaml.Controls
 			InitializeVisualStates();
 
 			Click += (s, e) => TryNavigate();
+
+			DefaultStyleKey = typeof(HyperlinkButton);
 		}
-		
+
 		protected override void OnApplyTemplate()
 		{
 			base.OnApplyTemplate();
@@ -31,7 +33,7 @@ namespace Windows.UI.Xaml.Controls
 				contentPresenter.Measure(new Size(0, 0));
 				if (VisualTreeHelper.GetChildrenCount(contentPresenter) == 1 && VisualTreeHelper.GetChild(contentPresenter, 0) is TextBlock textBlock)
 				{
-					textBlock.TextDecorations = Text.TextDecorations.Underline;
+					textBlock.TextDecorations = Windows.UI.Text.TextDecorations.Underline;
 				}
 			}
 		}

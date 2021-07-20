@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using Windows.Foundation;
 using Windows.UI.Xaml;
 using static System.Double;
-using static System.Math;
 
 namespace Uno.UI
 {
@@ -213,6 +212,21 @@ namespace Uno.UI
 			);
 		}
 
+		/// <summary>
+		/// a.k.a. Scale
+		/// </summary>
+		[Pure]
+		internal static Size Multiply(this Size left, double right)
+		{
+			return new Size(left.Width * right, left.Height * right);
+		}
+
+		[Pure]
+		internal static Size Divide(this Size left, double right)
+		{
+			return new Size(left.Width / right, left.Height / right);
+		}
+
 		[Pure]
 		internal static Rect InflateBy(this Rect left, Thickness right)
 		{
@@ -245,6 +259,49 @@ namespace Uno.UI
 				value.Height.NumberOrDefault(defaultValue.Height)
 			);
 		}
+
+		[Pure]
+		internal static double FiniteOrDefault(this double value, double defaultValue)
+		{
+#if XAMARIN
+			return IsFinite(value)
+				? value
+				: defaultValue;
+#else
+			return IsInfinity(value) || IsNaN(value)
+				? defaultValue
+				: value;
+#endif
+		}
+
+		[Pure]
+		internal static Point FiniteOrDefault(this Point value, Point defaultValue)
+		{
+			return new Point(
+				value.X.FiniteOrDefault(defaultValue.X),
+				value.Y.FiniteOrDefault(defaultValue.Y));
+		}
+
+		[Pure]
+		internal static Size FiniteOrDefault(this Size value, Size defaultValue)
+		{
+			return new Size(
+				value.Width.FiniteOrDefault(defaultValue.Width),
+				value.Height.FiniteOrDefault(defaultValue.Height)
+			);
+		}
+
+		[Pure]
+		internal static Rect FiniteOrDefault(this Rect value, Rect defaultValue)
+		{
+			return new Rect(
+				value.X.FiniteOrDefault(defaultValue.X),
+				value.Y.FiniteOrDefault(defaultValue.Y),
+				value.Width.FiniteOrDefault(defaultValue.Width),
+				value.Height.FiniteOrDefault(defaultValue.Height));
+		}
+
+
 
 		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -430,19 +487,20 @@ namespace Uno.UI
 #endif
 
 		[Pure]
-		internal static Rect GetBoundsRectRelativeTo(this UIElement element, UIElement relativeTo)
+		internal static Rect GetBoundsRectRelativeTo(this FrameworkElement element, FrameworkElement relativeTo)
 		{
 			var elementToTarget = element.TransformToVisual(relativeTo);
-			var elementRect = new Rect(default, element.RenderSize);
+			// Use ActualWidth/ActualHeight which may differ from RenderSize in some cases (notably, TextBlock)
+			var elementRect = new Rect(0, 0, element.ActualWidth, element.ActualHeight);
 			var elementRectRelToTarget = elementToTarget.TransformBounds(elementRect);
 
 			return elementRectRelToTarget;
 		}
 
 		[Pure]
-		internal static Rect GetAbsoluteBoundsRect(this UIElement element)
+		internal static Rect GetAbsoluteBoundsRect(this FrameworkElement element)
 		{
-			var root = Window.Current.Content;
+			var root = Window.Current.Content as FrameworkElement;
 			return GetBoundsRectRelativeTo(element, root);
 		}
 	}

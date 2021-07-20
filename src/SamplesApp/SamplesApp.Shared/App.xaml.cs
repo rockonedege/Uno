@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -23,6 +23,18 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Windows.Foundation.Metadata;
+using Uno.Logging;
+using Windows.Graphics.Display;
+using System.Globalization;
+using Windows.UI.ViewManagement;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging.Console;
+#if HAS_UNO_WINUI
+using LaunchActivatedEventArgs = Microsoft.UI.Xaml.LaunchActivatedEventArgs;
+#else
+using LaunchActivatedEventArgs = Windows.ApplicationModel.Activation.LaunchActivatedEventArgs;
+#endif
 
 namespace SamplesApp
 {
@@ -31,19 +43,27 @@ namespace SamplesApp
 	/// </summary>
 	sealed partial class App : Application
 	{
+		static App()
+		{
+			ConfigureFilters();
+		}
+
 		/// <summary>
 		/// Initializes the singleton application object.  This is the first line of authored code
 		/// executed, and as such is the logical equivalent of main() or WinMain().
 		/// </summary>
 		public App()
 		{
-			ConfigureFilters(LogExtensionPoint.AmbientLoggerFactory);
+			// Fix language for UI tests
+			Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+			Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
+
+			ConfigureFeatureFlags();
 
 			AssertIssue1790();
 
 			this.InitializeComponent();
 			this.Suspending += OnSuspending;
-
 		}
 
 		/// <summary>
@@ -51,7 +71,8 @@ namespace SamplesApp
 		/// </summary>
 		/// <seealso cref="https://github.com/unoplatform/uno/issues/1741"/>
 		public void AssertIssue1790()
-		{			
+		{
+#if !__SKIA__ // SKIA TODO
 			void AssertIsUsable(Windows.Storage.ApplicationDataContainer container)
 			{
 				const string issue1790 = nameof(issue1790);
@@ -64,6 +85,7 @@ namespace SamplesApp
 
 			AssertIsUsable(Windows.Storage.ApplicationData.Current.LocalSettings);
 			AssertIsUsable(Windows.Storage.ApplicationData.Current.RoamingSettings);
+#endif
 		}
 
 		/// <summary>
@@ -77,13 +99,21 @@ namespace SamplesApp
 #endif
 			override void OnLaunched(LaunchActivatedEventArgs e)
 		{
-#if __IOS__
+#if __IOS__ && !NET6_0
 			// requires Xamarin Test Cloud Agent
 			Xamarin.Calabash.Start();
+
+			LaunchiOSWatchDog();
 #endif
+
 			var sw = Stopwatch.StartNew();
 			var n = Windows.UI.Xaml.Window.Current.Dispatcher.RunIdleAsync(
-				_ => Console.WriteLine("Done loading " + sw.Elapsed));
+				_ =>
+				{
+					Console.WriteLine("Done loading " + sw.Elapsed);
+				});
+
+			ProcessEventArgs(e);
 
 #if DEBUG
 			if (System.Diagnostics.Debugger.IsAttached)
@@ -91,6 +121,111 @@ namespace SamplesApp
 				// this.DebugSettings.EnableFrameRateCounter = true;
 			}
 #endif
+			InitializeFrame(e.Arguments);
+			Windows.UI.Xaml.Window.Current.Activate();
+
+			ApplicationView.GetForCurrentView().Title = "Uno Samples";
+
+			HandleLaunchArguments(e);
+		}
+
+		private static void ProcessEventArgs(LaunchActivatedEventArgs e)
+		{
+#if __SKIA__
+			var runAutoScreenshotsParam =
+			e.Arguments.Split(';').FirstOrDefault(a => a.StartsWith("--auto-screenshots"));
+
+			var screenshotsPath = runAutoScreenshotsParam?.Split('=').LastOrDefault();
+#endif
+
+			var sw = Stopwatch.StartNew();
+			var n = Windows.UI.Xaml.Window.Current.Dispatcher.RunIdleAsync(
+				_ =>
+				{
+#if __SKIA__
+					if (!string.IsNullOrEmpty(screenshotsPath))
+					{
+						var n = Windows.UI.Xaml.Window.Current.Dispatcher.RunAsync(
+							CoreDispatcherPriority.Normal,
+							async () =>
+							{
+								await SampleControl.Presentation.SampleChooserViewModel.Instance.RecordAllTests(CancellationToken.None, screenshotsPath, () => System.Environment.Exit(0));
+							}
+						);
+					}
+#endif
+				});
+		}
+
+#if __IOS__
+		/// <summary>
+		/// Launches a watchdog that will terminate the app if the dispatcher does not process
+		/// messages within a specific time.
+		///
+		/// Restarting the app is required in some cases where either the test engine, or Xamarin.UITest stall
+		/// while processing the events of the app.
+		///
+		/// See https://github.com/unoplatform/uno/issues/3363 for details
+		/// </summary>
+		private void LaunchiOSWatchDog()
+		{
+			if (!Debugger.IsAttached)
+			{
+				Console.WriteLine("Starting dispatcher WatchDog...");
+
+				var dispatcher = CoreWindow.GetForCurrentThread().Dispatcher;
+
+				Task.Run(async () =>
+				{
+
+					while (true)
+					{
+						var delayTask = Task.Delay(TimeSpan.FromSeconds(60));
+						var messageTask = dispatcher.RunAsync(CoreDispatcherPriority.High, () => { }).AsTask();
+
+						if (await Task.WhenAny(delayTask, messageTask) == delayTask)
+						{
+							ThreadPool.QueueUserWorkItem(
+								_ => {
+								Console.WriteLine("WatchDog detecting a stall in the dispatcher, terminating the app");
+								throw new Exception($"Watchdog failed");
+							});
+						}
+
+						await Task.Delay(TimeSpan.FromSeconds(5));
+					}
+				});
+			}
+		}
+#endif
+
+		protected
+#if HAS_UNO
+			internal
+#endif
+			override async void OnActivated(IActivatedEventArgs e)
+		{
+			base.OnActivated(e);
+
+			InitializeFrame();
+			Windows.UI.Xaml.Window.Current.Activate();
+
+			if (e.Kind == ActivationKind.Protocol)
+			{
+				var protocolActivatedEventArgs = (ProtocolActivatedEventArgs)e;
+				var dlg = new MessageDialog(
+					$"PreviousState - {e.PreviousExecutionState}, " +
+					$"Uri - {protocolActivatedEventArgs.Uri}",
+					"Application activated via protocol");
+				if (ApiInformation.IsMethodPresent("Windows.UI.Popups.MessageDialog", nameof(MessageDialog.ShowAsync)))
+				{
+					await dlg.ShowAsync();
+				}
+			}
+		}
+
+		private void InitializeFrame(string arguments = null)
+		{
 			Frame rootFrame = Windows.UI.Xaml.Window.Current.Content as Frame;
 
 			// Do not repeat app initialization when the Window already has content,
@@ -102,38 +237,76 @@ namespace SamplesApp
 
 				rootFrame.NavigationFailed += OnNavigationFailed;
 
-				if (e.PreviousExecutionState == ApplicationExecutionState.Terminated)
-				{
-					//TODO: Load state from previously suspended application
-				}
-
 				// Place the frame in the current Window
 				Windows.UI.Xaml.Window.Current.Content = rootFrame;
+				Console.WriteLine($"RootFrame: {rootFrame}");
 			}
 
-			if (e.PrelaunchActivated == false)
+			if (rootFrame.Content == null)
 			{
-				if (rootFrame.Content == null)
+				// When the navigation stack isn't restored navigate to the first page,
+				// configuring the new page by passing required information as a navigation
+				// parameter
+				var startingPageType = typeof(MainPage);
+				if (arguments != null)
 				{
-					// When the navigation stack isn't restored navigate to the first page,
-					// configuring the new page by passing required information as a navigation
-					// parameter
-					rootFrame.Navigate(typeof(MainPage), e.Arguments);
+					rootFrame.Navigate(startingPageType, arguments);
 				}
-				// Ensure the current window is active
-				Windows.UI.Xaml.Window.Current.Activate();
+				else
+				{
+					rootFrame.Navigate(startingPageType);
+				}
 			}
-
-			DisplayLaunchArguments(e);
 		}
 
-		private async void DisplayLaunchArguments(LaunchActivatedEventArgs launchActivatedEventArgs)
+		private async void HandleLaunchArguments(LaunchActivatedEventArgs launchActivatedEventArgs)
 		{
+			if (await TryNavigateToLaunchSampleAsync(launchActivatedEventArgs))
+			{
+				return;
+			}
+
 			if (!string.IsNullOrEmpty(launchActivatedEventArgs.Arguments))
 			{
 				var dlg = new MessageDialog(launchActivatedEventArgs.Arguments, "Launch arguments");
-				await dlg.ShowAsync();
+				if (ApiInformation.IsMethodPresent("Windows.UI.Popups.MessageDialog", nameof(MessageDialog.ShowAsync)))
+				{
+					await dlg.ShowAsync();
+				}
 			}
+		}
+
+		private async Task<bool> TryNavigateToLaunchSampleAsync(LaunchActivatedEventArgs launchActivatedEventArgs)
+		{
+			const string samplePrefix = "sample=";
+			try
+			{
+				if (launchActivatedEventArgs.Arguments == null)
+				{
+					return false;
+				}
+
+				var args = Uri.UnescapeDataString(launchActivatedEventArgs.Arguments);
+
+				if (string.IsNullOrEmpty(args) || !args.StartsWith(samplePrefix))
+				{
+					return false;
+				}
+
+				args = args.Substring(samplePrefix.Length);
+
+				var pathParts = args.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+				var category = pathParts[0];
+				var sampleName = pathParts[1];
+
+				await SampleControl.Presentation.SampleChooserViewModel.Instance.SetSelectedSample(CancellationToken.None, category, sampleName);
+				return true;
+			}
+			catch (Exception ex)
+			{
+				this.Log().Error($"Could not navigate to initial sample - {ex}");
+			}
+			return false;
 		}
 
 		/// <summary>
@@ -156,65 +329,85 @@ namespace SamplesApp
 		private void OnSuspending(object sender, SuspendingEventArgs e)
 		{
 			var deferral = e.SuspendingOperation.GetDeferral();
-			//TODO: Save application state and stop any background activity
+
+			Console.WriteLine($"OnSuspending (Deadline:{e.SuspendingOperation.Deadline})");
+
 			deferral.Complete();
 		}
 
-		static void ConfigureFilters(ILoggerFactory factory)
+		public static void ConfigureFilters()
 		{
-			factory
-				.WithFilter(new FilterLoggerSettings
-					{
-						{ "Uno", LogLevel.Warning },
-						{ "Windows", LogLevel.Warning },
-
-						// RemoteControl and HotReload related
-						{ "Uno.UI.RemoteControl", LogLevel.Information },
-
-						// { "Uno.Foundation.WebAssemblyRuntime", LogLevel.Debug },
-						// { "Windows.UI.Xaml.Controls.PopupPanel", LogLevel.Debug },
-
-						// Generic Xaml events
-						// { "Windows.UI.Xaml", LogLevel.Debug },
-						// { "Windows.UI.Xaml.Shapes", LogLevel.Debug },
-						// { "Windows.UI.Xaml.VisualStateGroup", LogLevel.Debug },
-						// { "Windows.UI.Xaml.StateTriggerBase", LogLevel.Debug },
-						// { "Windows.UI.Xaml.UIElement", LogLevel.Debug },
-						// { "Windows.UI.Xaml.FrameworkElement", LogLevel.Trace },
-						// { "Windows.UI.Xaml.Controls.TextBlock", LogLevel.Debug },
-
-						// Layouter specific messages
-						// { "Windows.UI.Xaml.Controls", LogLevel.Debug },
-						// { "Windows.UI.Xaml.Controls.Layouter", LogLevel.Debug },
-						// { "Windows.UI.Xaml.Controls.Panel", LogLevel.Debug },
-						// { "Windows.Storage", LogLevel.Debug },
-
-						// Binding related messages
-						// { "Windows.UI.Xaml.Data", LogLevel.Debug },
-						// { "Windows.UI.Xaml.Data", LogLevel.Debug },
-
-						//  Binder memory references tracking
-						// { "ReferenceHolder", LogLevel.Debug },
-
-						// ListView-related messages
-						// { "Windows.UI.Xaml.Controls.ListViewBase", LogLevel.Debug },
-						// { "Windows.UI.Xaml.Controls.ListView", LogLevel.Debug },
-						// { "Windows.UI.Xaml.Controls.GridView", LogLevel.Debug },
-						// { "Windows.UI.Xaml.Controls.VirtualizingPanelLayout", LogLevel.Debug },
-						// { "Windows.UI.Xaml.Controls.NativeListViewBase", LogLevel.Debug },
-						// { "Windows.UI.Xaml.Controls.ListViewBaseSource", LogLevel.Debug }, //iOS
-						// { "Windows.UI.Xaml.Controls.ListViewBaseInternalContainer", LogLevel.Debug }, //iOS
-						// { "Windows.UI.Xaml.Controls.NativeListViewBaseAdapter", LogLevel.Debug }, //Android
-						// { "Windows.UI.Xaml.Controls.BufferViewCache", LogLevel.Debug }, //Android
-						// { "Windows.UI.Xaml.Controls.VirtualizingPanelGenerator", LogLevel.Debug }, //WASM
-					}
-				)
-#if DEBUG
-				//.AddConsole(LogLevel.Trace);
-				.AddConsole(LogLevel.Debug);
-
+#if HAS_UNO
+			System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (s, e) => typeof(App).Log().Error("UnobservedTaskException", e.Exception);
+			AppDomain.CurrentDomain.UnhandledException += (s, e) => typeof(App).Log().Error("UnhandledException", e.ExceptionObject as Exception);
+#endif
+			var factory = LoggerFactory.Create(builder =>
+			{
+#if __WASM__
+				builder.AddProvider(new Uno.Extensions.Logging.WebAssembly.WebAssemblyConsoleLoggerProvider());
 #else
-				.AddConsole(LogLevel.Warning);
+				builder.AddConsole();
+#endif
+
+				builder.AddFilter("Uno", LogLevel.Warning);
+				builder.AddFilter("Windows", LogLevel.Warning);
+				builder.AddFilter("Microsoft", LogLevel.Warning);
+
+				// RemoteControl and HotReload related
+				builder.AddFilter("Uno.UI.RemoteControl", LogLevel.Information);
+
+				// builder.AddFilter("Uno.Foundation.WebAssemblyRuntime", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.Controls.PopupPanel", LogLevel.Debug );
+
+				// Generic Xaml events
+				// builder.AddFilter("Windows.UI.Xaml", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.Media", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.Shapes", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.VisualStateGroup", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.StateTriggerBase", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.UIElement", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.FrameworkElement", LogLevel.Trace );
+				// builder.AddFilter("Windows.UI.Xaml.Controls.TextBlock", LogLevel.Debug );
+
+				// Layouter specific messages
+				// builder.AddFilter("Windows.UI.Xaml.Controls", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.Controls.Layouter", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.Controls.Panel", LogLevel.Debug );
+				// builder.AddFilter("Windows.Storage", LogLevel.Debug );
+
+				// Binding related messages
+				// builder.AddFilter("Windows.UI.Xaml.Data", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.Data", LogLevel.Debug );
+
+				// Binder memory references tracking
+				// builder.AddFilter("Uno.UI.DataBinding.BinderReferenceHolder", LogLevel.Debug );
+
+				// builder.AddFilter(ListView-related messages
+				// builder.AddFilter("Windows.UI.Xaml.Controls.ListViewBase", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.Controls.ListView", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.Controls.GridView", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.Controls.VirtualizingPanelLayout", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.Controls.NativeListViewBase", LogLevel.Debug );
+				// builder.AddFilter("Windows.UI.Xaml.Controls.ListViewBaseSource", LogLevel.Debug ); //iOS
+				// builder.AddFilter("Windows.UI.Xaml.Controls.ListViewBaseInternalContainer", LogLevel.Debug ); //iOS
+				// builder.AddFilter("Windows.UI.Xaml.Controls.NativeListViewBaseAdapter", LogLevel.Debug ); //Android
+				// builder.AddFilter("Windows.UI.Xaml.Controls.BufferViewCache", LogLevel.Debug ); //Android
+				// builder.AddFilter("Windows.UI.Xaml.Controls.VirtualizingPanelGenerator", LogLevel.Debug ); //WASM
+
+
+			});
+
+			Uno.Extensions.LogExtensionPoint.AmbientLoggerFactory = factory;
+		}
+
+		static void ConfigureFeatureFlags()
+		{
+#if !NETFX_CORE
+			Uno.UI.FeatureConfiguration.Style.UseUWPDefaultStylesOverride[typeof(CommandBar)] = false;
+#endif
+
+#if __IOS__
+			Uno.UI.FeatureConfiguration.CommandBar.AllowNativePresenterContent = true;
 #endif
 		}
 
@@ -225,6 +418,9 @@ namespace SamplesApp
 
 		public static string GetAllTests()
 			=> SampleControl.Presentation.SampleChooserViewModel.Instance.GetAllSamplesNames();
+
+		public static string GetDisplayScreenScaling(string displayId)
+			=> (DisplayInformation.GetForCurrentView().LogicalDpi * 100f / 96f).ToString(CultureInfo.InvariantCulture);
 
 		public static string RunTest(string metadataName)
 		{
@@ -302,6 +498,9 @@ namespace SamplesApp
 
 		[Foundation.Export("isTestDone:")] // notice the colon at the end of the method name
 		public Foundation.NSString IsTestDoneBackdoor(Foundation.NSString value) => new Foundation.NSString(IsTestDone(value).ToString());
+
+		[Foundation.Export("getDisplayScreenScaling:")] // notice the colon at the end of the method name
+		public Foundation.NSString GetDisplayScreenScalingBackdoor(Foundation.NSString value) => new Foundation.NSString(GetDisplayScreenScaling(value).ToString());
 #endif
 
 		public static bool IsTestDone(string testId) => int.TryParse(testId, out var id) ? _doneTests.Contains(id) : false;

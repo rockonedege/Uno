@@ -9,13 +9,9 @@ using Windows.UI.Xaml.Media;
 using CoreGraphics;
 #if __IOS__
 using UIKit;
-using _View = UIKit.UIView;
-using _Color = UIKit.UIColor;
 using _Image = UIKit.UIImage;
 #elif __MACOS__
 using AppKit;
-using _View = AppKit.NSView;
-using _Color = AppKit.NSColor;
 using _Image = AppKit.NSImage;
 #endif
 
@@ -45,16 +41,17 @@ namespace Windows.UI.Xaml.Controls
 		{
 			if (IsLoaded)
 			{
-				backgroundImage = backgroundImage ?? (Background as ImageBrush)?.ImageSource?.ImageData;
+				if (backgroundImage == null)
+				{
+					(Background as ImageBrush)?.ImageSource?.TryOpenSync(out backgroundImage);
+				}
 
-				BoundsPath = _borderRenderer.UpdateLayer(
-					this,
-					Background,
-					BorderThickness,
-					BorderBrush,
-					CornerRadius,
-					backgroundImage
-				);
+				if (_borderRenderer.UpdateLayer(this, Background, BorderThickness, BorderBrush, CornerRadius, backgroundImage)
+					is CGPath updated) // UpdateLayer may return null if there is no update
+				{
+					BoundsPath = updated;
+					BoundsPathUpdated?.Invoke(this, default);
+				}
 			}
 
 			this.SetNeedsDisplay();
@@ -96,7 +93,7 @@ namespace Windows.UI.Xaml.Controls
 			UpdateBorderLayer();
 		}
 
-        partial void OnChildChangedPartial(_View previousValue, _View newValue)
+        partial void OnChildChangedPartial(UIElement previousValue, UIElement newValue)
 		{
 			previousValue?.RemoveFromSuperview();
 
@@ -115,6 +112,7 @@ namespace Windows.UI.Xaml.Controls
         bool ICustomClippingElement.AllowClippingToLayoutSlot => CornerRadius == CornerRadius.None && (!(Child is UIElement ue) || ue.RenderTransform == null);
         bool ICustomClippingElement.ForceClippingToLayoutSlot => false;
 
+		internal event EventHandler BoundsPathUpdated;
 		internal CGPath BoundsPath { get; private set; }
 	}
 }

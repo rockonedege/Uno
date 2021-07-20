@@ -13,7 +13,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace UITests.Shared.Windows_UI_Xaml_Controls.ImageTests
 {
-	[SampleControlInfo(category: "Image", controlName: nameof(ImageSourceWriteableBitmapInvalidate))]
+	[Sample("WriteableBitmap")]
 	public sealed partial class ImageSourceWriteableBitmapInvalidate : Page
 	{
 		private WriteableBitmap _bitmap;
@@ -40,14 +40,19 @@ namespace UITests.Shared.Windows_UI_Xaml_Controls.ImageTests
 				data.Flush();
 			}
 #else
-			if (_bitmap.PixelBuffer is InMemoryBuffer buffer
-				&& buffer.GetType().GetProperty("Data", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(buffer) is byte[] data)
+			if (_bitmap.PixelBuffer is Windows.Storage.Streams.Buffer buffer
+				&& buffer.GetType().GetField("_data", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(buffer) is Memory<byte> data)
 			{
+				var span = data.Span;
 				// Half of the image in green, alpha 100% (bgra buffer)
 				for (var i = 1; i < data.Length / 2; i += 2)
 				{
-					data[i] = byte.MaxValue;
+					span[i] = byte.MaxValue;
 				}
+			}
+			else
+			{
+				throw new InvalidOperationException("Could not access _data field in Buffer type.");
 			}
 #endif
 

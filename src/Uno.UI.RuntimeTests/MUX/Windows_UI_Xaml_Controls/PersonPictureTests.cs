@@ -33,7 +33,7 @@ namespace Windows.UI.Xaml.Tests.MUXControls.ApiTests
 		[TestMethod]
 		public async Task VerifyDefaultsAndBasicSetting()
 		{
-			await RunOnUIThread.Execute(() =>
+			await RunOnUIThread.ExecuteAsync(() =>
 			{
 				PersonPicture personPicture = new PersonPicture();
 				Verify.IsNotNull(personPicture);
@@ -79,52 +79,55 @@ namespace Windows.UI.Xaml.Tests.MUXControls.ApiTests
 		[TestMethod]
 		public async Task VerifyAutomationName()
 		{
-			await RunOnUIThread.Execute(() =>
+			if (ApiInformation.IsTypePresent("Windows.UI.Xaml.Automation.Peers.PersonPictureAutomationPeer"))
 			{
-				PersonPicture personPicture = new PersonPicture();
-				Verify.IsNotNull(personPicture);
+				await RunOnUIThread.ExecuteAsync(() =>
+				{
+					PersonPicture personPicture = new PersonPicture();
+					Verify.IsNotNull(personPicture);
 
 				// Set properties and ensure that the AutomationName updates accordingly
 				personPicture.Initials = "AB";
-				String automationName = AutomationProperties.GetName(personPicture);
-				Verify.AreEqual(automationName, "AB");
+					String automationName = AutomationProperties.GetName(personPicture);
+					Verify.AreEqual(automationName, "AB");
 
-				personPicture.DisplayName = "Jane Smith";
-				automationName = AutomationProperties.GetName(personPicture);
-				Verify.AreEqual(automationName, "Jane Smith");
-
-				if (ApiInformation.IsTypePresent("Windows.ApplicationModel.Contacts.Contact"))
-				{
-					Contact contact = new Contact();
-					contact.FirstName = "John";
-					contact.LastName = "Doe";
-					personPicture.Contact = contact;
+					personPicture.DisplayName = "Jane Smith";
 					automationName = AutomationProperties.GetName(personPicture);
-					Verify.AreEqual(automationName, "John Doe");
+					Verify.AreEqual(automationName, "Jane Smith");
 
-					personPicture.IsGroup = true;
-					automationName = AutomationProperties.GetName(personPicture);
-					Verify.AreEqual(automationName, "Group");
-					personPicture.IsGroup = false;
+					if (ApiInformation.IsTypePresent("Windows.ApplicationModel.Contacts.Contact"))
+					{
+						Contact contact = new Contact();
+						contact.FirstName = "John";
+						contact.LastName = "Doe";
+						personPicture.Contact = contact;
+						automationName = AutomationProperties.GetName(personPicture);
+						Verify.AreEqual(automationName, "John Doe");
 
-					personPicture.BadgeGlyph = "\uE765";
-					automationName = AutomationProperties.GetName(personPicture);
-					Verify.AreEqual(automationName, "John Doe, icon");
+						personPicture.IsGroup = true;
+						automationName = AutomationProperties.GetName(personPicture);
+						Verify.AreEqual(automationName, "Group");
+						personPicture.IsGroup = false;
 
-					personPicture.BadgeText = "Skype";
-					automationName = AutomationProperties.GetName(personPicture);
-					Verify.AreEqual(automationName, "John Doe, Skype");
-					personPicture.BadgeText = "";
+						personPicture.BadgeGlyph = "\uE765";
+						automationName = AutomationProperties.GetName(personPicture);
+						Verify.AreEqual(automationName, "John Doe, icon");
 
-					personPicture.BadgeNumber = 5;
-					automationName = AutomationProperties.GetName(personPicture);
-					Verify.AreEqual(automationName, "John Doe, 5 items");
+						personPicture.BadgeText = "Skype";
+						automationName = AutomationProperties.GetName(personPicture);
+						Verify.AreEqual(automationName, "John Doe, Skype");
+						personPicture.BadgeText = "";
 
-					personPicture.BadgeText = "direct reports";
-					automationName = AutomationProperties.GetName(personPicture);
-					Verify.AreEqual(automationName, "John Doe, 5 direct reports");
-				}
-			});
+						personPicture.BadgeNumber = 5;
+						automationName = AutomationProperties.GetName(personPicture);
+						Verify.AreEqual(automationName, "John Doe, 5 items");
+
+						personPicture.BadgeText = "direct reports";
+						automationName = AutomationProperties.GetName(personPicture);
+						Verify.AreEqual(automationName, "John Doe, 5 direct reports");
+					}
+				});
+			}
 		}
 
 #if false // XamlControlsXamlMetaDataProvider is not supported
@@ -133,9 +136,9 @@ namespace Windows.UI.Xaml.Tests.MUXControls.ApiTests
 		[TestMethod]
 		public async Task VerifyContactPropertyMetadata()
 		{
-			await RunOnUIThread.Execute(() =>
+			await RunOnUIThread.ExecuteAsync(() =>
 			{
-				Microsoft.UI.Xaml.XamlTypeInfo.XamlControlsXamlMetaDataProvider provider = new Microsoft.UI.Xaml.XamlTypeInfo.XamlControlsXamlMetaDataProvider();
+				Windows.UI.Xaml.XamlTypeInfo.XamlControlsXamlMetaDataProvider provider = new Windows.UI.Xaml.XamlTypeInfo.XamlControlsXamlMetaDataProvider();
 				var picturePersonType = provider.GetXamlType(typeof(PersonPicture).FullName);
 				var contactMember = picturePersonType.GetMember("Contact");
 				var memberType = contactMember.Type;
@@ -149,17 +152,17 @@ namespace Windows.UI.Xaml.Tests.MUXControls.ApiTests
 		{
 			PersonPicture personPicture = null;
 
-			await RunOnUIThread.Execute(() =>
+			await RunOnUIThread.ExecuteAsync(() =>
 			{
 				personPicture = new PersonPicture();
-				Private.Infrastructure.TestServices.WindowHelper.WindowContent = personPicture;
+				global::Private.Infrastructure.TestServices.WindowHelper.WindowContent = personPicture;
 			});
 
-			await Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
+			await global::Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
 
 			var sizeChangedEvent = new TaskCompletionSource<bool>();
 
-			await RunOnUIThread.Execute(() =>
+			await RunOnUIThread.ExecuteAsync(() =>
 			{
 				personPicture.SizeChanged += (sender, args) => sizeChangedEvent.TrySetResult(true);
 				personPicture.Width = 0.4;
@@ -167,7 +170,7 @@ namespace Windows.UI.Xaml.Tests.MUXControls.ApiTests
 			});
 
 			await sizeChangedEvent.Task;
-			await Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
+			await global::Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
 		}
 
 		[TestMethod]
@@ -175,35 +178,41 @@ namespace Windows.UI.Xaml.Tests.MUXControls.ApiTests
 		{
 			PersonPicture personPicture = null;
 			TextBlock initialsTextBlock = null;
-
-			await RunOnUIThread.Execute(() =>
+#if WINDOWS_UWP
+			string symbolsFontName = "Segoe MDL2 Assets";
+#elif __ANDROID__ || __SKIA__
+			string symbolsFontName = "ms-appx:///Assets/Fonts/uno-fluentui-assets.ttf#Symbols";
+#else
+			string symbolsFontName = "Symbols";
+#endif
+			await RunOnUIThread.ExecuteAsync(() =>
 			{
 				personPicture = new PersonPicture();
-				Private.Infrastructure.TestServices.WindowHelper.WindowContent = personPicture;
+				global::Private.Infrastructure.TestServices.WindowHelper.WindowContent = personPicture;
 			});
 
-			await Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
+			await global::Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
 
-			await RunOnUIThread.Execute(() =>
+			await RunOnUIThread.ExecuteAsync(() =>
 			{
 				initialsTextBlock = (TextBlock)VisualTreeUtils.FindVisualChildByName(personPicture, "InitialsTextBlock");
 				personPicture.IsGroup = true;
 			});
 
-			await Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
+			await global::Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
 
-			await RunOnUIThread.Execute(() =>
+			await RunOnUIThread.ExecuteAsync(() =>
 			{
-				Verify.AreEqual(initialsTextBlock.FontFamily.Source, "Segoe MDL2 Assets");
+				Verify.AreEqual(initialsTextBlock.FontFamily.Source, symbolsFontName);
 				Verify.AreEqual(initialsTextBlock.Text, "\xE716");
 
 				personPicture.IsGroup = false;
 				personPicture.Initials = "JS";
 			});
 
-			await Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
+			await global::Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
 
-			await RunOnUIThread.Execute(() =>
+			await RunOnUIThread.ExecuteAsync(() =>
 			{
 #if false
 				Verify.AreEqual(initialsTextBlock.FontFamily.Source, "Segoe UI");
@@ -213,11 +222,11 @@ namespace Windows.UI.Xaml.Tests.MUXControls.ApiTests
 				personPicture.Initials = "";
 			});
 
-			await Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
+			await global::Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
 
-			await RunOnUIThread.Execute(() =>
+			await RunOnUIThread.ExecuteAsync(() =>
 			{
-				Verify.AreEqual(initialsTextBlock.FontFamily.Source, "Segoe MDL2 Assets");
+				Verify.AreEqual(initialsTextBlock.FontFamily.Source, symbolsFontName);
 				Verify.AreEqual(initialsTextBlock.Text, "\xE77B");
 
 				// Make sure that custom FontFamily takes effect after the control is created
@@ -226,9 +235,9 @@ namespace Windows.UI.Xaml.Tests.MUXControls.ApiTests
 				personPicture.Initials = "👍";
 			});
 
-			await Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
+			await global::Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
 
-			await RunOnUIThread.Execute(() =>
+			await RunOnUIThread.ExecuteAsync(() =>
 			{
 				Verify.AreEqual(initialsTextBlock.FontFamily.Source, "Segoe UI Emoji");
 				Verify.AreEqual(initialsTextBlock.Text, "👍");
@@ -236,11 +245,11 @@ namespace Windows.UI.Xaml.Tests.MUXControls.ApiTests
 				personPicture.IsGroup = true;
 			});
 
-			await Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
+			await global::Private.Infrastructure.TestServices.WindowHelper.WaitForIdle();
 
-			await RunOnUIThread.Execute(() =>
+			await RunOnUIThread.ExecuteAsync(() =>
 			{
-				Verify.AreEqual(initialsTextBlock.FontFamily.Source, "Segoe MDL2 Assets");
+				Verify.AreEqual(initialsTextBlock.FontFamily.Source, symbolsFontName);
 				Verify.AreEqual(initialsTextBlock.Text, "\xE716");
 			});
 		}

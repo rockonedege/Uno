@@ -1,28 +1,47 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
+using System.Diagnostics;
 using System.IO;
+using System.Net.Mime;
 using System.Text;
-using Uno.SourceGeneration;
+using Microsoft.CodeAnalysis;
+using Uno.Roslyn;
 using Uno.UI.SourceGenerators.Telemetry;
+
+#if NETFRAMEWORK
+using Uno.SourceGeneration;
+#endif
 
 namespace Uno.UI.SourceGenerators.XamlGenerator
 {
-	public class XamlCodeGenerator : SourceGenerator
+#if NETFRAMEWORK
+	[GenerateAfter("Uno.UI.SourceGenerators.DependencyObject." + nameof(DependencyObject.DependencyPropertyGenerator))]
+#endif
+	[Generator]
+	public class XamlCodeGenerator : ISourceGenerator
 	{
-		public override void Execute(SourceGeneratorContext context)
+		public void Initialize(GeneratorInitializationContext context)
 		{
-			var gen = new XamlCodeGeneration(
-				context.Compilation,
-				context.GetProjectInstance(),
-				context.Project
-			);
+			DependenciesInitializer.Init();
+		}
+
+		public void Execute(GeneratorExecutionContext context)
+		{
+			// No initialization required for this one
+			//if (!Process.GetCurrentProcess().ProcessName.Equals("devenv", StringComparison.OrdinalIgnoreCase))
+			//{
+			//	Debugger.Launch();
+			//}
 
 			if (PlatformHelper.IsValidPlatform(context))
 			{
+				var gen = new XamlCodeGeneration(context);
 				var genereratedTrees = gen.Generate();
 
 				foreach (var tree in genereratedTrees)
 				{
-					context.AddCompilationUnit(tree.Key, tree.Value);
+					context.AddSource(tree.Key, tree.Value);
 				}
 			}
 		}

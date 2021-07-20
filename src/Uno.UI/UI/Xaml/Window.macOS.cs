@@ -11,6 +11,8 @@ using Uno.UI.Controls;
 using System.Drawing;
 using Windows.UI.ViewManagement;
 using Uno.UI;
+using Windows.UI.Xaml.Controls;
+using Uno.UI.Xaml.Core;
 
 namespace Windows.UI.Xaml
 {
@@ -21,6 +23,8 @@ namespace Windows.UI.Xaml
 		private static Window _current;
 		private RootViewController _mainController;
 		private UIElement _content;
+		private RootVisual _rootVisual;
+		private Border _rootBorder;
 		private object _windowResizeNotificationObject;
 
 		/// <summary>
@@ -32,21 +36,21 @@ namespace Windows.UI.Xaml
 
 		public Window()
 		{
-			var style = NSWindowStyle.Closable | NSWindowStyle.Resizable | NSWindowStyle.Titled;
+			var style = NSWindowStyle.Closable | NSWindowStyle.Resizable | NSWindowStyle.Titled | NSWindowStyle.Miniaturizable;
 			var rect = new CoreGraphics.CGRect(100, 100, 1024, 768);
 			_window = new Uno.UI.Controls.Window(rect, style, NSBackingStore.Buffered, false);
 
 			_mainController = ViewControllerGenerator?.Invoke() ?? new RootViewController();
-
-			_window.TitleVisibility = NSWindowTitleVisibility.Hidden;
 
 			ObserveOrientationAndSize();
 
 			Dispatcher = CoreDispatcher.Main;
 			CoreWindow = new CoreWindow(_window);
 
+			_window.CoreWindowEvents = CoreWindow;
+
 			InitializeCommon();
-		}		
+		}
 
 		private void ObserveOrientationAndSize()
 		{
@@ -71,16 +75,40 @@ namespace Windows.UI.Xaml
 
 		private void InternalSetContent(UIElement value)
 		{
-			_content?.RemoveFromSuperview();
+			if (_rootVisual == null)
+			{
+				_rootBorder = new Border();
+				var coreServices = Uno.UI.Xaml.Core.CoreServices.Instance;
+				coreServices.PutVisualRoot(_rootBorder);
+				_rootVisual = coreServices.MainRootVisual;
 
-			_content = value;
-			_mainController.View = value;
-			_window.BackgroundColor = Colors.White;
-			value.Frame = _window.Frame;
-			value.AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable;
+				if (_rootVisual == null)
+				{
+					throw new InvalidOperationException("The root visual could not be created.");
+				}
+
+				_mainController.View = _rootVisual;
+				_rootVisual.Frame = _window.Frame;
+				_rootVisual.AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable;
+			}
+
+			_rootBorder.Child?.RemoveFromSuperview();
+			_rootBorder.Child = _content = value;
+
+			// This is required to get the mouse move while not pressed!
+			var options = NSTrackingAreaOptions.MouseEnteredAndExited
+				| NSTrackingAreaOptions.MouseMoved
+				| NSTrackingAreaOptions.ActiveInKeyWindow
+				| NSTrackingAreaOptions.EnabledDuringMouseDrag // We want enter/leave events even if the button is pressed
+				| NSTrackingAreaOptions.InVisibleRect; // Automagicaly syncs the bounds rect
+			var trackingArea = new NSTrackingArea(Bounds, options, _rootVisual, null);
+
+			_rootVisual.AddTrackingArea(trackingArea);
 		}
 
 		private UIElement InternalGetContent() => _content;
+
+		private UIElement InternalGetRootElement() => _rootVisual;
 
 		private static Window InternalGetCurrentWindow()
 		{
@@ -107,10 +135,26 @@ namespace Windows.UI.Xaml
 				}
 
 				RaiseSizeChanged(
-					new WindowSizeChangedEventArgs(
+					new Windows.UI.Core.WindowSizeChangedEventArgs(
 						new Windows.Foundation.Size((float)size.Width, (float)size.Height)
 					)
 				);
+			}
+		}
+
+		internal void DisplayFullscreen(UIElement element)
+		{
+			if (element == null)
+			{
+				FullWindowMediaRoot.Child = null;
+				_rootBorder.Visibility = Visibility.Visible;
+				FullWindowMediaRoot.Visibility = Visibility.Collapsed;
+			}
+			else
+			{
+				FullWindowMediaRoot.Visibility = Visibility.Visible;
+				_rootBorder.Visibility = Visibility.Collapsed;
+				FullWindowMediaRoot.Child = element;
 			}
 		}
 
@@ -121,6 +165,6 @@ namespace Windows.UI.Xaml
 			{
 				applicationView.SetCoreBounds(_window, Bounds);
 			}
-		}		
+		}
 	}
 }

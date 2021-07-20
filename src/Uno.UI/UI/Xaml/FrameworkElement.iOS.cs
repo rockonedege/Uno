@@ -14,39 +14,45 @@ namespace Windows.UI.Xaml
 {
 	public partial class FrameworkElement
 	{
-		private bool _inLayoutSubviews;
-		private CGSize? _lastAvailableSize;
-		private CGSize _lastMeasure;
-
-		partial void Initialize();
+		/// <summary>
+		/// When set, measure and invalidate requests will not be propagated further up the visual tree, ie they won't trigger a relayout.
+		/// Used where repeated unnecessary measure/arrange passes would be unacceptable for performance (eg scrolling in a list).
+		/// </summary>
+		internal bool ShouldInterceptInvalidate { get; set; }
 
 		public override void SetNeedsLayout()
 		{
+			if (ShouldInterceptInvalidate)
+			{
+				return;
+			}
+
 			if (!_inLayoutSubviews)
 			{
 				base.SetNeedsLayout();
 			}
 
-			RequiresMeasure = true;
-			RequiresArrange = true;
+			IsMeasureDirty = true;
+			IsArrangeDirty = true;
 
 			SetSuperviewNeedsLayout();
 		}
 
-		public FrameworkElement()
-		{
-			Initialize();
-		}
-
 		public override void LayoutSubviews()
 		{
+			if (Visibility == Visibility.Collapsed)
+			{
+				// //Don't layout collapsed views
+				return;
+			}
+
 			try
 			{
 				try
 				{
 					_inLayoutSubviews = true;
 
-					if (RequiresMeasure)
+					if (IsMeasureDirty)
 					{
 						// Add back the Margin (which is normally 'outside' the view's bounds) - the layouter will subtract it again
 						XamlMeasure(Bounds.Size.Add(Margin));
@@ -54,62 +60,22 @@ namespace Windows.UI.Xaml
 
 					OnBeforeArrange();
 
-					var size = SizeFromUISize(Bounds.Size);
-					_layouter.Arrange(new Rect(0, 0, size.Width, size.Height));
+					var finalRect = Superview is UIElement ? LayoutSlotWithMarginsAndAlignments : RectFromUIRect(Frame);
+
+					_layouter.Arrange(finalRect);
 
 					OnAfterArrange();
 				}
 				finally
 				{
 					_inLayoutSubviews = false;
-					RequiresArrange = false;
+					IsArrangeDirty = false;
 				}
 			}
 			catch (Exception e)
 			{
 				this.Log().Error($"Layout failed in {GetType()}", e);
 			}
-		}
-		/// <summary>
-		/// Called before Arrange is called, this method will be deprecated
-		/// once OnMeasure/OnArrange will be implemented completely
-		/// </summary>
-		[EditorBrowsable(EditorBrowsableState.Never)]
-		protected virtual void OnBeforeArrange()
-		{
-
-		}
-
-		/// <summary>
-		/// Called after Arrange is called, this method will be deprecated
-		/// once OnMeasure/OnArrange will be implemented completely
-		/// </summary>
-		[EditorBrowsable(EditorBrowsableState.Never)]
-		protected virtual void OnAfterArrange()
-		{
-
-		}
-
-		private CGSize? XamlMeasure(CGSize availableSize)
-		{
-			// If set layout has not been called, we can 
-			// return a previously cached result for the same available size.
-			if (
-				!RequiresMeasure
-				&& _lastAvailableSize.HasValue
-				&& availableSize == _lastAvailableSize
-			)
-			{
-				return _lastMeasure;
-			}
-
-			_lastAvailableSize = availableSize;
-			RequiresMeasure = false;
-
-			var result = _layouter.Measure(SizeFromUISize(availableSize));
-
-			// Result here exclude the margins on the element
-			return _lastMeasure = result.LogicalToPhysicalPixels();
 		}
 
 		public override CGSize SizeThatFits(CGSize size)
@@ -135,26 +101,36 @@ namespace Windows.UI.Xaml
 			}
 		}
 
-		protected Size SizeFromUISize(CGSize size)
+		public override void AddSubview(UIView view)
 		{
-			var width = nfloat.IsNaN(size.Width) ? float.PositiveInfinity : size.Width;
-			var height = nfloat.IsNaN(size.Height) ? float.PositiveInfinity : size.Height;
-
-			return new Size(width, height).PhysicalToLogicalPixels();
-		}
-
-		private bool IsTopLevelXamlView()
-		{
-			UIView parent = this;
-			while (parent != null)
+			if (IsLoaded)
 			{
-				parent = parent.Superview;
-				if (parent is IFrameworkElement)
+				// Apply styles in the subtree being loaded (if not already applied). We do it in this way to force Styles application in a
+				// 'root-first' order, because on iOS the native loading callback is raised 'leaf first,' and waiting until this point to
+				// apply the style can cause Loading/Loaded to be raised twice for some views (because template of outer control changes).
+				//
+				// This override can be removed when Loading/Loaded timing is adjusted to fully match UWP.
+				if (view is IDependencyObjectStoreProvider provider)
 				{
-					return false;
+					// Set parent so implicit styles in the tree can be resolved
+					provider.Store.Parent = this;
+				}
+				ApplyStylesToChildren(view);
+			}
+			base.AddSubview(view);
+
+			void ApplyStylesToChildren(UIView viewInner)
+			{
+				if (viewInner is FrameworkElement fe)
+				{
+					fe.ApplyStyles();
+				}
+
+				foreach (var subview in viewInner.Subviews)
+				{
+					ApplyStylesToChildren(subview);
 				}
 			}
-			return true;
 		}
 	}
 }

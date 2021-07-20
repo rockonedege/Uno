@@ -14,6 +14,7 @@ using Uno.UITest.Helpers.Queries;
 namespace SamplesApp.UITests.Windows_UI_Xaml_Media_Animation
 {
 	[TestFixture]
+	[ActivePlatforms(Platform.Android, Platform.Browser)] // Disabled for iOS: https://github.com/unoplatform/uno/issues/1955
 	public partial class DoubleAnimation_Tests : SampleControlUITestBase
 	{
 		private const string _finalStateOpacityTestControl = "UITests.Windows_UI_Xaml_Media_Animation.DoubleAnimation_FinalState_Opacity";
@@ -62,14 +63,14 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Media_Animation
 
 			Run(_finalStateOpacityTestControl, skipInitialScreenshot: true);
 
-			var initial = TakeScreenshot("Initial", ignoreInSnapshotCompare: true);
+			using var initial = TakeScreenshot("Initial", ignoreInSnapshotCompare: true);
 			var element = _app.WaitForElement($"{type}AnimationHost_{fill}").Single().Rect;
 
 			_app.Marked("StartButton").FastTap();
 			_app.WaitForDependencyPropertyValue(_app.Marked("Status"), "Text", "Completed");
 
 			// Assert
-			var final = TakeScreenshot("Final", ignoreInSnapshotCompare: true);
+			using var final = TakeScreenshot("Final", ignoreInSnapshotCompare: true);
 
 			if (isSame)
 			{

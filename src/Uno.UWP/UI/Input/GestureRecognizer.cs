@@ -15,9 +15,21 @@ namespace Windows.UI.Input
 	{
 		private const int _defaultGesturesSize = 2; // Number of pointers before we have to resize the gestures dictionary
 
+		internal const int TapMaxXDelta = 10;
+		internal const int TapMaxYDelta = 10;
+
+		internal const ulong MultiTapMaxDelayTicks = TimeSpan.TicksPerMillisecond * 1000;
+
+		internal const long HoldMinDelayTicks = TimeSpan.TicksPerMillisecond * 800;
+		internal const float HoldMinPressure = .75f;
+
+		internal const long DragWithTouchMinDelayTicks = TimeSpan.TicksPerMillisecond * 300; // https://docs.microsoft.com/en-us/windows/uwp/design/input/drag-and-drop#open-a-context-menu-on-an-item-you-can-drag-with-touch
+
 		private readonly ILogger _log;
 		private IDictionary<uint, Gesture> _gestures = new Dictionary<uint, Gesture>(_defaultGesturesSize);
+		private Manipulation _manipulation;
 		private GestureSettings _gestureSettings;
+		private bool _isManipulationOrDragEnabled;
 
 		public GestureSettings GestureSettings
 		{
@@ -25,11 +37,13 @@ namespace Windows.UI.Input
 			set
 			{
 				_gestureSettings = value;
-				_isManipulationEnabled = (value & GestureSettingsHelper.Manipulations) != 0;
+				_isManipulationOrDragEnabled = (value & (GestureSettingsHelper.Manipulations | GestureSettingsHelper.DragAndDrop)) != 0;
 			}
 		}
 
 		public bool IsActive => _gestures.Count > 0 || _manipulation != null;
+
+		internal bool IsDragging => _manipulation?.IsDragManipulation ?? false;
 
 		/// <summary>
 		/// This is the owner provided in the ctor. It might be `null` if none provided.
@@ -55,7 +69,7 @@ namespace Windows.UI.Input
 			{
 				if (_log.IsEnabled(LogLevel.Error))
 				{
-					this.Log().Error("Inconsistent state, we already have a pending gesture for a pointer that is going down. Abort the previous gesture.");
+					this.Log().Error($"{Owner} Inconsistent state, we already have a pending gesture for a pointer that is going down. Abort the previous gesture.");
 				}
 				previousGesture.ProcessComplete();
 			}
@@ -74,8 +88,8 @@ namespace Windows.UI.Input
 			}
 			_gestures[value.PointerId] = gesture;
 
-			// Create of update a Manipulation responsible to recognize multi-pointer gestures
-			if (_isManipulationEnabled)
+			// Create of update a Manipulation responsible to recognize multi-pointer and drag gestures
+			if (_isManipulationOrDragEnabled)
 			{
 				if (_manipulation == null)
 				{
@@ -104,7 +118,7 @@ namespace Windows.UI.Input
 				{
 					// debug: We might get some PointerMove for mouse even if not pressed,
 					//		  or if gesture was completed by user / other gesture recognizers.
-					_log.Debug("Received a 'Move' for a pointer which was not considered as down. Ignoring event.");
+					_log.Debug($"{Owner} Received a 'Move' for a pointer which was not considered as down. Ignoring event.");
 				}
 			}
 
@@ -115,7 +129,7 @@ namespace Windows.UI.Input
 
 		internal void ProcessUpEvent(PointerPoint value, bool isRelevant)
 		{
-#if NET461 || __WASM__
+#if NET461 || UNO_REFERENCE_API
 			if (_gestures.TryGetValue(value.PointerId, out var gesture))
 			{
 				_gestures.Remove(value.PointerId);
@@ -132,7 +146,7 @@ namespace Windows.UI.Input
 			{
 				// debug: We might get some PointerMove for mouse even if not pressed,
 				//		  or if gesture was completed by user / other gesture recognizers.
-				_log.Debug("Received a 'Up' for a pointer which was not considered as down. Ignoring event.");
+				_log.Debug($"{Owner} Received a 'Up' for a pointer which was not considered as down. Ignoring event.");
 			}
 
 			_manipulation?.Remove(value);
@@ -167,25 +181,17 @@ namespace Windows.UI.Input
 		#region Manipulations
 		internal event TypedEventHandler<GestureRecognizer, ManipulationStartingEventArgs> ManipulationStarting; // This is not on the public API!
 		public event TypedEventHandler<GestureRecognizer, ManipulationCompletedEventArgs> ManipulationCompleted;
-#pragma warning disable  // Event not raised: intertia is not supported yet
+#pragma warning disable  // Event not raised: inertia is not supported yet
 		public event TypedEventHandler<GestureRecognizer, ManipulationInertiaStartingEventArgs> ManipulationInertiaStarting;
 #pragma warning restore 67
 		public event TypedEventHandler<GestureRecognizer, ManipulationStartedEventArgs> ManipulationStarted;
 		public event TypedEventHandler<GestureRecognizer, ManipulationUpdatedEventArgs> ManipulationUpdated;
 
-		private bool _isManipulationEnabled;
-		private Manipulation _manipulation;
 
 		internal Manipulation PendingManipulation => _manipulation;
 		#endregion
 
 		#region Tap (includes DoubleTap and RightTap)
-		internal const ulong MultiTapMaxDelayTicks = TimeSpan.TicksPerMillisecond * 1000;
-		internal const long HoldMinDelayTicks = TimeSpan.TicksPerMillisecond * 800;
-		internal const float HoldMinPressure = .75f;
-		internal const int TapMaxXDelta = 10;
-		internal const int TapMaxYDelta = 10;
-
 		private (ulong id, ulong ts, Point position) _lastSingleTap;
 
 		public event TypedEventHandler<GestureRecognizer, TappedEventArgs> Tapped;
@@ -193,144 +199,11 @@ namespace Windows.UI.Input
 		public event TypedEventHandler<GestureRecognizer, HoldingEventArgs> Holding;
 
 		public bool CanBeDoubleTap(PointerPoint value)
-			=> _gestureSettings.HasFlag(GestureSettings.DoubleTap) && IsMultiTapGesture(_lastSingleTap, value);
-
-		#region Actual Tap gestures recognition (static)
-		// The beginning of a Tap gesture is: 1 down -> * moves close to the down with same buttons pressed
-		private static bool IsBeginningOfTapGesture(CheckButton isExpectedButton, Gesture points)
-		{
-			if (!isExpectedButton(points.Down)) // We validate only the start as for other points we validate the full pointer identifier
-			{
-				return false;
-			}
-
-			// Validate tap gesture
-			// Note: There is no limit for the duration of the tap!
-			if (points.HasMovedOutOfTapRange || points.HasChangedPointerIdentifier)
-			{
-				return false;
-			}
-
-			return true;
-		}
-
-		// A Tap gesture is: 1 down -> * moves close to the down with same buttons pressed -> 1 up
-		private static bool IsTapGesture(CheckButton isExpectedButton, Gesture points)
-		{
-			if (points.Up == null) // no tap if no up!
-			{
-				return false;
-			}
-
-			// Validate that all the intermediates points are valid
-			if (!IsBeginningOfTapGesture(isExpectedButton, points))
-			{
-				return false;
-			}
-
-			// For the pointer up, we check only the distance, as it's expected that the pressed button changed!
-			if (IsOutOfTapRange(points.Down.Position, points.Up.Position))
-			{
-				return false;
-			}
-
-			return true;
-		}
-
-		private static bool IsMultiTapGesture((ulong id, ulong ts, Point position) previousTap, PointerPoint down)
-		{
-			if (previousTap.ts == 0) // i.s. no previous tap to compare with
-			{
-				return false;
-			}
-
-			var currentId = GetPointerIdentifier(down);
-			var currentTs = down.Timestamp;
-			var currentPosition = down.Position;
-
-			return previousTap.id == currentId
-				&& currentTs - previousTap.ts <= MultiTapMaxDelayTicks
-				&& !IsOutOfTapRange(previousTap.position, currentPosition);
-		}
-
-		private static bool IsRightTapGesture(Gesture points, out bool isLongPress)
-		{
-			switch (points.PointerType)
-			{
-				case PointerDeviceType.Touch:
-					var isLeftTap = IsTapGesture(LeftButton, points);
-					if (isLeftTap && IsLongPress(points))
-					{
-						isLongPress = true;
-						return true;
-					}
-#if __IOS__
-					if (Uno.WinRTFeatureConfiguration.GestureRecognizer.InterpretForceTouchAsRightTap
-						&& isLeftTap
-						&& points.HasExceedMinHoldPressure)
-					{
-						isLongPress = true; // We handle the pressure exactly like a long press
-						return true;
-					}
-#endif
-					isLongPress = false;
-					return false;
-
-				case PointerDeviceType.Pen:
-					if (IsTapGesture(BarrelButton, points))
-					{
-						isLongPress = false;
-						return true;
-					}
-
-					// Some pens does not have a barrel button, so we also allow long press (and anyway it's the UWP behavior)
-					if (IsTapGesture(LeftButton, points) && IsLongPress(points))
-					{
-						isLongPress = true;
-						return true;
-					}
-
-					isLongPress = false;
-					return false;
-
-				case PointerDeviceType.Mouse:
-					if (IsTapGesture(RightButton, points))
-					{
-						isLongPress = false;
-						return true;
-					}
-#if __ANDROID__
-					// On Android, usually the right button is mapped to back navigation. So, unlike UWP,
-					// we also allow a long press with the left button to be more user friendly.
-					if (Uno.WinRTFeatureConfiguration.GestureRecognizer.InterpretMouseLeftLongPressAsRightTap
-						&& IsTapGesture(LeftButton, points)
-						&& IsLongPress(points))
-					{
-						isLongPress = true;
-						return true;
-					}
-#endif
-					isLongPress = false;
-					return false;
-
-				default:
-					isLongPress = false;
-					return false;
-			}
-		}
-
-		// This requires the UP to not be null!
-		private static bool IsLongPress(Gesture points)
-			=> points.Up.Timestamp - points.Down.Timestamp > HoldMinDelayTicks;
-
-		private static bool IsLongPress(Gesture points, PointerPoint current)
-			=> current.Timestamp - points.Down.Timestamp > HoldMinDelayTicks;
-
-		private static bool IsOutOfTapRange(Point p1, Point p2)
-			=> Math.Abs(p1.X - p2.X) > TapMaxXDelta
-			|| Math.Abs(p1.Y - p2.Y) > TapMaxYDelta;
+			=> _gestureSettings.HasFlag(GestureSettings.DoubleTap) && Gesture.IsMultiTapGesture(_lastSingleTap, value);
 		#endregion
 
+		#region Dragging
+		public event TypedEventHandler<GestureRecognizer, DraggingEventArgs> Dragging;
 		#endregion
 
 		private delegate bool CheckButton(PointerPoint point);
@@ -344,6 +217,10 @@ namespace Windows.UI.Input
 			// For mouse, the PointerId is the same, no matter the button pressed.
 			// The only thing that changes are flags in the properties.
 			// Here we build a "PointerIdentifier" that fully identifies the pointer used
+
+			// Note: We don't take in consideration props.IsHorizontalMouseWheel as it would require to also check
+			//		 the (non existing) props.IsVerticalMouseWheel, and it's actually not something that should
+			//		 be considered as a pointer changed.
 
 			var props = point.Properties;
 
@@ -362,27 +239,23 @@ namespace Windows.UI.Input
 			{
 				identifier |= 1L << 34;
 			}
-			if (props.IsHorizontalMouseWheel)
+			if (props.IsXButton1Pressed)
 			{
 				identifier |= 1L << 35;
 			}
-			if (props.IsXButton1Pressed)
-			{
-				identifier |= 1L << 36;
-			}
 			if (props.IsXButton2Pressed)
 			{
-				identifier |= 1L << 37;
+				identifier |= 1L << 36;
 			}
 
 			// Pen
 			if (props.IsBarrelButtonPressed)
 			{
-				identifier |= 1L << 38;
+				identifier |= 1L << 37;
 			}
 			if (props.IsEraser)
 			{
-				identifier |= 1L << 39;
+				identifier |= 1L << 38;
 			}
 
 			return identifier;

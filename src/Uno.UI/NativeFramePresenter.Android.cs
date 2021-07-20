@@ -1,5 +1,4 @@
-﻿#if __ANDROID__
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -130,22 +129,49 @@ namespace Uno.UI.Controls
 						await newPage.AnimateAsync(GetEnterAnimation());
 						newPage.ClearAnimation();
 					}
-					if (oldPage != null)
+					if (FeatureConfiguration.NativeFramePresenter.AndroidUnloadInactivePages && oldPage != null)
 					{
 						_pageStack.Children.Remove(oldPage);
 					}
 					break;
 				case NavigationMode.Back:
-					_pageStack.Children.Insert(0, newPage);
+					if (FeatureConfiguration.NativeFramePresenter.AndroidUnloadInactivePages)
+					{
+						_pageStack.Children.Insert(0, newPage);
+					}
 					if (GetIsAnimated(oldEntry))
 					{
 						await oldPage.AnimateAsync(GetExitAnimation());
 						oldPage.ClearAnimation();
 					}
+
 					if (oldPage != null)
 					{
 						_pageStack.Children.Remove(oldPage);
 					}
+
+					if (!FeatureConfiguration.NativeFramePresenter.AndroidUnloadInactivePages)
+					{
+						// Remove pages from the grid that may have been removed from the BackStack list
+						// Those items are not removed on BackStack list changes to avoid interfering with the GoBack method's behavior.
+						for (var pageIndex = _pageStack.Children.Count-1; pageIndex >= 0; pageIndex--)
+						{
+							var page = _pageStack.Children[pageIndex];
+							if (page == newPage)
+							{
+								break;
+							}
+
+							_pageStack.Children.Remove(page);
+						}
+
+						//In case we cleared the whole stack. This should never happen
+						if (_pageStack.Children.Count == 0)
+						{
+							_pageStack.Children.Insert(0, newPage);
+						}
+					}
+
 					break;
 			}
 
@@ -233,4 +259,3 @@ namespace Uno.UI.Controls
 		}
 	}
 }
-#endif

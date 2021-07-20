@@ -8,17 +8,23 @@ using Windows.Foundation;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Shapes;
 using Microsoft.Extensions.Logging;
 using Uno.Extensions;
 using Uno.UI;
+using Uno.Disposables;
+using Uno.UI.Xaml;
 
 namespace Windows.UI.Xaml
 {
 	public partial class FrameworkElement : UIElement, IFrameworkElement
 	{
-		public T FindFirstParent<T>() where T : class
+		private SerialDisposable _backgroundSubscription;
+		public T FindFirstParent<T>() where T : class => FindFirstParent<T>(includeCurrent: false);
+
+		public T FindFirstParent<T>(bool includeCurrent) where T : class
 		{
-			var view = this.Parent;
+			var view = includeCurrent ? (DependencyObject)this : this.Parent;
 			while (view != null)
 			{
 				var typed = view as T;
@@ -33,7 +39,15 @@ namespace Windows.UI.Xaml
 
 		partial void Initialize();
 
-		public FrameworkElement(string htmlTag = "div", bool isSvg = false) : base(htmlTag, isSvg)
+		public FrameworkElement() : this(DefaultHtmlTag, false)
+		{
+		}
+
+		public FrameworkElement(string htmlTag) : this(htmlTag, false)
+		{
+		}
+
+		public FrameworkElement(string htmlTag, bool isSvg) : base(htmlTag, isSvg)
 		{
 			Initialize();
 
@@ -52,40 +66,26 @@ namespace Windows.UI.Xaml
 		private protected readonly ILogger _logDebug;
 
 		private static readonly Uri DefaultBaseUri = new Uri("ms-appx://local");
-		public global::System.Uri BaseUri
-		{
-			get;
-			internal set;
-		} = DefaultBaseUri;
-
-		protected virtual void OnLoaded()
-		{
-
-		}
-
-		protected virtual void OnUnloaded()
-		{
-
-		}
+		public global::System.Uri BaseUri { get; internal set; } = DefaultBaseUri;
 
 		#region Transitions Dependency Property
 
+		[GeneratedDependencyProperty(DefaultValue = null, ChangedCallback = true)]
+		public static DependencyProperty TransitionsProperty { get; } = CreateTransitionsProperty();
+
 		public TransitionCollection Transitions
 		{
-			get { return (TransitionCollection)this.GetValue(TransitionsProperty); }
-			set { this.SetValue(TransitionsProperty, value); }
+			get => GetTransitionsValue();
+			set => SetTransitionsValue(value);
 		}
 
-		public static readonly DependencyProperty TransitionsProperty =
-			DependencyProperty.Register("Transitions", typeof(TransitionCollection), typeof(FrameworkElement), new PropertyMetadata(null, OnTransitionsChanged));
-
-		private static void OnTransitionsChanged(object dependencyObject, DependencyPropertyChangedEventArgs args)
+		private void OnTransitionsChanged(DependencyPropertyChangedEventArgs args)
 		{
 
 		}
 		#endregion
 
-		public IFrameworkElement FindName(string name)
+		public object FindName(string name)
 			=> IFrameworkElementHelper.FindName(this, GetChildren(), name);
 
 
@@ -101,111 +101,27 @@ namespace Windows.UI.Xaml
 
 		#region Background DependencyProperty
 
+		[GeneratedDependencyProperty(DefaultValue = null, ChangedCallback = true)]
+		public static DependencyProperty BackgroundProperty { get; } = CreateBackgroundProperty();
+
 		public Brush Background
 		{
-			get => (Brush)GetValue(BackgroundProperty);
-			set => SetValue(BackgroundProperty, value);
+			get => GetBackgroundValue();
+			set => SetBackgroundValue(value);
 		}
-
-		// Using a DependencyProperty as the backing store for Background.  This enables animation, styling, binding, etc...
-		public static readonly DependencyProperty BackgroundProperty =
-			DependencyProperty.Register("Background", typeof(Brush), typeof(FrameworkElement), new PropertyMetadata(null, (s, e) => ((FrameworkElement)s)?.OnBackgroundChanged(e)));
-
 
 		protected virtual void OnBackgroundChanged(DependencyPropertyChangedEventArgs e)
+			// Warning some controls (eg. CalendarViewBaseItem) takes ownership of the background rendering.
+			// They override the OnBackgroundChanged and explicitly do not invokes that base method.
+			=> SetAndObserveBackgroundBrush(e.NewValue as Brush);
+
+		private protected void SetAndObserveBackgroundBrush(Brush brush)
 		{
-			var brush = e.NewValue as Brush;
-			SetBackgroundBrush(brush);
+			var subscription = _backgroundSubscription ??= new SerialDisposable();
+
+			subscription.Disposable = null;
+			subscription.Disposable = BorderLayerRenderer.SetAndObserveBackgroundBrush(this, brush);
 		}
-
-		private void SetBackgroundBrush(Brush brush)
-		{
-			switch (brush)
-			{
-				case SolidColorBrush solidColorBrush:
-					var color = solidColorBrush.ColorWithOpacity;
-					SetStyle("background-color", color.ToCssString());
-					RecalculateBrushOnSizeChanged(false);
-					break;
-				case LinearGradientBrush linearGradientBrush:
-					SetStyle("background", linearGradientBrush.ToCssString(RenderSize));
-					RecalculateBrushOnSizeChanged(true);
-					break;
-				default:
-					ResetStyle("background-color");
-					ResetStyle("background");
-					RecalculateBrushOnSizeChanged(false);
-					break;
-			}
-		}
-
-		private static SizeChangedEventHandler _onSizeChangedForBrushCalculation = (sender, args) =>
-		{
-			var fe = sender as FrameworkElement;
-			fe.SetBackgroundBrush(fe.Background);
-		};
-
-		private bool onSizeChangedForBrushCalculatioSet = false;
-
-		private void RecalculateBrushOnSizeChanged(bool shouldRecalculate)
-		{
-			if (onSizeChangedForBrushCalculatioSet == shouldRecalculate)
-			{
-				return;
-			}
-
-			if (shouldRecalculate)
-			{
-				SizeChanged += _onSizeChangedForBrushCalculation;
-			}
-			else
-			{
-				SizeChanged -= _onSizeChangedForBrushCalculation;
-			}
-
-			onSizeChangedForBrushCalculatioSet = shouldRecalculate;
-		}
-
-		#endregion
-
-		#region IsEnabled DependencyProperty
-
-		public event DependencyPropertyChangedEventHandler IsEnabledChanged;
-
-		public bool IsEnabled
-		{
-			get { return (bool)GetValue(IsEnabledProperty); }
-			set { SetValue(IsEnabledProperty, value); }
-		}
-
-		public static readonly DependencyProperty IsEnabledProperty =
-			DependencyProperty.Register(
-				"IsEnabled",
-				typeof(bool),
-				typeof(FrameworkElement),
-				new FrameworkPropertyMetadata(
-					true,
-					FrameworkPropertyMetadataOptions.Inherits,
-					(s, e) =>
-					{
-						var elt = (FrameworkElement)s;
-						elt?.OnIsEnabledChanged((bool)e.OldValue, (bool)e.NewValue);
-						elt?.IsEnabledChanged?.Invoke(s, e);
-					}
-				)
-	);
-
-		protected virtual void OnIsEnabledChanged(bool oldValue, bool newValue)
-		{
-			UpdateHitTest();
-
-			// TODO: move focus elsewhere if control.FocusState != FocusState.Unfocused
-			if (FeatureConfiguration.UIElement.AssignDOMXamlProperties)
-			{
-				UpdateDOMProperties();
-			}
-		}
-
 		#endregion
 
 		public int? RenderPhase

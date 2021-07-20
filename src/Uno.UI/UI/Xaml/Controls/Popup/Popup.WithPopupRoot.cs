@@ -1,4 +1,4 @@
-﻿#if __ANDROID__ || __WASM__
+﻿#if __ANDROID__ || __WASM__ || __SKIA__
 using Uno.Extensions;
 using Uno.Disposables;
 using Uno.Logging;
@@ -7,23 +7,20 @@ using System;
 using Windows.UI.Xaml.Media;
 using Uno.UI;
 
-#if XAMARIN_ANDROID
-using View = Android.Views.View;
-#elif NET461 || __WASM__
-using View = Windows.UI.Xaml.FrameworkElement;
-#endif
-
-
 namespace Windows.UI.Xaml.Controls
 {
 	public partial class Popup
 	{
 		private readonly SerialDisposable _closePopup = new SerialDisposable();
 
+#if __ANDROID__
+		private bool _useNativePopup = FeatureConfiguration.Popup.UseNativePopup;
+#endif
+
 		partial void InitializePartial()
 		{
 #if __ANDROID__
-			if (FeatureConfiguration.Popup.UseNativePopup)
+			if (_useNativePopup)
 			{
 				InitializeNativePartial();
 			}
@@ -34,7 +31,7 @@ namespace Windows.UI.Xaml.Controls
 
 		partial void InitializeNativePartial();
 
-		protected override void OnChildChanged(View oldChild, View newChild)
+		protected override void OnChildChanged(UIElement oldChild, UIElement newChild)
 		{
 			base.OnChildChanged(oldChild, newChild);
 
@@ -51,7 +48,7 @@ namespace Windows.UI.Xaml.Controls
 			base.OnIsLightDismissEnabledChanged(oldIsLightDismissEnabled, newIsLightDismissEnabled);
 
 #if __ANDROID__
-			if (FeatureConfiguration.Popup.UseNativePopup)
+			if (_useNativePopup)
 			{
 				OnIsLightDismissEnabledChangedNative(oldIsLightDismissEnabled, newIsLightDismissEnabled);
 			}
@@ -77,7 +74,7 @@ namespace Windows.UI.Xaml.Controls
 			}
 
 #if __ANDROID__
-			if (FeatureConfiguration.Popup.UseNativePopup)
+			if (_useNativePopup)
 			{
 				OnIsOpenChangedNative(oldIsOpen, newIsOpen);
 			}
@@ -102,7 +99,7 @@ namespace Windows.UI.Xaml.Controls
 		partial void OnPopupPanelChangedPartial(PopupPanel previousPanel, PopupPanel newPanel)
 		{
 #if __ANDROID__
-			if (FeatureConfiguration.Popup.UseNativePopup)
+			if (_useNativePopup)
 			{
 				OnPopupPanelChangedPartialNative(previousPanel, newPanel);
 			}

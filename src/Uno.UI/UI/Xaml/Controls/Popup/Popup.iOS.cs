@@ -50,20 +50,22 @@ namespace Windows.UI.Xaml.Controls
 						newPanel.TemplatedParent = TemplatedParent;
 					}
 
-					newPanel.AddSubview(Child);
+					RegisterPopupPanelChild();
 				}
 
 				newPanel.Background = GetPanelBackground();
 
 				RegisterPopupPanel();
+				RegisterPopupPanelChild();
 			}
 		}
 
-		protected override void OnLoaded()
+		private protected override void OnLoaded()
 		{
 			base.OnLoaded();
 
 			RegisterPopupPanel();
+			RegisterPopupPanelChild();
 		}
 
 		private void RegisterPopupPanel()
@@ -79,14 +81,33 @@ namespace Windows.UI.Xaml.Controls
 			}
 		}
 
-		protected override void OnUnloaded()
+		private void RegisterPopupPanelChild(bool force = false)
+		{
+			if ((IsLoaded || force) && Child != null)
+			{
+				RegisterPopupPanel();
+
+				if (!PopupPanel.Children.Contains(Child))
+				{
+					PopupPanel.Children.Add(Child);
+				}
+			}
+		}
+
+		private void UnregisterPopupPanelChild(UIElement child = null)
+		{
+			PopupPanel.Children.Remove(child ?? Child);
+		}
+
+		private protected override void OnUnloaded()
 		{
 			base.OnUnloaded();
 
 			PopupPanel?.RemoveFromSuperview();
+			UnregisterPopupPanelChild();
 		}
 
-		protected override void OnChildChanged(UIView oldChild, UIView newChild)
+		protected override void OnChildChanged(UIElement oldChild, UIElement newChild)
 		{
 			base.OnChildChanged(oldChild, newChild);
 
@@ -94,19 +115,25 @@ namespace Windows.UI.Xaml.Controls
 			{
 				if (oldChild != null)
 				{
-					PopupPanel.RemoveChild(oldChild);
+					UnregisterPopupPanelChild(oldChild);
 				}
 
-				if (newChild != null)
-				{
-					PopupPanel.AddSubview(newChild);
-				}
+				RegisterPopupPanelChild();
 			}
 		}
 
 		protected override void OnIsOpenChanged(bool oldIsOpen, bool newIsOpen)
 		{
 			base.OnIsOpenChanged(oldIsOpen, newIsOpen);
+
+			if (newIsOpen)
+			{
+				RegisterPopupPanelChild(force: true);
+			}
+			else
+			{
+				UnregisterPopupPanelChild();
+			}
 
 			UpdateLightDismissLayer(newIsOpen);
 
@@ -152,7 +179,7 @@ namespace Windows.UI.Xaml.Controls
 		/// </summary>
 		private void EnsureForward()
 		{
-			PopupPanel.Superview?.BringSubviewToFront(PopupPanel);
+			PopupPanel?.Superview?.BringSubviewToFront(PopupPanel);
 		}
 	}
 }

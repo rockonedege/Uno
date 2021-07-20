@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Windows.UI.Xaml;
@@ -113,7 +113,11 @@ namespace Uno.UI.Toolkit
 				"BackButtonForeground",
 				typeof(Brush),
 				typeof(CommandBarExtensions),
+#if XAMARIN
+				new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.ValueInheritsDataContext)
+#else
 				new PropertyMetadata(null)
+#endif
 			);
 
 		public static void SetBackButtonForeground(this CommandBar commandBar, Brush backButtonForeground)

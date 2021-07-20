@@ -8,13 +8,14 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using NUnit.Framework;
 using SamplesApp.UITests.TestFramework;
+using Uno.UITest;
 using Uno.UITest.Helpers;
 using Uno.UITest.Helpers.Queries;
 using Uno.UITests.Helpers;
 
 namespace SamplesApp.UITests.Windows_UI_Xaml_Input
 {
-	public class Tapped_Tests : SampleControlUITestBase
+	public partial class Tapped_Tests : SampleControlUITestBase
 	{
 		private const string _xamlTestPage = "UITests.Shared.Windows_UI_Input.GestureRecognizerTests.TappedTest";
 
@@ -33,13 +34,13 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Input
 
 			var result = GestureResult.Get(_app.Marked("LastTapped"));
 			result.Element.Should().Be(targetName);
-			((int)result.X).Should().Be(tapX);
-			((int)result.Y).Should().Be(tapY);
+			((int)result.X).Should().BeInRange(tapX - 1, tapX + 1);
+			((int)result.Y).Should().BeInRange(tapY - 1, tapY + 1);
 		}
 
 		[Test]
 		[AutoRetry]
-		[ActivePlatforms(Platform.iOS)]  // Disabled on Android: The test engine is not able to find "Transformed_Target"
+		[ActivePlatforms(Platform.Browser, Platform.iOS)] // Disabled on Android: The test engine is not able to find "Transformed_Target"
 		public void When_Transformed()
 		{
 			Run(_xamlTestPage);
@@ -47,11 +48,26 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Input
 			const string parentName = "Transformed_Parent";
 			const string targetName = "Transformed_Target";
 
-			var parent = _app.WaitForElement(parentName).Single().Rect;
-			var target = _app.WaitForElement(targetName).Single().Rect;
+			IAppRect parent, target;
+			if (AppInitializer.TestEnvironment.CurrentPlatform == Platform.Browser)
+			{
+				// Workaround until https://github.com/unoplatform/Uno.UITest/pull/35 is merged
+
+				parent = _app.Query(q => q.Marked(parentName)).Single().Rect;
+				target = _app.Query(q => q.Marked(targetName)).Single().Rect;
+			}
+			else
+			{
+				parent = _app.Query(q => q.All().Marked(parentName)).Single().Rect;
+				target = _app.Query(q => q.All().Marked(targetName)).Single().Rect;
+			}
+
+			var dpi = target.Width / 50;
 
 			// Tap the target
-			_app.TapCoordinates(parent.Right - target.Width, parent.Bottom - 3);
+			// Note: On WASM the parent is not clipped properly, so we must use absolute coordinates from top/left
+			//		 https://github.com/unoplatform/uno/issues/2514
+			_app.TapCoordinates(parent.X + 100 * dpi, parent.Y + (100 + 25) * dpi);
 
 			var result = GestureResult.Get(_app.Marked("LastTapped"));
 			result.Element.Should().Be(targetName);
@@ -106,6 +122,7 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Input
 
 		[Test]
 		[AutoRetry]
+		[ActivePlatforms(Platform.Android, Platform.iOS)] // Disabled on WASM: False failure: https://github.com/unoplatform/uno/issues/2739
 		public void When_InListViewWithoutItemClick()
 		{
 			Run(_xamlTestPage);
@@ -124,6 +141,44 @@ namespace SamplesApp.UITests.Windows_UI_Xaml_Input
 				? "Item_1" // We were not able to scroll on WASM!
 				: "Item_3";
 			result.Element.Should().Be(expectedItem);
+		}
+
+		[Test]
+		[AutoRetry]
+		public void When_Nested()
+		{
+			Run(_xamlTestPage);
+
+			const string parentName = "Nested_Parent";
+			const string targetName = "Nested_Target";
+			const int tapX = 10, tapY = 10;
+
+			// Tap the target
+			var target = _app.WaitForElement(targetName).Single().Rect;
+			_app.TapCoordinates(target.X + tapX, target.Y + tapY);
+
+			var result = GestureResult.Get(_app.Marked("LastTapped"));
+			result.Element.Should().Be(parentName);
+		}
+
+		[Test]
+		[AutoRetry]
+		public void When_Nested_And_Handling()
+		{
+			Run(_xamlTestPage);
+
+			const string parentName = "Nested_Handling_Parent";
+			const string targetName = "Nested_Handling_Target";
+			const int tapX = 10, tapY = 10;
+
+			// Tap the target
+			var target = _app.WaitForElement(targetName).Single().Rect;
+			_app.TapCoordinates(target.X + tapX, target.Y + tapY);
+
+			var result = GestureResult.Get(_app.Marked("LastTapped"));
+			result.Element.Should().Be(targetName);
+			((int)result.X).Should().BeInRange(tapX - 1, tapX + 1);
+			((int)result.Y).Should().BeInRange(tapY - 1, tapY + 1);
 		}
 	}
 }

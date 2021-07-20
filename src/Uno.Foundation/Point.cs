@@ -11,7 +11,7 @@ using CoreGraphics;
 
 namespace Windows.Foundation
 {
-	[DebuggerDisplay("{X},{Y}")]
+	[DebuggerDisplay("{DebugDisplay,nq}")]
 	public partial struct Point
 	{
 		public Point(double x, double y)
@@ -29,6 +29,9 @@ namespace Windows.Foundation
 		{
 			return "[{0}, {1}]".InvariantCultureFormat(X, Y);
 		}
+
+		internal string ToDebugString()
+			=> FormattableString.Invariant($"{X:F2},{Y:F2}");
 
 		public static bool operator ==(Point left, Point right)
 		{
@@ -52,12 +55,21 @@ namespace Windows.Foundation
 
 		public static implicit operator Point(string point)
 		{
-			var parts = point
-				.Split(new[] { ',' })
-				.Select(value => double.Parse(value, CultureInfo.InvariantCulture))
-				.ToArray();
+			if (string.IsNullOrEmpty(point))
+			{
+				// Marker to enable null-comparison if the string comparer
+				// has been called with null.
+				return new Point(double.NaN, double.NaN);
+			}
+			else
+			{
+				var parts = point
+					.Split(new[] { ',' })
+					.Select(value => double.Parse(value, CultureInfo.InvariantCulture))
+					.ToArray();
 
-			return new Point(parts[0], parts[1]);
+				return new Point(parts[0], parts[1]);
+			}
 		}
 
 		public override int GetHashCode() => X.GetHashCode() ^ Y.GetHashCode();
@@ -73,5 +85,7 @@ namespace Windows.Foundation
 
 			return false;
 		}
+
+		private string DebugDisplay => $"{X:f1},{Y:f1}";
 	}
 }

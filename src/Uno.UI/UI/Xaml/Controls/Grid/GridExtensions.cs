@@ -1,36 +1,14 @@
-﻿#if !SILVERLIGHT
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-#if XAMARIN_ANDROID
-using View = Android.Views.View;
-using Font = Android.Graphics.Typeface;
-using Android.Graphics;
-#elif XAMARIN_IOS_UNIFIED
-using View = UIKit.UIView;
-using Color = UIKit.UIColor;
-using Font = UIKit.UIFont;
-#elif XAMARIN_IOS
-using View = MonoTouch.UIKit.UIView;
-using Color = MonoTouch.UIKit.UIColor;
-using Font = MonoTouch.UIKit.UIFont;
-#elif NETFX_CORE
-using View = Windows.UI.Xaml.FrameworkElement;
-using Windows.UI.Xaml.Controls;
-#else
-using View = Windows.UI.Xaml.UIElement;
-#endif
+﻿using View = Windows.UI.Xaml.UIElement;
 
 namespace Windows.UI.Xaml.Controls
 {
-    public static class GridExtensions
-    {
+	public static class GridExtensions
+	{
 		public static Grid ColumnDefinitions(this Grid grid, params string[] definitions)
 		{
 			foreach (var def in definitions)
 			{
-				grid.ColumnDefinitions.Add(new ColumnDefinition() { Width = (GridLength)def });
+				grid.ColumnDefinitions.Add(new ColumnDefinition { Width = (GridLength)def });
 			}
 
 			return grid;
@@ -40,7 +18,7 @@ namespace Windows.UI.Xaml.Controls
 		{
 			foreach (var def in definitions)
 			{
-				grid.RowDefinitions.Add(new RowDefinition() { Height = (GridLength)def });
+				grid.RowDefinitions.Add(new RowDefinition { Height = (GridLength)def });
 			}
 
 			return grid;
@@ -112,6 +90,5 @@ namespace Windows.UI.Xaml.Controls
 
 			return view;
 		}
-    }
+	}
 }
-#endif

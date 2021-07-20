@@ -49,7 +49,7 @@ namespace Windows.UI.Popups
 				actualCommandOrder.Add(command);
 			}
 
-			return new AsyncOperation<IUICommand>(async ct =>
+			return AsyncOperation.FromTask<IUICommand>(async ct =>
 			{
 				var response = await alert.BeginSheetAsync(NSApplication.SharedApplication.KeyWindow);
 
@@ -60,7 +60,9 @@ namespace Windows.UI.Popups
 				}
 
 				var commandIndex = (int)response - FirstButtonResultIndex;
-				return actualCommandOrder[commandIndex]; 
+				var commandResponse = actualCommandOrder[commandIndex];
+				commandResponse?.Invoked?.Invoke(commandResponse);
+				return commandResponse;
 			});
 		}
 	}

@@ -1,6 +1,10 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Collections.Generic;
 using System.Text;
+using Uno.Buffers;
+using Uno.Extensions;
 using Uno.UI.DataBinding;
 using Windows.UI.Xaml.Data;
 
@@ -9,17 +13,35 @@ namespace Windows.UI.Xaml
 	/// <summary>
 	/// A <see cref="DependencyPropertyDetails"/> collection
 	/// </summary>
-    partial class DependencyPropertyDetailsCollection
-    {
+	/// <remarks>
+	/// This implementation uses an O(1) lookup for the dependency properties of a DependencyObject. This assumes that
+	/// <see cref="DependencyProperty.GetPropertiesForType"/> returns an ordered list, and creates an array based on
+	/// the min and max UniqueIDs found in the object's properties.
+	///
+	/// This approach can cost more in storage for some types, if the array is mostly empty.
+	/// </remarks>
+	partial class DependencyPropertyDetailsCollection : IDisposable
+	{
+		private static readonly DependencyPropertyDetails[] Empty = new DependencyPropertyDetails[0];
+
 		private readonly Type _ownerType;
 		private readonly ManagedWeakReference _ownerReference;
+		private object? _hardOwnerReference;
+		private readonly DependencyProperty _dataContextProperty;
+		private readonly DependencyProperty _templatedParentProperty;
 
-		public DependencyPropertyDetails DataContextPropertyDetails { get; }
-		public DependencyPropertyDetails TemplatedParentPropertyDetails { get; }
+		private DependencyPropertyDetails? _dataContextPropertyDetails;
+		private DependencyPropertyDetails? _templatedParentPropertyDetails;
 
-		private PropertyEntry[] _entries;
+		private readonly static ArrayPool<DependencyPropertyDetails> _pool = ArrayPool<DependencyPropertyDetails>.Create(500, 100);
 
-		private PropertyEntry None = new PropertyEntry(-1, null);
+		private DependencyPropertyDetails[]? _entries;
+		private int _entriesLength;
+		private int _minId;
+		private int _maxId;
+		private List<DependencyObjectStore.DefaultValueProvider>? _defaultValueProviders = null;
+
+		private object? Owner => _hardOwnerReference ?? _ownerReference.Target;
 
 		/// <summary>
 		/// Creates an instance using the specified DependencyObject <see cref="Type"/>
@@ -30,22 +52,59 @@ namespace Windows.UI.Xaml
 			_ownerType = ownerType;
 			_ownerReference = ownerReference;
 
-			var propertiesForType = DependencyProperty.GetPropertiesForType(ownerType);
+			_dataContextProperty = dataContextProperty;
+			_templatedParentProperty = templatedParentProperty;
+		}
 
-			var entries = new PropertyEntry[propertiesForType.Length];
-
-			for (int i = 0; i < propertiesForType.Length; i++)
+		private DependencyPropertyDetails[] Entries
+		{
+			get
 			{
-				entries[i].Id = propertiesForType[i].UniqueId;
+				EnsureEntriesInitialized();
+				return _entries!;
+			}
+		}
+
+		private void EnsureEntriesInitialized()
+		{
+			if (_entries == null)
+			{
+				var propertiesForType = DependencyProperty.GetPropertiesForType(_ownerType);
+
+				if (propertiesForType.Length != 0)
+				{
+					_minId = propertiesForType[0].UniqueId;
+					_maxId = propertiesForType[propertiesForType.Length - 1].UniqueId;
+
+					var entriesLength = _maxId - _minId + 1;
+					var entries = _pool.Rent(entriesLength);
+
+					// Entries are pre-sorted by the DependencyProperty.GetPropertiesForType method
+					AssignEntries(entries, entriesLength);
+
+				}
+				else
+				{
+					_entries = Empty;
+				}
+			}
+		}
+
+		public void Dispose()
+		{
+			for (var i = 0; i < _entriesLength; i++)
+			{
+				Entries![i]?.Dispose();
 			}
 
-			// Entries are pre-sorted by the DependencyProperty.GetPropertiesForType method
-			AssignEntries(entries, sort: false);
-
-			// Prefetch known properties for faster access
-			DataContextPropertyDetails = GetPropertyDetails(dataContextProperty);
-			TemplatedParentPropertyDetails = GetPropertyDetails(templatedParentProperty);
+			ReturnEntriesToPool();
 		}
+
+		public DependencyPropertyDetails DataContextPropertyDetails
+			=> _dataContextPropertyDetails ??= GetPropertyDetails(_dataContextProperty);
+
+		public DependencyPropertyDetails TemplatedParentPropertyDetails
+			=> _templatedParentPropertyDetails ??= GetPropertyDetails(_templatedParentProperty);
 
 		/// <summary>
 		/// Gets the <see cref="DependencyPropertyDetails"/> for a specific <see cref="DependencyProperty"/>
@@ -53,7 +112,7 @@ namespace Windows.UI.Xaml
 		/// <param name="property">A dependency property</param>
 		/// <returns>The details of the property</returns>
 		public DependencyPropertyDetails GetPropertyDetails(DependencyProperty property)
-			=> TryGetPropertyDetails(property, forceCreate: true);
+			=> TryGetPropertyDetails(property, forceCreate: true)!;
 
 		/// <summary>
 		/// Finds the <see cref="DependencyPropertyDetails"/> for a specific <see cref="DependencyProperty"/> if it exists.
@@ -61,124 +120,147 @@ namespace Windows.UI.Xaml
 		/// <param name="property">A dependency property</param>
 		/// <returns>The details of the property if it exists, otherwise null.</returns>
 		public DependencyPropertyDetails FindPropertyDetails(DependencyProperty property)
-			=> TryGetPropertyDetails(property, forceCreate: false);
+			=> TryGetPropertyDetails(property, forceCreate: false)!;
 
-		private DependencyPropertyDetails TryGetPropertyDetails(DependencyProperty property, bool forceCreate)
+		private DependencyPropertyDetails? TryGetPropertyDetails(DependencyProperty property, bool forceCreate)
 		{
-			ref var propertyEntry = ref GetEntry(property.UniqueId);
+			EnsureEntriesInitialized();
 
-			if (propertyEntry.Id == -1)
+			var propertyId = property.UniqueId;
+
+			var entryIndex = propertyId - _minId;
+
+			// https://stackoverflow.com/a/17095534/26346
+			var isInRange = (uint)entryIndex <= (_maxId - _minId);
+
+			if (isInRange)
+			{
+				ref var propertyEntry = ref Entries![entryIndex];
+
+				if (forceCreate && propertyEntry == null)
+				{
+					propertyEntry = new DependencyPropertyDetails(property, _ownerType);
+
+					if (TryResolveDefaultValueFromProviders(property, out var value))
+					{
+						propertyEntry.SetDefaultValue(value);
+					}
+				}
+
+				return propertyEntry;
+			}
+			else
 			{
 				if (forceCreate)
 				{
-					// The property was not known at startup time, add it.
-					var newEntries = new PropertyEntry[_entries.Length + 1];
+					int newEntriesSize;
+					DependencyPropertyDetails[] newEntries;
 
-					if (_entries.Length != 0)
+					if (entryIndex < 0)
 					{
-						Array.Copy(_entries, 0, newEntries, 0, _entries.Length);
+						newEntriesSize = _maxId - propertyId + 1;
+						newEntries = _pool.Rent(newEntriesSize);
+						Array.Copy(Entries, 0, newEntries, _minId - propertyId, _entriesLength);
+
+						_minId = propertyId;
+
+						AssignEntries(newEntries, newEntriesSize);
+					}
+					else
+					{
+						newEntriesSize = propertyId - _minId + 1;
+
+						newEntries = _pool.Rent(newEntriesSize);
+						Array.Copy(Entries, 0, newEntries, 0, _entriesLength);
+
+						AssignEntries(newEntries, newEntriesSize);
 					}
 
-					ref var newEntry = ref newEntries[_entries.Length];
+					ref var propertyEntry = ref Entries![property.UniqueId - _minId];
+					propertyEntry = new DependencyPropertyDetails(property, _ownerType);
+					if (TryResolveDefaultValueFromProviders(property, out var value))
+					{
+						propertyEntry.SetValue(value, DependencyPropertyValuePrecedences.DefaultValue);
+					}
 
-					var details = new DependencyPropertyDetails(property, _ownerType);
-
-					newEntry.Id = property.UniqueId;
-					newEntry.Details = details;
-
-					AssignEntries(newEntries, sort: true);
-
-					return details;
+					return propertyEntry;
 				}
 				else
 				{
 					return null;
 				}
 			}
-			else
-			{
-				if (propertyEntry.Details == null)
-				{
-					propertyEntry.Details = new DependencyPropertyDetails(property, _ownerType);
-				}
-
-				return propertyEntry.Details;
-			}
 		}
 
-		private void AssignEntries(PropertyEntry[] newEntries, bool sort)
+		private bool TryResolveDefaultValueFromProviders(DependencyProperty property, out object? value)
 		{
+			if (_defaultValueProviders != null)
+			{
+				for (int i = _defaultValueProviders.Count - 1; i >= 0; i--)
+				{
+					var provider = _defaultValueProviders[i];
+					if (provider.Invoke(property, out var resolvedValue))
+					{
+						value = resolvedValue;
+						return true;
+					}
+				}
+			}
+			value = null;
+			return false;
+		}
+
+		private void AssignEntries(DependencyPropertyDetails[] newEntries, int newSize)
+		{
+			ReturnEntriesToPool();
+
 			_entries = newEntries;
+			_entriesLength = newEntries.Length;
 
-			if (sort)
+			// Array size returned by Rend may be larger than the requested size
+			// Adjust the max to that new value.
+			_maxId = _entriesLength + _minId - 1;
+		}
+
+		private void ReturnEntriesToPool()
+		{
+			if (_entries != null)
 			{
-				Array.Sort(newEntries, (l, r) => l.Id - r.Id);
+				_pool.Return(_entries, clearArray: true);
 			}
 		}
 
-		private ref PropertyEntry GetEntry(int propertyId)
+		internal IEnumerable<DependencyPropertyDetails> GetAllDetails() => Entries.Trim();
+
+		/// <summary>
+		/// Adds a default value provider.
+		/// </summary>
+		/// <param name="provider">Default value provider.</param>
+		/// <remarks>
+		/// Providers which are registered later have higher priority.
+		/// E.g. when both a derived and base class register their own default
+		/// value provider in the constructor for the same property, the derived
+		/// class value is used.
+		/// </remarks>
+		public void RegisterDefaultValueProvider(DependencyObjectStore.DefaultValueProvider provider)
 		{
-			// 6 is based based on some perf comparisons on Android.
-			// This may need to be adjusted based on some hardware specific properties.
-			const int LinearSearchThreshold = 6;
-
-			int min = 0;
-			int max = _entries.Length - 1;
-
-			if (max >= 0)
+			if (provider == null)
 			{
-				while (max - min > LinearSearchThreshold)
-				{
-					int mid = (min + max) / 2;
-					ref var midValue = ref _entries[mid];
-
-					if (propertyId == midValue.Id)
-					{
-						return ref midValue;
-					}
-					else if (propertyId < midValue.Id)
-					{
-						max = mid - 1;
-					}
-					else
-					{
-						min = mid + 1;
-					}
-				}
-
-				// If the remaining items reaches LinearSearchThreshold, switch to linear search
-				while (min <= max)
-				{
-					ref var midValue = ref _entries[min];
-
-					if (midValue.Id == propertyId)
-					{
-						return ref midValue;
-					}
-
-					if (midValue.Id > propertyId)
-					{
-						break;
-					}
-
-					min++;
-				}
+				throw new ArgumentNullException(nameof(provider));
 			}
 
-			// Should be readonly, see C# 7.2 and up.
-			return ref None;
+			_defaultValueProviders ??= new List<DependencyObjectStore.DefaultValueProvider>(2);
+			_defaultValueProviders.Add(provider);
 		}
 
-		private struct PropertyEntry
+		internal void TryEnableHardReferences()
 		{
-			public PropertyEntry(int id, DependencyPropertyDetails details)
-			{
-				Id = id;
-				Details = details;
-			}
+			_hardOwnerReference = _ownerReference.Target;
+		}
 
-			public int Id;
-			public DependencyPropertyDetails Details;
+		internal void DisableHardReferences()
+		{
+			_hardOwnerReference = null;
 		}
 	}
 }

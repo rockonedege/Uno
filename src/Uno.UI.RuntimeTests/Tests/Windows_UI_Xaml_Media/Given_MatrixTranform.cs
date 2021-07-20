@@ -17,7 +17,7 @@ namespace Uno.UI.RuntimeTests.Tests.Windows_UI_Xaml_Media
 	{
 		[TestMethod]
 		public Task When_Identity_And_TransformPoint() =>
-			RunOnUIThread.Execute(() =>
+			RunOnUIThread.ExecuteAsync(() =>
 			{
 				var SUT = new MatrixTransform();
 
@@ -26,7 +26,7 @@ namespace Uno.UI.RuntimeTests.Tests.Windows_UI_Xaml_Media
 
 		[TestMethod]
 		public Task When_Identity_And_TransformBounds() =>
-			RunOnUIThread.Execute(() =>
+			RunOnUIThread.ExecuteAsync(() =>
 			{
 				var SUT = new MatrixTransform();
 
@@ -35,11 +35,11 @@ namespace Uno.UI.RuntimeTests.Tests.Windows_UI_Xaml_Media
 
 		[TestMethod]
 		public Task When_Translate_And_TransformPoint() =>
-			RunOnUIThread.Execute(() =>
+			RunOnUIThread.ExecuteAsync(() =>
 			{
 				var SUT = new MatrixTransform()
 				{
-					Matrix = new Matrix(1, 0, 0, 1, 10, 20)
+					Matrix = MatrixHelper.Create(1, 0, 0, 1, 10, 20)
 				};
 
 				Assert.AreEqual(new Point(10, 20), SUT.TransformPoint(new Point(0, 0)));
@@ -47,11 +47,11 @@ namespace Uno.UI.RuntimeTests.Tests.Windows_UI_Xaml_Media
 
 		[TestMethod]
 		public Task When_Translate_And_TransformBounds() =>
-			RunOnUIThread.Execute(() =>
+			RunOnUIThread.ExecuteAsync(() =>
 			{
 				var SUT = new MatrixTransform()
 				{
-					Matrix = new Matrix(1, 0, 0, 1, 10, 20)
+					Matrix = MatrixHelper.Create(1, 0, 0, 1, 10, 20)
 				};
 
 				Assert.AreEqual(
@@ -62,7 +62,7 @@ namespace Uno.UI.RuntimeTests.Tests.Windows_UI_Xaml_Media
 
 		[TestMethod]
 		public Task When_Rotate_And_TransformPoint() =>
-			RunOnUIThread.Execute(() =>
+			RunOnUIThread.ExecuteAsync(() =>
 			{
 				var SUT = new MatrixTransform()
 				{
@@ -74,7 +74,7 @@ namespace Uno.UI.RuntimeTests.Tests.Windows_UI_Xaml_Media
 
 		[TestMethod]
 		public Task When_Rotate_And_TransformBounds() =>
-			RunOnUIThread.Execute(() =>
+			RunOnUIThread.ExecuteAsync(() =>
 			{
 				var SUT = new MatrixTransform()
 				{
@@ -89,7 +89,7 @@ namespace Uno.UI.RuntimeTests.Tests.Windows_UI_Xaml_Media
 
 		[TestMethod]
 		public Task When_RotateQuarter_And_TransformPoint() =>
-			RunOnUIThread.Execute(() =>
+			RunOnUIThread.ExecuteAsync(() =>
 			{
 				var SUT = new MatrixTransform()
 				{
@@ -104,7 +104,7 @@ namespace Uno.UI.RuntimeTests.Tests.Windows_UI_Xaml_Media
 
 		[TestMethod]
 		public Task When_RotateQuarter_And_TransformBounds() =>
-			RunOnUIThread.Execute(() =>
+			RunOnUIThread.ExecuteAsync(() =>
 			{
 				var SUT = new MatrixTransform()
 				{
@@ -124,14 +124,14 @@ namespace Uno.UI.RuntimeTests.Tests.Windows_UI_Xaml_Media
 	public class MatrixHelper
 	{
 		public static Matrix FromMatrix3x2(Matrix3x2 m) =>
-			new Matrix(
-				m.M11,
-				m.M12,
-				m.M21,
-				m.M22,
-				m.M31,
-				m.M32
-			);
+			new Matrix {
+				M11 = m.M11,
+				M12 = m.M12,
+				M21 = m.M21,
+				M22 = m.M22,
+				OffsetX = m.M31,
+				OffsetY = m.M32
+			};
 
 		public static Matrix3x2 ToMatrix3x2(Matrix m) =>
 			new Matrix3x2(
@@ -142,5 +142,17 @@ namespace Uno.UI.RuntimeTests.Tests.Windows_UI_Xaml_Media
 				(float)m.OffsetX,
 				(float)m.OffsetY
 			);
+
+		internal static Matrix Create(int M11, int M12, int M21, int M22, int OffsetX, int OffsetY)
+		{
+			return new Matrix {
+				M11 = M11,
+				M12 = M12,
+				M21 = M21,
+				M22 = M22,
+				OffsetX = OffsetX,
+				OffsetY = OffsetY
+			};
+		}
 	}
 }

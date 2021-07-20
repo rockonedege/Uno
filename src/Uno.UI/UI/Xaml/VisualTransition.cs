@@ -11,6 +11,8 @@ namespace Windows.UI.Xaml
 	[ContentProperty(Name = "Storyboard")]
 	public partial class VisualTransition : DependencyObject
 	{
+		internal Action LazyBuilder { get; set; }
+
 		public VisualTransition()
 		{
 			IsAutoPropertyInheritanceEnabled = false;
@@ -26,11 +28,32 @@ namespace Windows.UI.Xaml
 
 		public Storyboard Storyboard
 		{
-			get { return (Storyboard)this.GetValue(StoryboardProperty); }
+			get
+			{
+				EnsureMaterialized();
+				return (Storyboard)this.GetValue(StoryboardProperty);
+			}
 			set { this.SetValue(StoryboardProperty, value); }
 		}
 
-		public static readonly DependencyProperty StoryboardProperty =
+		private void EnsureMaterialized()
+		{
+			if (LazyBuilder != null)
+			{
+				var builder = LazyBuilder;
+				LazyBuilder = null;
+				builder.Invoke();
+
+				if (Storyboard is IDependencyObjectStoreProvider storyboardProvider)
+				{
+					// Set the theme changed flag on so the update processes
+					// the children.
+					storyboardProvider.Store.UpdateResourceBindings(true);
+				}
+			}
+		}
+
+		public static DependencyProperty StoryboardProperty { get ; } =
 			DependencyProperty.Register(
 				"Storyboard",
 				typeof(Storyboard),
@@ -42,5 +65,5 @@ namespace Windows.UI.Xaml
 			);
 
 		#endregion
-    }
+	}
 }

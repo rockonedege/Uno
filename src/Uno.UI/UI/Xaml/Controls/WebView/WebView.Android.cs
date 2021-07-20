@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using Uno.UI;
 using Uno.Logging;
 using Uno.Disposables;
+using Windows.Foundation;
 
 namespace Windows.UI.Xaml.Controls
 {
@@ -133,7 +134,8 @@ namespace Windows.UI.Xaml.Controls
 			}
 
 			_wasLoadedFromString = true;
-			_webView.LoadData(text, "text/html; charset=utf-8", "utf-8");
+			//Note : _webView.LoadData does not work properly on Android 10 even when we encode to base64.
+			_webView.LoadDataWithBaseURL(null, text, "text/html; charset=utf-8", "utf-8", null);
 		}
 
 		//This should be IAsyncOperation<string> instead of Task<string> but we use an extension method to enable the same signature in Win.
@@ -151,6 +153,10 @@ namespace Windows.UI.Xaml.Controls
 
 			return await tcs.Task;
 		}
+
+		public IAsyncOperation<string> InvokeScriptAsync(string scriptName, IEnumerable<string> arguments) =>
+			AsyncOperation.FromTask(ct => InvokeScriptAsync(ct, scriptName, arguments?.ToArray()));
+			
 
 		#region Navigation History
 
@@ -252,11 +258,15 @@ namespace Windows.UI.Xaml.Controls
 			public InternalClient(WebView webView)
 			{
 				_webView = webView;
-				//SetLayerType disables hardware acceleration for a single view.
-				//This is required to remove glitching issues particularly when having a keyboard pop-up with a webview present.
-				//http://developer.android.com/guide/topics/graphics/hardware-accel.html
-				//http://stackoverflow.com/questions/27172217/android-systemui-glitches-in-lollipop
-				_webView.SetLayerType(LayerType.Software, null);
+
+				if (FeatureConfiguration.WebView.ForceSoftwareRendering)
+				{
+					//SetLayerType disables hardware acceleration for a single view.
+					//This is required to remove glitching issues particularly when having a keyboard pop-up with a webview present.
+					//http://developer.android.com/guide/topics/graphics/hardware-accel.html
+					//http://stackoverflow.com/questions/27172217/android-systemui-glitches-in-lollipop
+					_webView.SetLayerType(LayerType.Software, null);
+				}
 			}
 
 #pragma warning disable CS0672 // Member overrides obsolete member
@@ -297,7 +307,9 @@ namespace Windows.UI.Xaml.Controls
 #pragma warning restore 0672, 618
 
 			public override void OnPageFinished(Android.Webkit.WebView view, string url)
-			{
+			{				
+				_webView.DocumentTitle = view.Title;
+
 				_webView.OnNavigationHistoryChanged();
 
 				var args = new WebViewNavigationCompletedEventArgs()

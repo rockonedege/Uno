@@ -6,6 +6,7 @@ using Windows.UI.Xaml.Markup;
 namespace Windows.UI.Xaml.Controls
 {
 	[ContentProperty(Name = nameof(Blocks))]
+	[global::Uno.NotImplemented]
 	public  partial class RichTextBlock : global::Windows.UI.Xaml.FrameworkElement
 	{
 		[global::Uno.NotImplemented]
@@ -16,6 +17,8 @@ namespace Windows.UI.Xaml.Controls
 			Blocks = new Documents.BlockCollection();
 		}
 
-		public BlockCollection Blocks { get; } 
+		public BlockCollection Blocks { get; }
+
+		internal override bool CanHaveChildren() => true;
 	}
 }

@@ -27,7 +27,7 @@ namespace Uno.UI
 			| Android.Content.PM.ConfigChanges.ScreenSize
 	)]
 #pragma warning disable 618
-	public partial class BaseActivity : Android.Support.V7.App.AppCompatActivity, DependencyObject
+	public partial class BaseActivity : AndroidX.AppCompat.App.AppCompatActivity, DependencyObject
 #pragma warning restore 618
 
 	{
@@ -44,11 +44,6 @@ namespace Uno.UI
 		public const string CreatedTotalBindableActivityCounter = "BindableActivity.CreatedTotal";
 		public const string ActiveBindableActivityCounter = "BindableActivity.ActiveCount";
 		public const string DisposedTotalBindableActivityCounter = "BindableActivity.DisposedCount";
-
-		static BaseActivity()
-		{
-			Windows.UI.Xaml.GenericStyles.Initialize();
-		}
 
 		/// <summary>
 		/// Occurs when an instance of BaseActivity is created or destroyed
@@ -184,23 +179,47 @@ namespace Uno.UI
 
 		partial void InnerCreateWithPersistedState(Android.OS.Bundle bundle, PersistableBundle persistentState) => SetAsCurrent();
 
-		partial void InnerStart() => SetAsCurrent();
+		partial void InnerStart()
+		{
+			SetAsCurrent();
+
+			Windows.UI.Xaml.Application.Current?.OnLeavingBackground();
+			Windows.UI.Xaml.Window.Current?.OnVisibilityChanged(true);
+		}
 
 		partial void InnerRestart() => SetAsCurrent();
 		
 		partial void InnerResume()
 		{
-			SetAsCurrent();
+			SetAsCurrent();			
+
 			Windows.UI.Xaml.Application.Current?.OnResuming();
+			Windows.UI.Xaml.Window.Current?.OnActivated(CoreWindowActivationState.CodeActivated);
+		}
+
+		partial void InnerTopResumedActivityChanged(bool isTopResumedActivity)
+		{
+			Windows.UI.Xaml.Window.Current?.OnActivated(
+				isTopResumedActivity ?
+					CoreWindowActivationState.CodeActivated :
+					CoreWindowActivationState.Deactivated);
 		}
 
 		partial void InnerPause()
 		{
 			ResignCurrent();
+
+			Windows.UI.Xaml.Window.Current?.OnActivated(CoreWindowActivationState.Deactivated);
 			Windows.UI.Xaml.Application.Current?.OnSuspending();
 		}
 
-		partial void InnerStop() => ResignCurrent();
+		partial void InnerStop()
+		{
+			ResignCurrent();
+
+			Windows.UI.Xaml.Window.Current?.OnVisibilityChanged(false);
+			Windows.UI.Xaml.Application.Current?.OnEnteredBackground();
+		}
 
 		partial void InnerDestroy() => ResignCurrent();
 

@@ -23,19 +23,18 @@ namespace Windows.UI.Xaml
 	/// Defines a dependency property for a <see cref="DependencyObject"/>.
 	/// </summary>
 	/// <remarks>The properties are attached to the <see cref="IDependencyObject"/> marker interface.</remarks>
-	[DebuggerDisplay("Name={Name}, Type={Type.FullName}, Owner={OwnerType.FullName}, DefaultValue={Metadata.DefaultValue}")]
+	[DebuggerDisplay("Name={Name}, Type={Type.FullName}, Owner={OwnerType.FullName}")]
 	public sealed partial class DependencyProperty
 	{
-		private static Dictionary<Type, Dictionary<string, DependencyProperty>> _registry
-			= new Dictionary<Type, Dictionary<string, DependencyProperty>>(Uno.Core.Comparison.FastTypeComparer.Default);
+		private readonly static DependencyPropertyRegistry _registry = new DependencyPropertyRegistry();
 
-		private readonly static Dictionary<Type, DependencyProperty[]> _getPropertiesForType = new Dictionary<Type, DependencyProperty[]>(Uno.Core.Comparison.FastTypeComparer.Default);
-		private readonly static Dictionary<PropertyCacheEntry, DependencyProperty> _getPropertyCache = new Dictionary<PropertyCacheEntry, DependencyProperty>(PropertyCacheEntry.DefaultComparer);
+		private readonly static TypeToPropertiesDictionary _getPropertiesForType = new TypeToPropertiesDictionary();
+		private readonly static NameToPropertyDictionary _getPropertyCache = new NameToPropertyDictionary();
 
-		private readonly static Dictionary<CachedTuple<Type, FrameworkPropertyMetadataOptions>, DependencyProperty[]> _getFrameworkPropertiesForType = new Dictionary<CachedTuple<Type, FrameworkPropertyMetadataOptions>, DependencyProperty[]>(CachedTuple<Type, FrameworkPropertyMetadataOptions>.Comparer);
-		private readonly static Dictionary<Type, DependencyProperty[]> _getDependencyObjectPropertiesForType = new Dictionary<Type, DependencyProperty[]>(Uno.Core.Comparison.FastTypeComparer.Default);
+		private readonly static FrameworkPropertiesForTypeDictionary _getFrameworkPropertiesForType = new FrameworkPropertiesForTypeDictionary();
 
-		private readonly Dictionary<Type, PropertyMetadata> _metadata = new Dictionary<Type, PropertyMetadata>(Uno.Core.Comparison.FastTypeComparer.Default);
+		private readonly PropertyMetadata _ownerTypeMetadata; // For perf consideration, we keep direct ref the metadata for the owner type
+		private readonly PropertyMetadataDictionary _metadata = new PropertyMetadataDictionary();
 
 		private string _name;
 		private Type _propertyType;
@@ -43,7 +42,6 @@ namespace Windows.UI.Xaml
 		private readonly bool _isAttached;
 		private readonly bool _isTypeNullable;
 		private readonly int _uniqueId;
-		private readonly bool _hasAutoDataContextInherit;
 		private readonly bool _isDependencyObjectCollection;
 		private readonly bool _hasWeakStorage;
 		private object _fallbackDefaultValue;
@@ -54,32 +52,19 @@ namespace Windows.UI.Xaml
 		{
 			_name = name;
 			_propertyType = propertyType;
-			_ownerType = attached || IsTypeDependencyObject(ownerType) ? ownerType : typeof(_View);
+			_ownerType = ownerType;
 			_isAttached = attached;
-			_hasAutoDataContextInherit = CanAutoInheritDataContext(propertyType);
 			_isDependencyObjectCollection = typeof(DependencyObjectCollection).IsAssignableFrom(propertyType);
 			_isTypeNullable = propertyType.IsNullableCached();
 			_uniqueId = Interlocked.Increment(ref _globalId);
 			_hasWeakStorage = (defaultMetadata as FrameworkPropertyMetadata)?.Options.HasWeakStorage() ?? false;
 
-			_metadata.Add(_ownerType, defaultMetadata ?? new PropertyMetadata(null));
+			_ownerTypeMetadata = defaultMetadata ?? new FrameworkPropertyMetadata(null);
+			_metadata.Add(_ownerType, _ownerTypeMetadata);
 
 			// Improve the performance of the hash code by
 			CachedHashCode = _name.GetHashCode() ^ ownerType.GetHashCode();
 		}
-
-		/// <summary>
-		/// Determines of the provided property type can inherit a DataContext.
-		/// </summary>
-		/// <remarks>
-		/// The types checked by this method are generally types that do not contain any
-		/// dependency property, or that cannot be used in a data binding context. Those types
-		/// are forcibly ignored, even if they inherit from <see cref="DependencyObject"/>.
-		/// </remarks>
-		private static bool CanAutoInheritDataContext(Type propertyType)
-			=> typeof(DependencyObject).IsAssignableFrom(propertyType)
-			&& propertyType != typeof(Style)
-			&& !typeof(FrameworkTemplate).IsAssignableFrom(propertyType);
 
 		/// <summary>
 		/// Provides a unique identifier for the dependency property lookup
@@ -175,15 +160,23 @@ namespace Windows.UI.Xaml
 		/// <returns>A property metadata object.</returns>
 		public PropertyMetadata GetMetadata(Type forType)
 		{
+			if (forType == _ownerType)
+			{
+				return _ownerTypeMetadata;
+			}
+
 			PropertyMetadata metadata = null;
 			if (!_metadata.TryGetValue(forType, out metadata))
 			{
 				if (
 					!IsTypeDependencyObject(forType)
-
+#if !UNO_REFERENCE_API
+					// Perf: On generic API the Panel.Children are UIElement, so avoid costly check
 					// This check must be removed when Panel.Children will support only
 					// UIElement as its elements. See #103492
 					&& !forType.Is<_View>()
+#endif
+					&& OwnerType != typeof(AttachedDependencyObject)
 				)
 				{
 					throw new ArgumentException($"'{forType}' type must derive from DependencyObject.", nameof(forType));
@@ -263,11 +256,6 @@ namespace Windows.UI.Xaml
 		internal object GetFallbackDefaultValue()
 			=> _fallbackDefaultValue != null ? _fallbackDefaultValue : _fallbackDefaultValue = Activator.CreateInstance(Type);
 
-		/// <summary>
-		/// Determines if the Type of the property is a <see cref="DependencyObject"/>
-		/// </summary>
-		internal bool HasAutoDataContextInherit => _hasAutoDataContextInherit;
-
 		internal string Name
 		{
 			get { return _name; }
@@ -306,8 +294,6 @@ namespace Windows.UI.Xaml
 		{
 			ForceInitializeTypeConstructor(type);
 
-			DependencyProperty result = null;
-
 			var propertyInfo = DependencyPropertyDescriptor.Parse(name);
 
 			if(propertyInfo != null)
@@ -318,16 +304,9 @@ namespace Windows.UI.Xaml
 
 			do
 			{
-				var properties = _registry.UnoGetValueOrDefault(type);
-
-				if (properties != null)
+				if(_registry.TryGetValue(type, name, out var result))
 				{
-					result = properties.UnoGetValueOrDefault(name);
-
-					if (result != null)
-					{
-						return result;
-					}
+					return result;
 				}
 
 				// Dependency properties are inherited
@@ -335,7 +314,7 @@ namespace Windows.UI.Xaml
 			}
 			while (type != typeof(object) && type != null);
 
-			return result;
+			return null;
 		}
 
 		/// <summary>
@@ -375,23 +354,6 @@ namespace Windows.UI.Xaml
 		}
 
 		/// <summary>
-		/// Gets the dependencies properties for the specified type for which the type is a <see cref="DependencyObject"/>.
-		/// </summary>
-		/// <param name="type">A dependency object</param>
-		/// <returns>An array of Dependency Properties.</returns>
-		internal static DependencyProperty[] GetDependencyObjectPropertiesForType(Type type)
-		{
-			DependencyProperty[] result = null;
-
-			if (!_getDependencyObjectPropertiesForType.TryGetValue(type, out result))
-			{
-				_getDependencyObjectPropertiesForType.Add(type, result = InternalGetDependencyObjectPropertiesForType(type));
-			}
-
-			return result;
-		}
-
-		/// <summary>
 		/// Clears all the property registrations, when used in unit tests.
 		/// </summary>
 		internal static void ClearRegistry()
@@ -400,16 +362,13 @@ namespace Windows.UI.Xaml
 			_getPropertiesForType.Clear();
 			_getPropertyCache.Clear();
 			_getFrameworkPropertiesForType.Clear();
-			_getDependencyObjectPropertiesForType.Clear();
 		}
 
 		private static void RegisterProperty(Type ownerType, string name, DependencyProperty newProperty)
 		{
-			var properties = _registry.FindOrCreate(ownerType, () => new Dictionary<string, DependencyProperty>());
-
 			ResetGetPropertyCache(ownerType, name);
 
-			properties.Add(name, newProperty);
+			_registry.Add(ownerType, name, newProperty);
 		}
 
 		private static DependencyProperty[] InternalGetPropertiesForType(Type type)
@@ -420,12 +379,7 @@ namespace Windows.UI.Xaml
 
 			do
 			{
-				var properties = _registry.UnoGetValueOrDefault(type);
-
-				if (properties != null)
-				{
-					results.AddRange(properties.Values);
-				}
+				_registry.AppendPropertiesForType(type, results);
 
 				// Dependency properties are inherited
 				type = type.BaseType;
@@ -493,11 +447,9 @@ namespace Windows.UI.Xaml
 
 				if (
 					(
-						prop.HasAutoDataContextInherit
-
 						// We must include explicitly marked properties for now, until the
 						// metadata generator can provide this information.
-						|| propertyOptions.HasValueInheritsDataContext()
+						propertyOptions.HasValueInheritsDataContext()
 					)
 					&& !propertyOptions.HasValueDoesNotInheritDataContext()
 				)

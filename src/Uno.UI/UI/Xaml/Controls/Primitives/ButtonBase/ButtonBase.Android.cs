@@ -19,29 +19,25 @@ namespace Windows.UI.Xaml.Controls.Primitives
 		{
 			// need the Tapped event to be registered for "Click" to work properly
 			Tapped += (snd, evt) => { };
+			Clickable = true;
 		}
 
-		protected override void OnLoaded()
+		partial void OnLoadedPartial()
 		{
-			base.OnLoaded();
-
 			Focusable = true;
 			FocusableInTouchMode = true;
-
-			RegisterEvents();
 
 			OnCanExecuteChanged();
 		}
 
-		protected override void OnUnloaded()
-		{
-			base.OnUnloaded();
+		partial void OnUnloadedPartial()
+		{			
 			_isEnabledSubscription.Disposable = null;
 		}
 
-		partial void OnIsEnabledChangedPartial(bool oldValue, bool newValue)
+		private protected override void OnIsEnabledChanged(IsEnabledChangedEventArgs e)
 		{
-			Clickable = newValue;
+			Clickable = e.NewValue;
 		}
 
 		partial void RegisterEvents()

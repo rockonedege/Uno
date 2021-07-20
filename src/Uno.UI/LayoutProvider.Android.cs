@@ -53,8 +53,11 @@ namespace Uno.UI
 		{
 			if (view?.WindowToken != null)
 			{
-				_adjustNothingLayoutProvider.Start(view);
+				// making sure to stop before starting new ones.
+				Stop();
+
 				_adjustResizeLayoutProvider.Start(view);
+				_adjustNothingLayoutProvider.Start(view);				
 			}
 		}
 
@@ -66,6 +69,7 @@ namespace Uno.UI
 
 		private void MeasureLayout(PopupWindow sender)
 		{
+#pragma warning disable 618
 			// We can obtain the size of keyboard by comparing the layout of two popup windows
 			// where one (AdjustResize) resizes to keyboard and one(AdjustNothing) that doesn't:
 			// [size] realMetrics			: screen 
@@ -78,6 +82,7 @@ namespace Uno.UI
 			var displayRect = Get<Rect>(_activity.WindowManager.DefaultDisplay.GetRectSize);
 			var adjustNothingFrame = Get<Rect>(_adjustNothingLayoutProvider.ContentView.GetWindowVisibleDisplayFrame);
 			var adjustResizeFrame = Get<Rect>(_adjustResizeLayoutProvider.ContentView.GetWindowVisibleDisplayFrame);
+#pragma warning restore 618
 
 			var orientation = DisplayInformation.GetForCurrentView().CurrentOrientation;
 
@@ -112,12 +117,14 @@ namespace Uno.UI
 
 		private void MeasureInsets(PopupWindow sender, WindowInsets insets)
 		{
+#pragma warning disable 618
 			Insets = new Thickness(
 				ViewHelper.PhysicalToLogicalPixels(insets.SystemWindowInsetLeft),
 				ViewHelper.PhysicalToLogicalPixels(insets.SystemWindowInsetTop),
 				ViewHelper.PhysicalToLogicalPixels(insets.SystemWindowInsetRight),
 				ViewHelper.PhysicalToLogicalPixels(insets.SystemWindowInsetBottom)
 			);
+#pragma warning restore 618
 
 			InsetsChanged?.Invoke(Insets);
 		}
@@ -178,7 +185,9 @@ namespace Uno.UI
 			{
 				_insetsListener?.Invoke(this, insets);
 				// We need to consume insets here since we will handle them in the Window.Android.cs
+#pragma warning disable 618
 				return insets.ConsumeSystemWindowInsets();
+#pragma warning restore 618
 			}
 		}
 	}

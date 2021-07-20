@@ -24,6 +24,8 @@ namespace Uno.UI.Tests.FlyoutTests
 		[TestMethod]
 		public void When_ChildIsBigger_PlacementBottom()
 		{
+			var app = UnitTestsApp.App.EnsureApplication();
+
 			var SUT = new Grid() { Name = "test" };
 
 			var flyout = new Flyout()
@@ -38,9 +40,9 @@ namespace Uno.UI.Tests.FlyoutTests
 				Flyout = flyout
 			};
 
-
-
 			SUT.AddChild(button);
+
+			app.HostView.Children.Add(SUT);
 
 			SUT.Measure(new Size(20, 20));
 			SUT.Arrange(new Rect(0, 0, 20, 20));
@@ -73,7 +75,7 @@ namespace Uno.UI.Tests.FlyoutTests
 			{
 				Flyout = flyout
 			};
-			
+
 			//button.Click;
 			flyout.ShowAt(button);
 
@@ -82,7 +84,7 @@ namespace Uno.UI.Tests.FlyoutTests
 
 			var visibleBounds = new Rect(0, 0, 410, 815);
 			var applicationView = ApplicationView.GetForCurrentView();
-			using (applicationView.SetVisibleBounds(visibleBounds))
+			using (applicationView.SetTemporaryVisibleBounds(visibleBounds))
 			{
 				panel.Measure(visibleBounds.Size);
 				panel.Arrange(visibleBounds);
@@ -114,7 +116,7 @@ namespace Uno.UI.Tests.FlyoutTests
 			{
 				Flyout = flyout
 			};
-			
+
 			//button.Click;
 			flyout.ShowAt(button);
 
@@ -123,7 +125,7 @@ namespace Uno.UI.Tests.FlyoutTests
 
 			var visibleBounds = new Rect(0, 0, 410, 815);
 			var applicationView = ApplicationView.GetForCurrentView();
-			using (applicationView.SetVisibleBounds(visibleBounds))
+			using (applicationView.SetTemporaryVisibleBounds(visibleBounds))
 			{
 				panel.Measure(visibleBounds.Size);
 				panel.Arrange(visibleBounds);

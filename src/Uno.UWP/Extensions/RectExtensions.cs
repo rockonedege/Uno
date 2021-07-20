@@ -38,5 +38,21 @@ namespace Uno.Extensions
 				return DisplayOrientations.None;
 			}
 		}
+
+		internal static Rect OffsetRect(this Rect rect, double dx, double dy)
+		{
+			rect.X += dx;
+			rect.Y += dy;
+
+			return rect;
+		}
+
+		internal static Rect OffsetRect(this Rect rect, Point offset) => rect.OffsetRect(offset.X, offset.Y);
+
+		internal static bool IsIntersecting(this Rect rect, Rect other)
+		{
+			rect.Intersect(other);
+			return !rect.IsEmpty;
+		}
 	}
 }

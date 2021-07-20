@@ -340,7 +340,7 @@
 
 				<!--NAVIGATION BUTTONS-->
 				<Border Background="{StaticResource Color08Brush}"
-						Grid.ColumnSpan="2"
+						
 						BorderThickness="0,1,0,0"
 						BorderBrush="{StaticResource Color05Brush}"
 						Height="50"
@@ -437,6 +437,7 @@
 						<ColumnDefinition Width="Auto" />
 						<ColumnDefinition Width="Auto" />
 						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="Auto" />
 					</Grid.ColumnDefinitions>
 
 					<!-- Back Button -->
@@ -523,6 +524,12 @@
 									   HorizontalContentAlignment="Center"
 									   Margin="0,4,10,0" />
 					</Button>
+
+					<!-- Fluent styles check box -->
+					<CheckBox Content="FL"
+							  Grid.Column="8"
+							  IsChecked="{Binding UseFluentStyles, Mode=TwoWay}"
+							  Style="{x:Null}"/>
 				</Grid>
 
 				<!-- Sample Content -->

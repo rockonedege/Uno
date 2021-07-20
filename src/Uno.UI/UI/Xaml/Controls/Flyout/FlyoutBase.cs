@@ -1,8 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using Uno.Disposables;
+using Uno.Extensions;
+using Uno.UI;
+using Uno.UI.Xaml;
 using Windows.Foundation;
+using Windows.UI.Core;
+using Windows.UI.ViewManagement;
 using Windows.UI.Xaml.Media;
 
 #if XAMARIN_IOS
@@ -24,33 +31,67 @@ namespace Windows.UI.Xaml.Controls.Primitives
 
 		private bool _isOpen = false;
 
+		internal bool m_isPositionedAtPoint;
+
 		protected internal Windows.UI.Xaml.Controls.Popup _popup;
+		private bool _isLightDismissEnabled = true;
+		private Point? _popupPositionInTarget;
 		private readonly SerialDisposable _sizeChangedDisposable = new SerialDisposable();
 
-		public FlyoutBase()
+		protected FlyoutBase()
 		{
-			LightDismissOverlayBackground = Application.Current?.Resources["FlyoutLightDismissOverlayBackground"] as Brush ??
-				// This is normally a no-op - the above line should retrieve the framework-level resource. This is purely to fail the build when
-				// Resources/Styles are overhauled (and the above will no longer be valid)
-				Uno.UI.GlobalStaticResources.FlyoutLightDismissOverlayBackground as Brush;
-
-			_popup = new Windows.UI.Xaml.Controls.Popup()
-			{
-				Child = CreatePresenter(),
-			};
-
-			_popup.Opened += OnPopupOpened;
-			_popup.Closed += OnPopupClosed;
-
-			_popup.BindToEquivalentProperty(this, nameof(LightDismissOverlayMode));
-			_popup.BindToEquivalentProperty(this, nameof(LightDismissOverlayBackground));
-
-			InitializePopupPanel();
 		}
+
+		private void EnsurePopupCreated()
+		{
+			if (_popup == null)
+			{
+				ResourceResolver.ApplyResource(this, LightDismissOverlayBackgroundProperty, "FlyoutLightDismissOverlayBackground", isThemeResourceExtension: true);
+
+				var child = CreatePresenter();
+				_popup = new Windows.UI.Xaml.Controls.Popup()
+				{
+					Child = child,
+					IsLightDismissEnabled = _isLightDismissEnabled,
+				};
+
+				SynchronizeTemplatedParent();
+
+				_popup.Opened += OnPopupOpened;
+				_popup.Closed += OnPopupClosed;
+
+				_popup.BindToEquivalentProperty(this, nameof(LightDismissOverlayMode));
+				_popup.BindToEquivalentProperty(this, nameof(LightDismissOverlayBackground));
+
+				InitializePopupPanel();
+
+				SynchronizeDataContext();
+			}
+		}
+
+		/// <summary>
+		/// Controls the appeareance of <see cref="MenuFlyout"/>, when true the native popups and appearance
+		/// is used, otherwise the UWP appeareance is used. The default value is provided by <see cref="FeatureConfiguration.Style.UseUWPDefaultStyles"/>.
+		/// </summary>
+		public bool UseNativePopup { get; set; } = !FeatureConfiguration.Style.UseUWPDefaultStyles;
 
 		protected virtual void InitializePopupPanel()
 		{
 			InitializePopupPanelPartial();
+		}
+
+		private protected bool IsLightDismissOverlayEnabled
+		{
+			get => _isLightDismissEnabled;
+			set
+			{
+				_isLightDismissEnabled = value;
+
+				if (_popup != null)
+				{
+					_popup.IsLightDismissEnabled = value;
+				}
+			}
 		}
 
 		partial void InitializePopupPanelPartial();
@@ -59,7 +100,7 @@ namespace Windows.UI.Xaml.Controls.Primitives
 		{
 			if (_popup.Child is FrameworkElement child)
 			{
-				SizeChangedEventHandler handler = (_, __) => SetPopupPositionPartial(Target);
+				SizeChangedEventHandler handler = (_, __) => SetPopupPositionPartial(Target, _popupPositionInTarget);
 
 				child.SizeChanged += handler;
 
@@ -121,10 +162,45 @@ namespace Windows.UI.Xaml.Controls.Primitives
 			set { SetValue(LightDismissOverlayBackgroundProperty, value); }
 		}
 
-		internal static readonly DependencyProperty LightDismissOverlayBackgroundProperty =
-			DependencyProperty.Register("LightDismissOverlayBackground", typeof(Brush), typeof(FlyoutBase), new PropertyMetadata(null));
+		internal static DependencyProperty LightDismissOverlayBackgroundProperty { get; } =
+			DependencyProperty.Register("LightDismissOverlayBackground", typeof(Brush), typeof(FlyoutBase), new FrameworkPropertyMetadata(null));
+
+		/// <summary>
+		/// Gets or sets whether a disabled control can receive focus.
+		/// </summary>
+		public bool AllowFocusWhenDisabled
+		{
+			get => GetAllowFocusWhenDisabledValue();
+			set => SetAllowFocusWhenDisabledValue(value);
+		}
+
+		/// <summary>
+		/// Identifies the AllowFocusWhenDisabled  dependency property.
+		/// </summary>
+		[GeneratedDependencyProperty(DefaultValue = false, Options = FrameworkPropertyMetadataOptions.Inherits)]
+		public static DependencyProperty AllowFocusWhenDisabledProperty { get; } = CreateAllowFocusWhenDisabledProperty();
+
+		/// <summary>
+		/// Gets or sets a value that indicates whether the element automatically gets focus when the user interacts with it.
+		/// </summary>
+		public bool AllowFocusOnInteraction
+		{
+			get => GetAllowFocusOnInteractionValue();
+			set => SetAllowFocusOnInteractionValue(value);
+		}
+
+		/// <summary>
+		/// Identifies for the AllowFocusOnInteraction dependency property.
+		/// </summary>
+		[GeneratedDependencyProperty(DefaultValue = true, Options = FrameworkPropertyMetadataOptions.Inherits)]
+		public static DependencyProperty AllowFocusOnInteractionProperty { get; } = CreateAllowFocusOnInteractionProperty();
 
 		public FrameworkElement Target { get; private set; }
+
+		/// <summary>
+		/// Defines an optional position of the popup in the <see cref="Target"/> element.
+		/// </summary>
+		internal Point? PopupPositionInTarget => _popupPositionInTarget;
 
 		public void Hide()
 		{
@@ -140,9 +216,11 @@ namespace Windows.UI.Xaml.Controls.Primitives
 
 			if (canCancel)
 			{
+				bool cancel = false;
+				OnClosing(ref cancel);
 				var closing = new FlyoutBaseClosingEventArgs();
 				Closing?.Invoke(this, closing);
-				if (closing.Cancel)
+				if (cancel || closing.Cancel)
 				{
 					return;
 				}
@@ -150,11 +228,27 @@ namespace Windows.UI.Xaml.Controls.Primitives
 
 			Close();
 			_isOpen = false;
+			OnClosed();
 			Closed?.Invoke(this, EventArgs.Empty);
 		}
 
 		public void ShowAt(FrameworkElement placementTarget)
 		{
+			ShowAtCore(placementTarget, null);
+		}
+
+		public void ShowAt(DependencyObject placementTarget, FlyoutShowOptions showOptions)
+		{
+			if (placementTarget is FrameworkElement fe)
+			{
+				ShowAtCore(fe, showOptions);
+			}
+		}
+
+		private protected virtual void ShowAtCore(FrameworkElement placementTarget, FlyoutShowOptions showOptions)
+		{
+			EnsurePopupCreated();
+
 			if (_isOpen)
 			{
 				if (placementTarget == Target)
@@ -170,16 +264,40 @@ namespace Windows.UI.Xaml.Controls.Primitives
 
 			Target = placementTarget;
 
+			if (showOptions != null)
+			{
+				_popupPositionInTarget = showOptions.Position;
+			}
+
+			OnOpening();
 			Opening?.Invoke(this, EventArgs.Empty);
 			Open();
 			_isOpen = true;
-			Opened?.Invoke(this, EventArgs.Empty);
+
+			// **************************************************************************************
+			// UNO-FIX: Defer the raising of the Opened event to ensure everything is well
+			// initialized before opening it.
+			// **************************************************************************************
+			Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+			// **************************************************************************************
+			{
+				if (_isOpen)
+				{
+					OnOpened();
+					Opened?.Invoke(this, EventArgs.Empty);
+				}
+			});
 		}
 
-		protected virtual Control CreatePresenter()
-		{
-			return null;
-		}
+		private protected virtual void OnOpening() { }
+
+		private protected virtual void OnClosing(ref bool cancel) { }
+
+		private protected virtual void OnClosed() { }
+
+		private protected virtual void OnOpened() { }
+
+		protected virtual Control CreatePresenter() => null;
 
 		private void OnPopupClosed(object sender, object e)
 		{
@@ -189,25 +307,36 @@ namespace Windows.UI.Xaml.Controls.Primitives
 
 		protected internal virtual void Close()
 		{
-			_popup.IsOpen = false;
+			if (_popup != null)
+			{
+				_popup.IsOpen = false;
+			}
 		}
 
 		protected internal virtual void Open()
 		{
-			SetPopupPositionPartial(Target);
+			EnsurePopupCreated();
+
+			SetPopupPositionPartial(Target, _popupPositionInTarget);
 
 			_popup.IsOpen = true;
 		}
 
-		partial void SetPopupPositionPartial(UIElement placementTarget);
+		partial void SetPopupPositionPartial(UIElement placementTarget, Point? absolutePosition);
 
 		partial void OnDataContextChangedPartial(DependencyPropertyChangedEventArgs e)
 		{
-			// This is present to force the dataContext to be passed to the popup of the flyout since it is not directly a child in the visual tree of the flyout. 
-			_popup?.SetValue(Popup.DataContextProperty, this.DataContext, precedence: DependencyPropertyValuePrecedences.Local);
+			SynchronizeDataContext();
 		}
 
+		private void SynchronizeDataContext() =>
+			// This is present to force the dataContext to be passed to the popup of the flyout since it is not directly a child in the visual tree of the flyout. 
+			_popup?.SetValue(Popup.DataContextProperty, this.DataContext, precedence: DependencyPropertyValuePrecedences.Local);
+
 		partial void OnTemplatedParentChangedPartial(DependencyPropertyChangedEventArgs e)
+			=> SynchronizeTemplatedParent();
+
+		private void SynchronizeTemplatedParent()
 		{
 			_popup?.SetValue(Popup.TemplatedParentProperty, TemplatedParent, precedence: DependencyPropertyValuePrecedences.Local);
 		}
@@ -226,6 +355,93 @@ namespace Windows.UI.Xaml.Controls.Primitives
 		{
 			var flyout = GetAttachedFlyout(flyoutOwner);
 			flyout?.ShowAt(flyoutOwner);
+		}
+
+		internal static Rect CalculateAvailableWindowRect(bool isMenuFlyout, Controls.Popup popup, object placementTarget, bool hasTargetPosition, Point positionPoint, bool isFull)
+		{
+			// UNO TODO: UWP also uses values coming from the input pane and app bars, if any.
+			// Make sure of migrate to XamlRoot: https://docs.microsoft.com/en-us/uwp/api/windows.ui.xaml.xamlroot
+			return ApplicationView.GetForCurrentView().VisibleBounds;
+		}
+
+		internal void SetPresenterStyle(
+			Control pPresenter,
+			Style pStyle)
+		{
+			Debug.Assert(pPresenter != null);
+
+			if (pStyle != null)
+			{
+				pPresenter.Style = pStyle;
+			}
+			else
+			{
+				pPresenter.ClearValue(Control.StyleProperty);
+			}
+		}
+
+		internal Control GetPresenter() => _popup?.Child as Control;
+
+		internal static PreferredJustification GetJustificationFromPlacementMode(FlyoutPlacementMode placement)
+		{
+			switch (placement)
+			{
+				case FlyoutPlacementMode.Full:
+				case FlyoutPlacementMode.Top:
+				case FlyoutPlacementMode.Bottom:
+				case FlyoutPlacementMode.Left:
+				case FlyoutPlacementMode.Right:
+					return PreferredJustification.Center;
+				case FlyoutPlacementMode.TopEdgeAlignedLeft:
+				case FlyoutPlacementMode.BottomEdgeAlignedLeft:
+					return PreferredJustification.Left;
+				case FlyoutPlacementMode.TopEdgeAlignedRight:
+				case FlyoutPlacementMode.BottomEdgeAlignedRight:
+					return PreferredJustification.Right;
+				case FlyoutPlacementMode.LeftEdgeAlignedTop:
+				case FlyoutPlacementMode.RightEdgeAlignedTop:
+					return PreferredJustification.Top;
+				case FlyoutPlacementMode.LeftEdgeAlignedBottom:
+				case FlyoutPlacementMode.RightEdgeAlignedBottom:
+					return PreferredJustification.Bottom;
+				default:
+					if (typeof(FlyoutBase).Log().IsEnabled(LogLevel.Error))
+					{
+						typeof(FlyoutBase).Log().LogError("Unsupported FlyoutPlacementMode");
+					}
+					return PreferredJustification.Center;
+			}
+		}
+
+		internal static MajorPlacementMode GetMajorPlacementFromPlacement(FlyoutPlacementMode placement)
+		{
+			switch (placement)
+			{
+				case FlyoutPlacementMode.Full:
+					return MajorPlacementMode.Full;
+				case FlyoutPlacementMode.Top:
+				case FlyoutPlacementMode.TopEdgeAlignedLeft:
+				case FlyoutPlacementMode.TopEdgeAlignedRight:
+					return MajorPlacementMode.Top;
+				case FlyoutPlacementMode.Bottom:
+				case FlyoutPlacementMode.BottomEdgeAlignedLeft:
+				case FlyoutPlacementMode.BottomEdgeAlignedRight:
+					return MajorPlacementMode.Bottom;
+				case FlyoutPlacementMode.Left:
+				case FlyoutPlacementMode.LeftEdgeAlignedTop:
+				case FlyoutPlacementMode.LeftEdgeAlignedBottom:
+					return MajorPlacementMode.Left;
+				case FlyoutPlacementMode.Right:
+				case FlyoutPlacementMode.RightEdgeAlignedTop:
+				case FlyoutPlacementMode.RightEdgeAlignedBottom:
+					return MajorPlacementMode.Right;
+				default:
+					if (typeof(FlyoutBase).Log().IsEnabled(LogLevel.Error))
+					{
+						typeof(FlyoutBase).Log().LogError("Unsupported FlyoutPlacementMode");
+					}
+					return MajorPlacementMode.Full;
+			}
 		}
 	}
 }

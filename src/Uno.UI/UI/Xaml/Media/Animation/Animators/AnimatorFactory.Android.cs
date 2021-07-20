@@ -7,15 +7,16 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using Windows.Foundation;
 using Uno.UI;
+using Windows.UI;
 
 namespace Windows.UI.Xaml.Media.Animation
 {
-    internal static partial class AnimatorFactory
-    {
+	internal static partial class AnimatorFactory
+	{
 		/// <summary>
 		/// Creates the actual animator instance
 		/// </summary>
-		internal static IValueAnimator Create(Timeline timeline, double startingValue, double targetValue)
+		private static IValueAnimator CreateDouble(Timeline timeline, double startingValue, double targetValue)
 		{
 			if (timeline.GetIsDependantAnimation() || timeline.GetIsDurationZero())
 			{
@@ -25,6 +26,19 @@ namespace Windows.UI.Xaml.Media.Animation
 			{
 				return timeline.GetGPUAnimator(startingValue, targetValue);
 			}
+		}
+
+		/// <summary>
+		/// Creates the actual animator instance
+		/// </summary>
+		private static IValueAnimator CreateColor(Timeline timeline, ColorOffset startingValue, ColorOffset targetValue)
+		{
+			// TODO: GPU-bound color animations - https://github.com/unoplatform/uno/issues/2947
+
+			var startingColor = (Android.Graphics.Color)(Color)startingValue;
+			var targetColor = (Android.Graphics.Color)(Color)targetValue;
+			var valueAnimator = ValueAnimator.OfArgb(startingColor, targetColor);
+			return new NativeValueAnimatorAdapter(valueAnimator);
 		}
 
 		private static IValueAnimator GetGPUAnimator(this Timeline timeline, double startingValue, double targetValue)
@@ -69,13 +83,16 @@ namespace Windows.UI.Xaml.Media.Animation
 
 			if (target is ScaleTransform scale)
 			{
+				var nativeStartingValue = ToNativeScale(startingValue);
+				var nativeTargetValue = ToNativeScale(targetValue);
+
 				switch (property)
 				{
 					case nameof(ScaleTransform.ScaleX):
-						return new NativeValueAnimatorAdapter(GetRelativeAnimator(scale.View, "scaleX", startingValue, targetValue), PrepareScaleX(scale, startingValue), Complete(scale));
+						return new NativeValueAnimatorAdapter(GetRelativeAnimator(scale.View, "scaleX", nativeStartingValue, nativeTargetValue), PrepareScaleX(scale, nativeStartingValue), Complete(scale));
 
 					case nameof(ScaleTransform.ScaleY):
-						return new NativeValueAnimatorAdapter(GetRelativeAnimator(scale.View, "scaleY", startingValue, targetValue), PrepareScaleY(scale, startingValue), Complete(scale));
+						return new NativeValueAnimatorAdapter(GetRelativeAnimator(scale.View, "scaleY", nativeStartingValue, nativeTargetValue), PrepareScaleY(scale, nativeStartingValue), Complete(scale));
 				}
 			}
 
@@ -93,6 +110,7 @@ namespace Windows.UI.Xaml.Media.Animation
 
 			if (target is CompositeTransform composite)
 			{
+
 				switch (property)
 				{
 					case nameof(CompositeTransform.TranslateX):
@@ -105,16 +123,20 @@ namespace Windows.UI.Xaml.Media.Animation
 						return new NativeValueAnimatorAdapter(GetRelativeAnimator(composite.View, "rotation", startingValue, targetValue), PrepareAngle(composite, startingValue), Complete(composite));
 
 					case nameof(CompositeTransform.ScaleX):
-						return new NativeValueAnimatorAdapter(GetRelativeAnimator(composite.View, "scaleX", startingValue, targetValue), PrepareScaleX(composite, startingValue), Complete(composite));
+						var nativeStartingValueX = ToNativeScale(startingValue);
+						var nativetargetValueX = ToNativeScale(targetValue);
+						return new NativeValueAnimatorAdapter(GetRelativeAnimator(composite.View, "scaleX", nativeStartingValueX, nativetargetValueX), PrepareScaleX(composite, nativeStartingValueX), Complete(composite));
 
 					case nameof(CompositeTransform.ScaleY):
-						return new NativeValueAnimatorAdapter(GetRelativeAnimator(composite.View, "scaleY", startingValue, targetValue), PrepareScaleY(composite, startingValue), Complete(composite));
+						var nativeStartingValueY = ToNativeScale(startingValue);
+						var nativetargetValueY = ToNativeScale(targetValue);
+						return new NativeValueAnimatorAdapter(GetRelativeAnimator(composite.View, "scaleY", nativeStartingValueY, nativetargetValueY), PrepareScaleY(composite, nativeStartingValueY), Complete(composite));
 
-					//case nameof(CompositeTransform.SkewX):
-					//	return ObjectAnimator.OfFloat(composite.View, "scaleX", ViewHelper.LogicalToPhysicalPixels(targetValue), startingValue);
+						//case nameof(CompositeTransform.SkewX):
+						//	return ObjectAnimator.OfFloat(composite.View, "scaleX", ViewHelper.LogicalToPhysicalPixels(targetValue), startingValue);
 
-					//case nameof(CompositeTransform.SkewY):
-					//	return ObjectAnimator.OfFloat(composite.View, "scaleY", ViewHelper.LogicalToPhysicalPixels(targetValue), startingValue);
+						//case nameof(CompositeTransform.SkewY):
+						//	return ObjectAnimator.OfFloat(composite.View, "scaleY", ViewHelper.LogicalToPhysicalPixels(targetValue), startingValue);
 				}
 			}
 
@@ -202,8 +224,8 @@ namespace Windows.UI.Xaml.Media.Animation
 
 			// Apply transform using native values
 			OverridePivot(scale.View, scale.CenterX, scale.CenterY);
-			scale.View.ScaleX = (float)from;
-			scale.View.ScaleY = (float) scale.ScaleY;
+			scale.View.ScaleX = (float)ToNativeScale(from);
+			scale.View.ScaleY = (float)ToNativeScale(scale.ScaleY);
 		};
 
 		private static Action PrepareScaleY(ScaleTransform scale, double from) => () =>
@@ -213,8 +235,8 @@ namespace Windows.UI.Xaml.Media.Animation
 
 			// Apply transform using native values
 			OverridePivot(scale.View, scale.CenterX, scale.CenterY);
-			scale.View.ScaleX = (float)scale.ScaleX;
-			scale.View.ScaleY = (float)from;
+			scale.View.ScaleX = (float)ToNativeScale(scale.ScaleX);
+			scale.View.ScaleY = (float)ToNativeScale(from);
 		};
 
 		private static Action PrepareTranslateX(CompositeTransform composite, double from) => () =>
@@ -225,8 +247,8 @@ namespace Windows.UI.Xaml.Media.Animation
 			// Apply transform using native values
 			composite.View.TranslationX = ViewHelper.LogicalToPhysicalPixels(from);
 			composite.View.TranslationY = ViewHelper.LogicalToPhysicalPixels(composite.TranslateY);
-			composite.View.ScaleX = (float)composite.ScaleX;
-			composite.View.ScaleY = (float)composite.ScaleY;
+			composite.View.ScaleX = (float)ToNativeScale(composite.ScaleX);
+			composite.View.ScaleY = (float)ToNativeScale(composite.ScaleY);
 			composite.View.Rotation = (float)composite.Rotation;
 		};
 
@@ -238,8 +260,8 @@ namespace Windows.UI.Xaml.Media.Animation
 			// Apply transform using native values
 			composite.View.TranslationX = ViewHelper.LogicalToPhysicalPixels(composite.TranslateX);
 			composite.View.TranslationY = ViewHelper.LogicalToPhysicalPixels(from);
-			composite.View.ScaleX = (float)composite.ScaleX;
-			composite.View.ScaleY = (float)composite.ScaleY;
+			composite.View.ScaleX = (float)ToNativeScale(composite.ScaleX);
+			composite.View.ScaleY = (float)ToNativeScale(composite.ScaleY);
 			composite.View.Rotation = (float)composite.Rotation;
 		};
 
@@ -252,8 +274,8 @@ namespace Windows.UI.Xaml.Media.Animation
 			OverridePivot(composite.View, composite.CenterX, composite.CenterY);
 			composite.View.TranslationX = ViewHelper.LogicalToPhysicalPixels(composite.TranslateX);
 			composite.View.TranslationY = ViewHelper.LogicalToPhysicalPixels(composite.TranslateY);
-			composite.View.ScaleX = (float) composite.ScaleX;
-			composite.View.ScaleY = (float) composite.ScaleY;
+			composite.View.ScaleX = (float)ToNativeScale(composite.ScaleX);
+			composite.View.ScaleY = (float)ToNativeScale(composite.ScaleY);
 			composite.View.Rotation = (float)from;
 		};
 
@@ -266,8 +288,8 @@ namespace Windows.UI.Xaml.Media.Animation
 			OverridePivot(composite.View, composite.CenterX, composite.CenterY);
 			composite.View.TranslationX = ViewHelper.LogicalToPhysicalPixels(composite.TranslateX);
 			composite.View.TranslationY = ViewHelper.LogicalToPhysicalPixels(composite.TranslateY);
-			composite.View.ScaleX = (float)from;
-			composite.View.ScaleY = (float)composite.ScaleY;
+			composite.View.ScaleX = (float)ToNativeScale(from);
+			composite.View.ScaleY = (float)ToNativeScale(composite.ScaleY);
 			composite.View.Rotation = (float)composite.Rotation;
 		};
 
@@ -280,8 +302,8 @@ namespace Windows.UI.Xaml.Media.Animation
 			OverridePivot(composite.View, composite.CenterX, composite.CenterY);
 			composite.View.TranslationX = ViewHelper.LogicalToPhysicalPixels(composite.TranslateX);
 			composite.View.TranslationY = ViewHelper.LogicalToPhysicalPixels(composite.TranslateY);
-			composite.View.ScaleX = (float)composite.ScaleX;
-			composite.View.ScaleY = (float)from;
+			composite.View.ScaleX = (float)ToNativeScale(composite.ScaleX);
+			composite.View.ScaleY = (float)ToNativeScale(from);
 			composite.View.Rotation = (float)composite.Rotation;
 		};
 
@@ -308,5 +330,12 @@ namespace Windows.UI.Xaml.Media.Animation
 		{
 			return ObjectAnimator.OfFloat(target, property, (float)from, (float)to);
 		}
+
+		/// <summary>
+		/// Ensures that scale value is without the android accepted values
+		/// </summary>
+		private static double ToNativeScale(double value)
+			=> double.IsNaN(value) ? 1 : value;
+
 	}
 }

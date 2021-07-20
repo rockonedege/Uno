@@ -5,6 +5,7 @@ using Windows.Foundation;
 using View = Windows.UI.Xaml.UIElement;
 using System.Collections;
 using Uno.UI;
+using Windows.UI.Xaml.Controls.Primitives;
 
 namespace Windows.UI.Xaml
 {
@@ -14,12 +15,20 @@ namespace Windows.UI.Xaml
 
 		internal List<View> _children = new List<View>();
 
+		internal UIElement VisualParent => ((IDependencyObjectStoreProvider)this).Store.Parent as UIElement;
+
+		internal bool ShouldInterceptInvalidate { get; set; }
+
+		internal void UpdateHitTest() { }
+
+		private protected virtual void OnPostLoading() { }
+
 		partial void OnLoadingPartial();
 
 		public T AddChild<T>(T child) where T : View
 		{
 			_children.Add(child);
-			child.SetParent(this);
+			OnAddChild(child);
 
 			return child;
 		}
@@ -27,15 +36,30 @@ namespace Windows.UI.Xaml
 		public T AddChild<T>(T child, int index) where T : View
 		{
 			_children.Insert(index, child);
-			child.SetParent(this);
+			OnAddChild(child);
 
 			return child;
 		}
 
+		private void OnAddChild(View child)
+		{
+			child.SetParent(this);
+			if (child is FrameworkElement fe)
+			{
+				fe.IsLoaded = IsLoaded;
+				fe.EnterTree();
+			}
+		}
+		
 		public T RemoveChild<T>(T child) where T : View
 		{
 			_children.Remove(child);
 			child.SetParent(null);
+
+			if (child is FrameworkElement fe)
+			{
+				fe.OnUnloaded();
+			}
 
 			return child;
 		}
@@ -43,11 +67,6 @@ namespace Windows.UI.Xaml
 		public View FindFirstChild()
 		{
 			return _children.FirstOrDefault();
-		}
-
-		public T FindFirstChild<T>()  where T : View
-		{
-			return _children.OfType<T>().FirstOrDefault<T>();
 		}
 
 		public virtual IEnumerable<View> GetChildren()
@@ -71,14 +90,18 @@ namespace Windows.UI.Xaml
 			MeasureCallCount++;
 			AvailableMeasureSize = slotSize;
 
-			if(DesiredSizeSelector != null)
+			if (DesiredSizeSelector != null)
 			{
-				DesiredSize = DesiredSizeSelector(slotSize);
-				RequestedDesiredSize = DesiredSize;
+				var desiredSize = DesiredSizeSelector(slotSize);
+
+				LayoutInformation.SetDesiredSize(this, desiredSize);
+				RequestedDesiredSize = desiredSize;
 			}
-			else if(RequestedDesiredSize != null)
+			else if (RequestedDesiredSize != null)
 			{
-				DesiredSize = RequestedDesiredSize.Value;
+				var desiredSize = RequestedDesiredSize.Value;
+
+				LayoutInformation.SetDesiredSize(this, desiredSize);
 			}
 		}
 
@@ -87,19 +110,29 @@ namespace Windows.UI.Xaml
 			_layouter.Arrange(frame);
 		}
 
-		static partial void OnGenericPropertyUpdatedPartial(object dependencyObject, DependencyPropertyChangedEventArgs args);
+		partial void OnGenericPropertyUpdatedPartial(DependencyPropertyChangedEventArgs args);
 
 		public bool IsLoaded { get; private set; }
 
 		public void ForceLoaded()
 		{
 			IsLoaded = true;
-			OnLoading();
-			OnLoaded();
+			EnterTree();
+		}
 
-			foreach(var child in GetChildren().OfType<FrameworkElement>())
+		private void EnterTree()
+		{
+			if (IsLoaded)
 			{
-				child.ForceLoaded();
+				OnLoading();
+				OnPostLoading();
+				OnLoaded();
+
+				foreach (var child in _children.OfType<FrameworkElement>().ToArray())
+				{
+					child.IsLoaded = IsLoaded;
+					child.EnterTree();
+				}
 			}
 		}
 
@@ -119,5 +152,8 @@ namespace Windows.UI.Xaml
 		public Size UnclippedDesiredSize => _layouter._unclippedDesiredSize;
 
 		public global::System.Uri BaseUri { get; internal set; }
+
+		private protected override double GetActualWidth() => ActualWidth;
+		private protected override double GetActualHeight() => ActualHeight;
 	}
 }

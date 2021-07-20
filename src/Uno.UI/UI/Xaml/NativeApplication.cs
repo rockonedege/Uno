@@ -19,19 +19,9 @@ namespace Windows.UI.Xaml
 		private readonly Application _app;
 		private Intent _lastHandledIntent;
 
-		public delegate Windows.UI.Xaml.Application AppBuilder();
+		private bool _isRunning = false;
 
-		[EditorBrowsable(EditorBrowsableState.Never)]
-		public NativeApplication(Windows.UI.Xaml.Application app, IntPtr javaReference, Android.Runtime.JniHandleOwnership transfer)
-			: this(() => app, javaReference, transfer)
-		{
-			if (this.Log().IsEnabled(LogLevel.Warning))
-			{
-				this.Log().LogWarning(
-					"The constructor on Windows.UI.Xaml.NativeApplication uses an explicitly created Windows.UI.Xaml.Application instance. " +
-					"Instead, use the constructor that requires a Windows.UI.Xaml.NativeApplication.AppBuilder delegate.");
-			}
-		}
+		public delegate Windows.UI.Xaml.Application AppBuilder();
 
 		/// <summary>
 		/// Creates an android Application instance
@@ -55,17 +45,71 @@ namespace Windows.UI.Xaml
 
 		private void OnActivityStarted(Activity activity)
 		{
-			_app.InitializationCompleted();
-			if (_lastHandledIntent != activity.Intent &&
-			    activity.Intent?.Extras?.ContainsKey(JumpListItem.ArgumentsExtraKey) == true)
+			if (activity is ApplicationActivity)
 			{
-				_lastHandledIntent = activity.Intent;
-				_app.OnLaunched(new LaunchActivatedEventArgs(ActivationKind.Launch, activity.Intent.GetStringExtra(JumpListItem.ArgumentsExtraKey)));
+				if (this.Log().IsEnabled(LogLevel.Debug))
+				{
+					this.Log().LogDebug($"Application activity started with intent {activity.Intent}");
+				}
+
+				_app.InitializationCompleted();
+
+				var handled = TryHandleIntent(activity.Intent);
+
+				// default to normal launch
+				if (!handled && !_isRunning)
+				{
+					_app.OnLaunched(new LaunchActivatedEventArgs());
+				}
+				_isRunning = true;
 			}
-			else
+		}
+
+		internal bool TryHandleIntent(Intent intent)
+		{
+			if (this.Log().IsEnabled(LogLevel.Debug))
 			{
-				_app.OnLaunched(new LaunchActivatedEventArgs());
+				this.Log().LogDebug($"Trying to handle intent with data: {intent?.Data?.ToString() ?? "(null)"}");
 			}
+
+			var handled = false;
+			if (_lastHandledIntent != intent)
+			{
+				_lastHandledIntent = intent;
+				if (intent?.Extras?.ContainsKey(JumpListItem.ArgumentsExtraKey) == true)
+				{
+					if (this.Log().IsEnabled(LogLevel.Debug))
+					{
+						this.Log().LogDebug("Intent contained JumpList extra arguments, calling OnLaunched.");
+					}
+
+					_app.OnLaunched(new LaunchActivatedEventArgs(ActivationKind.Launch, intent.GetStringExtra(JumpListItem.ArgumentsExtraKey)));
+					handled = true;
+				}
+				else if (intent.Data != null)
+				{
+					if (Uri.TryCreate(intent.Data.ToString(), UriKind.Absolute, out var uri))
+					{
+						if (this.Log().IsEnabled(LogLevel.Debug))
+						{
+							this.Log().LogDebug("Intent data parsed successfully as Uri, calling OnActivated.");
+						}
+
+						_app.OnActivated(new ProtocolActivatedEventArgs(uri, _isRunning ? ApplicationExecutionState.Running : ApplicationExecutionState.NotRunning));
+						handled = true;
+					}
+					else
+					{
+						// log warning and continue with normal launch
+						if (this.Log().IsEnabled(LogLevel.Warning))
+						{
+							this.Log().LogWarning("URI cannot be parsed from Intent.Data, continuing unhandled");
+						}
+					}
+				}
+			}
+
+			return handled;
 		}
 
 		/// <summary>

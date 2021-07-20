@@ -38,7 +38,7 @@ namespace Windows.UI.Xaml.Controls
 		/// <summary>
 		/// Gets the first sub-view of this control or null if there is none
 		/// </summary>
-		public IFrameworkElement GetTemplateRoot()
+		internal IFrameworkElement GetTemplateRoot()
 		{
 			return Subviews.FirstOrDefault() as IFrameworkElement;
 		}
@@ -59,13 +59,6 @@ namespace Windows.UI.Xaml.Controls
 			}
 
 			AddSubview(child);
-		}
-
-		protected virtual bool RequestFocus(FocusState state)
-		{
-			FocusState = state;
-
-			return true;
 		}
 	}
 }

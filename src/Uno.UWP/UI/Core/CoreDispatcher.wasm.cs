@@ -11,6 +11,10 @@ namespace Windows.UI.Core
 {
 	public sealed partial class CoreDispatcher
 	{
+		internal bool IsThreadingSupported { get; } = Environment.GetEnvironmentVariable("UNO_BOOTSTRAP_MONO_RUNTIME_CONFIGURATION").StartsWith("threads", StringComparison.OrdinalIgnoreCase);
+
+		private Timer _backgroundWakeupTimer;
+
 		/// <summary>
 		/// Method invoked from 
 		/// </summary>
@@ -28,12 +32,32 @@ namespace Windows.UI.Core
 
 		partial void Initialize()
 		{
+			if (IsThreadingSupported)
+			{
+				if(Thread.CurrentThread.ManagedThreadId != 1)
+				{
+					throw new InvalidOperationException($"CoreDispatcher must be initialized on the main Javascript thread");
+				}
+
+				_backgroundWakeupTimer = new Timer(_ => Main.DispatchItems());
+				_backgroundWakeupTimer.Change(0, 50);
+			}
 		}
 
 		// Always reschedule, otherwise we may end up in live-lock.
 		public static bool HasThreadAccessOverride { get; set; } = false;
-		 
-		private bool GetHasThreadAccess() => HasThreadAccessOverride;
+
+		private bool GetHasThreadAccess()
+		{
+			if (IsThreadingSupported)
+			{
+				return Thread.CurrentThread.ManagedThreadId == 1;
+			}
+			else
+			{
+				return HasThreadAccessOverride;
+			}
+		}
 
 		public static CoreDispatcher Main { get; } = new CoreDispatcher();
 
@@ -41,7 +65,14 @@ namespace Windows.UI.Core
 		{
 			if (DispatchOverride == null)
 			{
-				WebAssemblyRuntime.InvokeJSUnmarshalled("CoreDispatcher:WakeUp", IntPtr.Zero);
+				if (!IsThreadingSupported)
+				{
+					WebAssemblyRuntime.InvokeJSUnmarshalled("CoreDispatcher:WakeUp", IntPtr.Zero);
+				}
+				else
+				{
+					// The _backgroundWakeupTimer will do the dispatching.
+				}
 			}
 			else
 			{

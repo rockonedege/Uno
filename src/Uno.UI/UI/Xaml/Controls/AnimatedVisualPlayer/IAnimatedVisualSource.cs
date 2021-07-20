@@ -1,19 +1,20 @@
-﻿using Windows.Foundation;
+﻿using Microsoft.UI.Xaml.Controls;
+using Windows.Foundation;
 
 namespace Windows.UI.Xaml.Controls
 {
-	public interface IAnimatedVisualSource
+	public partial interface IAnimatedVisualSource
 	{
 		void Update(AnimatedVisualPlayer player);
 		void Load();
 		void Unload();
-		void Play(bool looped);
+		void Play(double fromProgress, double toProgress, bool looped);
 		void Stop();
 		void Pause();
 		void Resume();
 
 		void SetProgress(double progress);
 
-		Size Measure(Size availableSize);
+		Size Measure(Size availableSize);		
 	}
 }

@@ -1,4 +1,6 @@
-﻿#if !NET461 && !__MACOS__
+﻿#if !NET461
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,6 +13,7 @@ using Uno;
 
 namespace Windows.UI.Xaml.Controls
 {
+    [Windows.UI.Xaml.Data.Bindable]
 	abstract partial class VirtualizingPanelLayout : IScrollSnapPointsInfo
 	{
 		/// <summary>
@@ -28,17 +31,17 @@ namespace Windows.UI.Xaml.Controls
 		/// </summary>
 		/// <remarks>For <see cref="ItemsStackPanel"/> layouting this is identical to <see cref="Orientation"/> but for <see cref="ItemsWrapGrid"/> it is the opposite of <see cref="Orientation"/>.</remarks>
 		public abstract Orientation ScrollOrientation { get; }
-#if !__WASM__
-		protected readonly ILayouter _layouter = new VirtualizingPanelLayouter();
+#if !UNO_REFERENCE_API
+		private protected readonly ILayouter _layouter = new VirtualizingPanelLayouter();
 		internal ILayouter Layouter => _layouter;
 #endif
 
 #pragma warning disable 67 // Unused member
 		[NotImplemented]
-		public event EventHandler<object> HorizontalSnapPointsChanged;
+		public event EventHandler<object>? HorizontalSnapPointsChanged;
 
 		[NotImplemented]
-		public event EventHandler<object> VerticalSnapPointsChanged;
+		public event EventHandler<object>? VerticalSnapPointsChanged;
 #pragma warning restore 67 // Unused member
 
 
@@ -80,6 +83,11 @@ namespace Windows.UI.Xaml.Controls
 		{
 			get
 			{
+				if (XamlParent == null)
+				{
+					return default;
+				}
+
 				if (ScrollOrientation == Orientation.Vertical)
 				{
 					return XamlParent.ScrollViewer.VerticalSnapPointsType;
@@ -96,6 +104,11 @@ namespace Windows.UI.Xaml.Controls
 		{
 			get
 			{
+				if (XamlParent == null)
+				{
+					return default;
+				}
+
 				if (ScrollOrientation == Orientation.Vertical)
 				{
 					return XamlParent.ScrollViewer.VerticalSnapPointsAlignment;
@@ -117,8 +130,8 @@ namespace Windows.UI.Xaml.Controls
 			set { SetValue(OrientationProperty, value); }
 		}
 
-		public static readonly DependencyProperty OrientationProperty =
-			DependencyProperty.Register("Orientation", typeof(Orientation), typeof(VirtualizingPanelLayout), new PropertyMetadata(Orientation.Vertical, (o, e) => ((VirtualizingPanelLayout)o).OnOrientationChanged((Orientation)e.NewValue)));
+		public static DependencyProperty OrientationProperty { get; } =
+			DependencyProperty.Register("Orientation", typeof(Orientation), typeof(VirtualizingPanelLayout), new FrameworkPropertyMetadata(Orientation.Vertical, (o, e) => ((VirtualizingPanelLayout)o).OnOrientationChanged((Orientation)e.NewValue)));
 
 		/// <summary>
 		/// Whether the content should be stretched in breadth (ie perpendicular to the direction of scroll).
@@ -127,28 +140,32 @@ namespace Windows.UI.Xaml.Controls
 		{
 			get
 			{
-				if (XamlParent == null)
+				var stretchOwner =
+#if !__IOS__ && !__ANDROID__
+					IsInsidePopup ? (FrameworkElement)OwnerPanel :
+#endif
+					XamlParent;
+				if (stretchOwner == null)
 				{
 					return true;
 				}
 
-				if (IsInsidePopup)
-				{
-					return false;
-				}
-
 				if (ScrollOrientation == Orientation.Vertical)
 				{
-					return XamlParent.HorizontalAlignment == HorizontalAlignment.Stretch;
+					return stretchOwner.HorizontalAlignment == HorizontalAlignment.Stretch;
 				}
 				else
 				{
-					return XamlParent.VerticalAlignment == VerticalAlignment.Stretch;
+					return stretchOwner.VerticalAlignment == VerticalAlignment.Stretch;
 				}
 			}
 		}
 
-		public IReadOnlyList<float> GetIrregularSnapPoints(Orientation orientation, SnapPointsAlignment alignment)
+		// TODO: This is a temporary workaround for TabView items stretching vertically
+		// Can be removed when #1133 is fixed.
+		internal bool ShouldApplyChildStretch { get; set; } = true;
+
+		public IReadOnlyList<float>? GetIrregularSnapPoints(Orientation orientation, SnapPointsAlignment alignment)
 		{
 			if (orientation != ScrollOrientation)
 			{
@@ -169,7 +186,7 @@ namespace Windows.UI.Xaml.Controls
 			{
 				var snapPoints = GetIrregularSnapPoints(ScrollOrientation, SnapPointsAlignment);
 
-				if (snapPoints.Count == 0)
+				if (snapPoints == null || snapPoints.Count == 0)
 				{
 					return null;
 				}
@@ -211,9 +228,19 @@ namespace Windows.UI.Xaml.Controls
 		/// <summary>
 		/// Get the index of the next item that has not yet been materialized in the nominated fill direction. Returns null if there are no more available items in the source.
 		/// </summary>
-		protected IndexPath? GetNextUnmaterializedItem(GeneratorDirection fillDirection, IndexPath? currentMaterializedItem)
+		protected Uno.UI.IndexPath? GetNextUnmaterializedItem(GeneratorDirection fillDirection, Uno.UI.IndexPath? currentMaterializedItem)
 		{
-			return XamlParent?.GetNextItemIndex(currentMaterializedItem, fillDirection == GeneratorDirection.Forward ? 1 : -1);
+			var direction = fillDirection == GeneratorDirection.Forward ? 1 : -1;
+			var index = XamlParent?.GetNextItemIndex(currentMaterializedItem, direction);
+
+			// We consider the pending reorder item as non materializable and we ignore it while filling the layout.
+			// It's then the responsibility of the layout to render it at the appropriate slot
+			if (index is {} && GetReorderingIndex() is {} reorderIndex && index == reorderIndex)
+			{
+				index = XamlParent?.GetNextItemIndex(index, direction);
+			}
+
+			return index;
 		}
 
 		// Note that Item1 is used instead of Item to work around an issue
@@ -250,7 +277,7 @@ namespace Windows.UI.Xaml.Controls
 			return (minItem, min);
 		}
 
-#if !__WASM__
+#if !UNO_REFERENCE_API
 		private class VirtualizingPanelLayouter : Layouter
 		{
 

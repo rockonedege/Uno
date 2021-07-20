@@ -1,10 +1,15 @@
+#nullable enable
+
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Uno.Extensions;
 using Uno.Logging;
+using Uno.UI;
 using Uno.UI.DataBinding;
+using Uno.UI.Xaml;
 using Windows.Foundation;
 using Windows.Foundation.Metadata;
 using Windows.UI.Xaml.Data;
@@ -12,6 +17,7 @@ using Windows.UI.Xaml.Data;
 namespace Windows.UI.Xaml
 {
 	public delegate object SetterValueProviderHandler();
+	public delegate object SetterValueProviderHandlerWithOwner(object? owner);
 
 	[DebuggerDisplay("{DebuggerDisplay}")]
 	public sealed partial class Setter : SetterBase
@@ -21,12 +27,12 @@ namespace Windows.UI.Xaml
 
 		}
 
-		private BindingPath _bindingPath;
-		private readonly SetterValueProviderHandler _valueProvider;
-		private object _value;
+		private BindingPath? _bindingPath;
+		private readonly SetterValueProviderHandler? _valueProvider;
+		private object? _value;
 		private int _targetNameResolutionFailureCount;
 
-		public object Value
+		public object? Value
 		{
 			get
 			{
@@ -40,7 +46,7 @@ namespace Windows.UI.Xaml
 			set => _value = value;
 		}
 
-		public TargetPropertyPath Target
+		public TargetPropertyPath? Target
 		{
 			get;
 			set;
@@ -49,7 +55,14 @@ namespace Windows.UI.Xaml
 		/// <summary>
 		/// The property being set by this setter
 		/// </summary>
-		public DependencyProperty Property { get; set; }
+		public DependencyProperty? Property { get; set; }
+
+		/// <summary>
+		/// The name of the ThemeResource applied to the value, if any, as an optimized key.
+		/// </summary>
+		internal SpecializedResourceDictionary.ResourceKey? ThemeResourceKey { get; set; }
+
+		internal XamlParseContext? ThemeResourceContext { get; set; }
 
 		public Setter(DependencyProperty targetProperty, object value)
 		{
@@ -63,6 +76,14 @@ namespace Windows.UI.Xaml
 			_valueProvider = valueProvider;
 		}
 
+		public Setter(DependencyProperty targetProperty, object? owner, SetterValueProviderHandlerWithOwner valueProvider)
+		{
+			Property = targetProperty;
+
+			var ownerRef = WeakReferencePool.RentWeakReference(this, owner);
+			_valueProvider = () => valueProvider(ownerRef?.Target);
+		}
+
 		public Setter(TargetPropertyPath targetPath, object value)
 		{
 			Target = targetPath;
@@ -73,8 +94,15 @@ namespace Windows.UI.Xaml
 		{
 			if (Property != null)
 			{
-				object value = _valueProvider != null ? _valueProvider() : _value;
-				o.SetValue(Property, BindingPropertyHelper.Convert(() => Property.Type, value));
+				if (ThemeResourceKey.HasValue)
+				{
+					ResourceResolver.ApplyResource(o, Property, ThemeResourceKey.Value, isThemeResourceExtension: true, context: ThemeResourceContext, precedence: null);
+				}
+				else
+				{
+					object? value = _valueProvider != null ? _valueProvider() : _value;
+					o.SetValue(Property, BindingPropertyHelper.Convert(() => Property.Type, value));
+				}
 			}
 			else
 			{
@@ -88,11 +116,19 @@ namespace Windows.UI.Xaml
 
 			if (path != null)
 			{
-				path.Value = Value;
+				if (ThemeResourceKey.HasValue && ResourceResolver.ApplyVisualStateSetter(ThemeResourceKey.Value, ThemeResourceContext, path, precedence))
+				{
+					// Applied as theme binding, no need to do more
+					return;
+				}
+				else
+				{
+					path.Value = Value;
+				}
 			}
 		}
 
-		private BindingPath TryGetOrCreateBindingPath(DependencyPropertyValuePrecedences precedence, IFrameworkElement owner)
+		private BindingPath? TryGetOrCreateBindingPath(DependencyPropertyValuePrecedences precedence, IFrameworkElement owner)
 		{
 			if (_bindingPath != null)
 			{
@@ -136,6 +172,11 @@ namespace Windows.UI.Xaml
 				{
 					stub.Materialize();
 				}
+
+				subject.ElementInstanceChanged += (s, value) =>
+				{
+					_bindingPath.DataContext = value;
+				};
 
 				_bindingPath.DataContext = subject.ElementInstance;
 			}
